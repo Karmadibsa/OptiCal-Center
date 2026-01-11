@@ -36,14 +36,18 @@ const Dashboard = ({ csvData }) => {
             const convertToCooked = (valStr, item) => {
                 if (!valStr || !item) return valStr;
 
-                // Only convert Rice, Pasta, PST if they are marked as included 'cru'
-                // Actually the logic is: if item contains 'cru' -> replace with 'cuit' text AND multiply numbers by 3
+                // Detect item type for specific ratios
+                let ratio = 3; // Default (Riz standard)
+                if (/Pâtes|PST/i.test(item)) ratio = 2.5;
+                if (/Riz/i.test(item)) ratio = 3;
+
+                // Only convert if marked as 'cru'
                 const needsConversion = /Riz|Pâtes|PST/i.test(item) && /cru/i.test(item);
                 if (!needsConversion) return valStr;
 
                 // Try to parse numbers and ranges (e.g. 92-100)
                 return valStr.replace(/(\d+)/g, (match) => {
-                    return Math.round(parseFloat(match) * 3);
+                    return Math.round(parseFloat(match) * ratio);
                 });
             };
 

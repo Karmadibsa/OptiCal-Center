@@ -30,7 +30,27 @@ Vous n'avez pas besoin de toucher au code pour changer une quantité ou un alime
 - **Axel / Prisca** : Les quantités (ex: `100g`)
 - **Note** : Petit commentaire optionnel (ex: `OBLIGATOIRE`)
 
-⚠️ **Important** : Si vous mettez `(cru)` dans le nom d'un aliment (Riz, Pâtes, PST), le PDF le convertira automatiquement en `(cuit)` et multipliera la quantité par 3.
+⚠️ **Important - Ratios de Cuisson** : 
+Si vous mettez `(cru)` dans le nom d'un aliment, le PDF convertira automatiquement le poids pour l'affichage "Frigo" :
+- **Riz** : x3 (100g cru -> 300g cuit)
+- **Pâtes** : x2.5 (100g cru -> 250g cuit)
+- **PST** : x2.5 (100g cru -> 250g cuit)
+
+### 🤖 Générer le CSV avec une IA
+Pour éviter les erreurs de format, copiez-collez ce prompt à votre IA préférée (ChatGPT, Claude, etc.) avec vos données :
+
+> "Agis comme un expert data. Je veux mettre à jour mon fichier `roadmap.csv` pour mon application de nutrition.
+> Voici le format STRICT à respecter (Headers inclus) :
+> `Type,Section,Item,Axel,Prisca,Note`
+>
+> Règles :
+> 1. **Type**: Diet, Supplement, ou Info.
+> 2. **Section**: Matin, Midi, Collation, Soir, Avant Sport, Pendant Sport, Après Sport, Rappel.
+> 3. **Item**: Nom de l'aliment. Ajoute '(cru)' pour Riz/Pâtes/PST si c'est le poids sec.
+> 4. **Axel/Prisca**: Juste le nombre + unité (ex: '100g' ou '1 gel'). Pas de texte superflu.
+> 5. **Note**: Court commentaire ou laisser vide.
+>
+> Voici mes nouveaux inputs : [INSÉRER TES DONNÉES ICI]. Génère-moi uniquement le contenu CSV."
 
 ## 💻 Installation & Lancement
 
