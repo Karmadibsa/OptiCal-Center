@@ -20,10 +20,10 @@ const SmartDiet = () => {
 
     const SOCLE_DATA = {
         common: {
-            pancakes: { kcal: 550, prot: 15 },
+            // Pancakes moved to specific profiles
             collation_whey: { kcal: 110, prot: 25 },
             collation_fruit: { kcal: 105, prot: 1 },
-            // Removed static PST/Oeufs - now dynamic
+            // Removed static PST/Oefs - now dynamic
             midi_creme: { kcal: 90, prot: 1 },
             soir_creme: { kcal: 90, prot: 1 },
             legumes: { kcal: 100, prot: 4 }, // Estimate
@@ -31,9 +31,11 @@ const SmartDiet = () => {
             galettes_2x: { kcal: 334, prot: 13.4 } // 2 Galettes (Standardized)
         },
         axel: {
+            pancakes: { kcal: 550, prot: 15 }, // 3 Pancakes + Garniture
             matin_whey: { kcal: 110, prot: 25 },
         },
         prisca: {
+            pancakes: { kcal: 366, prot: 10 }, // 2 Pancakes + Garniture (Valeur ajustée)
             matin_whey: { kcal: 0, prot: 0 },
         }
     };
