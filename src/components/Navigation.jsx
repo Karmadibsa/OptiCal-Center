@@ -16,6 +16,12 @@ const Navigation = () => {
             >
                 Calculateur
             </NavLink>
+            <NavLink
+                to="/smart-diet"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+                Macro Plan
+            </NavLink>
         </nav>
     );
 };

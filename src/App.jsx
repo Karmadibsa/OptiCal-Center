@@ -5,6 +5,7 @@ import Papa from 'papaparse';
 import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import Calculator from './components/Calculator';
+import SmartDiet from './components/SmartDiet';
 
 const App = () => {
   const [data, setData] = useState([]);
@@ -53,6 +54,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Dashboard csvData={data} />} />
         <Route path="/calculator" element={<Calculator csvData={data} />} />
+        <Route path="/smart-diet" element={<SmartDiet />} />
       </Routes>
 
       <footer style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
