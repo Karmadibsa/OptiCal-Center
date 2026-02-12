@@ -31,8 +31,8 @@ const Calculator = ({ csvData }) => {
     // CSV Items: "Riz (cru)", "Pâtes (cru)", "PST (cru)", "Crème Fraîche", "Œufs"
 
     const INGREDIENTS_MAP = {
-        'Midi': ['Riz (cru)', 'PST (cru)', 'Crème Fraîche'],
-        'Soir': ['Pâtes (cru)', 'Œufs', 'Crème Fraîche']
+        'Midi': ['Pâtes Protein+ (Cru)', 'PST (Cru)', 'Crème Fraîche'],
+        'Soir': ['Pâtes Protein+ (Cru)', 'Œufs', 'Crème Fraîche']
     };
 
     useEffect(() => {
@@ -61,9 +61,9 @@ const Calculator = ({ csvData }) => {
         setSchedule(newSchedule);
     };
 
-    const selectMonFri = () => {
+    const selectMonSat = () => {
         const newSchedule = {};
-        const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+        const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
         weekDays.forEach(day => {
             MEALS.forEach(meal => {
                 newSchedule[`${day}-${meal}`] = { axel: true, prisca: true };
@@ -120,7 +120,7 @@ const Calculator = ({ csvData }) => {
 
             <div className="calc-controls">
                 <button onClick={selectAll} className="btn-small">Tout Sélectionner</button>
-                <button onClick={selectMonFri} className="btn-small">Lundi - Vendredi</button>
+                <button onClick={selectMonSat} className="btn-small">Lundi - Samedi</button>
                 <button onClick={resetSchedule} className="btn-small btn-outline">Reset</button>
             </div>
 

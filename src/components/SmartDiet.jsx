@@ -198,7 +198,60 @@ const SmartDiet = () => {
         }));
     };
 
-    // --- 5. RENDER HELPERS ---
+    // --- 5. CSV EXPORT ---
+    const generateCSV = () => {
+        const rows = [
+            // HEADING
+            ['Type', 'Section', 'Item', 'Axel', 'Prisca', 'Note'],
+
+            // DIET - MATIN
+            ['Diet', 'Matin', 'Pancakes', '3 Pancakes (+ Beurre cacahuète/Confiture)', '2 Pancakes (+ Beurre cacahuète/Confiture)', 'Base fixe'],
+            ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
+
+            // DIET - MIDI
+            ['Diet', 'Midi', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_midi)}g`, `${Math.round(resPrisca.pasta_midi)}g`, 'Calculé (55%)'],
+            ['Diet', 'Midi', 'PST (Cru)', `${resAxel.pst_qty}g`, `${resPrisca.pst_qty}g`, 'Source Protéines (Poids - 25)'],
+            ['Diet', 'Midi', 'Légumes', 'À volonté', 'À volonté', 'Volume'],
+            ['Diet', 'Midi', 'Crème Fraîche', '30g (1 c.à.s)', '30g (1 c.à.s)', 'Lipides'],
+
+            // DIET - 16H
+            ['Diet', '16H00', 'Banane', '1 Banane', '1 Banane', 'Glucides rapides'],
+            ['Diet', '16H00', 'Whey', '1 Shaker de Whey (30g)', '1 Shaker de Whey (25g)', 'Récupération'],
+
+            // DIET - SOIR
+            ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
+            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty} (Plat/Mollet)`, `${resPrisca.oeuf_qty} (Plat/Mollet)`, 'OBLIGATOIRE'],
+            ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
+            ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
+            ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
+
+            // SUPPLEMENTS (Standard)
+            ['Supplement', 'Matin', 'Collagène', '10-15g', '10g', 'Dans shaker ou boisson chaude'],
+            ['Supplement', 'Matin', 'Vitamine D3 + K2', '1 gélule', '1 gélule', 'Avec le gras du matin'],
+            ['Supplement', 'Matin', 'Whey', '1 dose', 'Rien', '(Si déjà compté plus haut)'],
+            ['Supplement', '16H00', 'Whey', '1 dose', '1 dose', ''],
+            ['Supplement', 'Avant Sport', 'BCAA (Comprimés)', '8 à 10 cp', '5 cp', '30 min avant séance'],
+            ['Supplement', 'Coucher', 'Zinc', '1 gélule', '1 gélule', 'Immunité'],
+            ['Supplement', 'Coucher', 'Magnésium', '1 gélule', '1 gélule', 'Sommeil'],
+
+            // INFO
+            ['Info', 'Rappel', 'Eau', '4 Litres / jour', '2.5 Litres / jour', 'Augmenté pour Créatine + Sport'],
+            ['Info', 'Rappel', 'Jours de Repos', 'Aucun changement alimentaire', 'Aucun changement alimentaire', 'Lissage sur la semaine']
+        ];
+
+        // Convert to CSV string
+        const csvContent = rows.map(row => row.join(',')).join('\n');
+        return csvContent;
+    };
+
+    const handleCopyCSV = () => {
+        const csv = generateCSV();
+        navigator.clipboard.writeText(csv).then(() => {
+            alert("CSV copié ! Collez-le dans public/roadmap.csv pour mettre à jour tout le site.");
+        });
+    };
+
+    // --- 6. RENDER HELPERS ---
     const PlanRow = ({ label, axelVal, priscaVal, note, isHeader = false }) => (
         <div className={`plan-row ${isHeader ? 'header-row' : ''}`}>
             <div className="col-item">{label}</div>
@@ -207,6 +260,7 @@ const SmartDiet = () => {
             <div className="col-note">{note}</div>
         </div>
     );
+
 
     return (
         <div className="animate-fade-in section-container">
@@ -293,6 +347,14 @@ const SmartDiet = () => {
                     </div>
                 ))}
             </div>
+
+            <button
+                onClick={handleCopyCSV}
+                className="action-btn"
+                style={{ marginTop: '1rem', width: '100%', background: 'rgba(255, 255, 255, 0.1)', border: '1px dashed #94a3b8' }}
+            >
+                <Download size={18} /> Copier Configuration CSV
+            </button>
 
             {/* --- TABLEAU FINAL --- */}
             <h2 className="section-title" style={{ marginTop: '3rem' }}>
@@ -559,14 +621,33 @@ const SmartDiet = () => {
                     align-items: center;
                 }
 
+                .action-btn {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.5rem;
+                    padding: 0.75rem 1rem;
+                    background: #3b82f6;
+                    color: white;
+                    border: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .action-btn:hover {
+                    opacity: 0.9;
+                    transform: translateY(-1px);
+                }
+
                 @media (max-width: 768px) {
                     .plan-row {
                         grid-template-columns: 1fr 1fr;
                         gap: 0.5rem;
                     }
-                    .col-item { grid-column: 1 / -1; margin-bottom: 0.25rem; }
-                    .col-note { grid-column: 1 / -1; margin-top: 0.25rem; text-align: left; }
-                    .col-val { text-align: left; }
+                    .col-item { grid-column: 1 / -1; margin-bottom: 0.25rem; font-size: 1rem; color: #fff; }
+                    .col-note { grid-column: 1 / -1; margin-top: 0.25rem; text-align: left; opacity: 0.7; }
+                    .col-val { text-align: left; padding: 0.25rem 0; }
                 }
             `}</style>
         </div>

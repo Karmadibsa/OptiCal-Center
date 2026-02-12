@@ -1,22 +1,23 @@
 Type,Section,Item,Axel,Prisca,Note
-Diet,Matin,Pancakes,"3 Pancakes (+ Beurre cacahuète/Confiture)","2 Pancakes (+ Beurre cacahuète/Confiture)",""
-Diet,Matin,Whey,"1 Shaker de Whey (30g)","Rien",""
-Diet,Midi,Riz (cru),"115g","70g",""
-Diet,Midi,PST (cru),"100g","35-40g",""
-Diet,Midi,Légumes,"À volonté","À volonté",""
-Diet,Midi,Crème Fraîche,"30g (1 c.à.s bombée)","30g (1 c.à.s bombée)",""
-Diet,16H00,Banane,"1 Banane","1 Banane",""
-Diet,16H00,Whey,"1 Shaker de Whey (30g)","1 Shaker de Whey (25g)",""
-Diet,Soir,Pâtes (cru),"92-100g","81g",""
-Diet,Soir,Œufs,"3 (Plat/Mollet) OBLIGATOIRE","2 (Plat/Mollet) OBLIGATOIRE","Si pas de galettes, augmentez un peu les pâtes, mais mangez TOUJOURS les œufs"
-Diet,Soir,Légumes + Crème,"Légumes + 30g Crème Fraîche","Légumes + 30g Crème Fraîche",""
-Diet,Soir,Option,"3 Galettes Iglo","2 Galettes Iglo",""
-Supplement,Matin,Collagène,"10-15g","10g","Dans ton shaker (Axel) ou boisson chaude"
-Supplement,Matin,Vitamine D3 + K2,"1 gélule","1 gélule","À avaler avec le gras du petit-déj"
-Supplement,Matin,Whey,"1 dose","Rien","À boire pour compléter les pancakes"
-Supplement,16H00,Whey,"1 dose","1 dose","Indispensable pour la récupération"
-Supplement,Avant Sport,BCAA (Comprimés),"8 à 10 cp","5 cp","À avaler avec un grand verre d'eau avant de s'échauffer (30 min avant)"
-Supplement,Coucher,Zinc,"1 gélule","1 gélule","Pour l'immunité et la peau"
-Supplement,Coucher,Magnésium,"1 gélule","1 gélule","Pour le sommeil et le système nerveux"
-Info,Rappel,Eau,"Minimum 2.5 Litres par jour (hors sport)","Minimum 2.5 Litres par jour (hors sport)",""
-Info,Rappel,Jours de Repos,"On garde tout pareil SAUF les BCAA","On garde tout pareil SAUF les BCAA",""
+Diet,Matin,Pancakes,3 Pancakes (+ Beurre cacahuète/Confiture),2 Pancakes (+ Beurre cacahuète/Confiture),Base fixe
+Diet,Matin,Whey,1 Shaker de Whey (30g),Rien,
+Diet,Midi,Pâtes Protein+ (Cru),83g,47g,Calculé (55%)
+Diet,Midi,PST (Cru),85g,37g,Source Protéines (Poids - 25)
+Diet,Midi,Légumes,À volonté,À volonté,Volume
+Diet,Midi,Crème Fraîche,30g (1 c.à.s),30g (1 c.à.s),Lipides
+Diet,16H00,Banane,1 Banane,1 Banane,Glucides rapides
+Diet,16H00,Whey,1 Shaker de Whey (30g),1 Shaker de Whey (25g),Récupération
+Diet,Soir,Pâtes Protein+ (Cru),68g,38g,Ajustement (45%)
+Diet,Soir,Œufs,3 (Plat/Mollet),2 (Plat/Mollet),OBLIGATOIRE
+Diet,Soir,Légumes + Crème,Légumes + 30g Crème,Légumes + 30g Crème,
+Diet,Soir,Option Galettes,2 Galettes Iglo,2 Galettes Iglo,Si activé, pâtes réduites
+Diet,Soir,Option Fromage,20g,20g,Extra variable
+Supplement,Matin,Collagène,10-15g,10g,Dans shaker ou boisson chaude
+Supplement,Matin,Vitamine D3 + K2,1 gélule,1 gélule,Avec le gras du matin
+Supplement,Matin,Whey,1 dose,Rien,(Si déjà compté plus haut)
+Supplement,16H00,Whey,1 dose,1 dose,
+Supplement,Avant Sport,BCAA (Comprimés),8 à 10 cp,5 cp,30 min avant séance
+Supplement,Coucher,Zinc,1 gélule,1 gélule,Immunité
+Supplement,Coucher,Magnésium,1 gélule,1 gélule,Sommeil
+Info,Rappel,Eau,4 Litres / jour,2.5 Litres / jour,Augmenté pour Créatine + Sport
+Info,Rappel,Jours de Repos,Aucun changement alimentaire,Aucun changement alimentaire,Lissage sur la semaine
