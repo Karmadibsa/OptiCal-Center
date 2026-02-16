@@ -12,18 +12,23 @@ const App = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/roadmap.csv')
-      .then(response => response.text())
-      .then(csvText => {
-        Papa.parse(csvText, {
-          header: true,
-          skipEmptyLines: true,
-          complete: (results) => {
-            setData(results.data);
-            setLoading(false);
-          }
-        });
-      });
+    // Determine environment base URL for fetching files (Vite / public)
+    const basePath = import.meta.env.BASE_URL || '/';
+
+    Promise.all([
+      fetch(`${basePath}diet.csv`).then(res => res.text()),
+      fetch(`${basePath}supplements.csv`).then(res => res.text())
+    ]).then(([dietText, suppText]) => {
+      const dietData = Papa.parse(dietText, { header: true, skipEmptyLines: true }).data;
+      const suppData = Papa.parse(suppText, { header: true, skipEmptyLines: true }).data;
+
+      // Merge both for backward compatibility with components expecting one list
+      setData([...dietData, ...suppData]);
+      setLoading(false);
+    }).catch(err => {
+      console.error("Error loading CSV files", err);
+      setLoading(false);
+    });
   }, []);
 
   if (loading) return (
@@ -54,7 +59,7 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Dashboard csvData={data} />} />
         <Route path="/calculator" element={<Calculator csvData={data} />} />
-        <Route path="/smart-diet" element={<SmartDiet />} />
+        <Route path="/smart-diet" element={<SmartDiet csvData={data} />} />
       </Routes>
 
       <footer style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>

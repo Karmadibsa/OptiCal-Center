@@ -1,60 +1,43 @@
 # 🥗 OptiCal Center - Roadmap Nutrition & Performance
 
 Bienvenue sur le projet **OptiCal Center**. 
-Ceci est une application web conçue pour visualiser une roadmap nutritionnelle, gérer les compléments alimentaires et calculer automatiquement les quantités pour le Batch Cooking.
+Une application web optimisée pour gérer sa diète sportive, ses compléments et son batch cooking avec précision.
 
-## 🚀 Fonctionnalités
+## 🚀 Fonctionnalités Clés
 
-### 1. Dashboard (Tableau de Bord)
-- Visualisation claire de la diète (Matin, Midi, Collation, Soir).
-- Visualisation des compléments et du timing.
-- **Export PDF "Frigo-Ready"** : Génère un PDF propre, optimisé pour l'impression (A4 Portrait), avec conversion automatique des poids crus en poids cuits (x3) pour le riz, les pâtes et le PST.
+### 1. 🧠 SmartDiet (Le Cerveau)
+- **Calculateur de Calories & Macros** : Ajustement automatique selon le poids, la taille, l'âge et l'activité sportive (Mifflin-St Jeor + METs).
+- **Synchronisation Totale** : Vos réglages sont sauvegardés dans `public/diet.csv`, garantissant que tout le site utilise les mêmes données.
+- **Gestion Hebdomadaire** : Définissez votre sport par semaine et votre déficit calorique cible.
 
-### 2. Calculateur Batch Cooking
-- Sélectionnez les repas prévus (Lundi -> Dimanche / Midi & Soir).
-- Calcul automatique des totaux de cuisson nécessaires (Riz, Pâtes, PST).
-- Exclusion automatique des œufs et de la crème fraîche du résumé final.
-- Bouton "Copier" pour envoyer la liste rapidement.
+### 2. ⚖️ Batch Cooking Intelligent
+- **Fini les règles de trois !**
+- Pesez votre casserole vide une fois pour toutes.
+- Pesez votre casserole pleine de pâtes cuites.
+- L'application calcule le **coefficient de cuisson** exact et vous donne le poids précis à mettre dans chaque tupperware (Midi/Soir pour Axel & Prisca).
 
-## 🛠️ Comment modifier les données ?
+### 3. Spécificités Techniques
+- **Source de Vérité Unique** : `public/diet.csv` contient à la fois la configuration (Poids/Taille) et le plan alimentaire.
+- **Suppléments Séparés** : `public/supplements.csv` gère la liste fixe des compléments (Vitamines, Créatine, etc.), pour ne pas polluer les réglages quotidiens.
+- **Export CSV** : Un bouton "Copier Configuration" permet de sauvegarder instantanément vos réglages dans le fichier source.
 
-Tout est piloté par le fichier `public/roadmap.csv`. 
-Vous n'avez pas besoin de toucher au code pour changer une quantité ou un aliment.
+## 🛠️ Comment mettre à jour sa diète ?
 
-**Format du CSV :**
-`Type,Section,Item,Axel,Prisca,Note`
+Tout se passe dans l'onglet **SmartDiet** :
+1.  Ajustez vos poids, objectifs ou minutes de sport.
+2.  L'algorithme recalcule instantanément les portions de pâtes et de protéines.
+3.  Cliquez sur **"Copier Configuration CSV"**.
+4.  Collez le contenu dans le fichier `public/diet.csv`.
+5.  C'est tout ! Le Calculateur de courses et le Dashboard sont à jour.
 
-- **Type** : `Diet`, `Supplement`, ou `Info`
-- **Section** : Le moment de la journée (ex: `Matin`, `Midi`, `Avant Sport`)
-- **Item** : Le nom de l'aliment (ex: `Riz (cru)`)
-- **Axel / Prisca** : Les quantités (ex: `100g`)
-- **Note** : Petit commentaire optionnel (ex: `OBLIGATOIRE`)
+## 📂 Structure des Fichiers Clés
 
-⚠️ **Important - Ratios de Cuisson** : 
-Si vous mettez `(cru)` dans le nom d'un aliment, le PDF convertira automatiquement le poids pour l'affichage "Frigo" :
-- **Riz** : x3 (100g cru -> 300g cuit)
-- **Pâtes** : x2.5 (100g cru -> 250g cuit)
-- **PST** : x2.5 (100g cru -> 250g cuit)
-
-### 🤖 Générer le CSV avec une IA
-Pour éviter les erreurs de format, copiez-collez ce prompt à votre IA préférée (ChatGPT, Claude, etc.) avec vos données :
-
-> "Agis comme un expert data. Je veux mettre à jour mon fichier `roadmap.csv` pour mon application de nutrition.
-> Voici le format STRICT à respecter (Headers inclus) :
-> `Type,Section,Item,Axel,Prisca,Note`
->
-> Règles :
-> 1. **Type**: Diet, Supplement, ou Info.
-> 2. **Section**: Matin, Midi, Collation, Soir, Avant Sport, Pendant Sport, Après Sport, Rappel.
-> 3. **Item**: Nom de l'aliment. Ajoute '(cru)' pour Riz/Pâtes/PST si c'est le poids sec.
-> 4. **Axel/Prisca**: Juste le nombre + unité (ex: '100g' ou '1 gel'). Pas de texte superflu.
-> 5. **Note**: Court commentaire ou laisser vide.
->
-> Voici mes nouveaux inputs : [INSÉRER TES DONNÉES ICI]. Génère-moi uniquement le contenu CSV."
+- `src/components/SmartDiet.jsx` : Cœur de l'application (Interface & Logique).
+- `src/utils/dietAlgo.js` : Algorithme de calcul nutritionnel pur.
+- `public/diet.csv` : **NE PAS SUPPRIMER**. Contient vos réglages et votre diète.
+- `public/supplements.csv` : Liste des compléments alimentaires.
 
 ## 💻 Installation & Lancement
-
-Si vous récupérez le projet :
 
 1.  Installez les dépendances :
     ```bash
@@ -66,7 +49,5 @@ Si vous récupérez le projet :
     npm run dev
     ```
 
-3.  Ouvrez votre navigateur sur l'adresse indiquée (souvent `http://localhost:5173`).
-
 ---
-*Projet perso - Fait avec ❤️ pour la performance.*
+*Projet perso - Optimisation • Calories • Performance*

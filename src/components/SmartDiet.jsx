@@ -5,187 +5,106 @@ import {
     Utensils,
     AlertTriangle,
     CheckCircle,
-    Download
+    Download,
+    Scale
 } from 'lucide-react';
+import {
+    MET_DEFAULT,
+    PASTA_REF,
+    SOCLE_DATA,
+    DEFAULT_PROFILES,
+    calculatePlan
+} from '../utils/dietAlgo';
 
-const SmartDiet = () => {
+const SmartDiet = ({ csvData }) => {
     // --- 1. CONSTANTS & DATA ---
-    const MET_DEFAULT = 8; // Running/Renfo average
-
-    const PASTA_REF = {
-        name: "Pâtes Barilla Protein+",
-        kcal: 360, // per 100g
-        prot: 20   // per 100g
-    };
-
-    const SOCLE_DATA = {
-        common: {
-            // Pancakes moved to specific profiles
-            collation_whey: { kcal: 110, prot: 25 },
-            collation_fruit: { kcal: 105, prot: 1 },
-            // Removed static PST/Oefs - now dynamic
-            midi_creme: { kcal: 90, prot: 1 },
-            soir_creme: { kcal: 90, prot: 1 },
-            legumes: { kcal: 100, prot: 4 }, // Estimate
-            fromage_unit: { kcal: 4, prot: 0.25 }, // 4kcal/g approx
-            galettes_2x: { kcal: 334, prot: 13.4 } // 2 Galettes (Standardized)
-        },
-        axel: {
-            pancakes: { kcal: 550, prot: 15 }, // 3 Pancakes + Garniture
-            matin_whey: { kcal: 110, prot: 25 },
-        },
-        prisca: {
-            pancakes: { kcal: 366, prot: 10 }, // 2 Pancakes + Garniture (Valeur ajustée)
-            matin_whey: { kcal: 0, prot: 0 },
-        }
-    };
-
-    const DEFAULT_PROFILES = {
-        axel: {
-            weight: 105,
-            height: 183,
-            age: 27,
-            gender: 'male',
-            sport_min: 190,
-            deficit: 300,
-            opt_galettes: false,
-            opt_fromage: 0 // grams
-        },
-        prisca: {
-            weight: 70,
-            height: 165,
-            age: 25,
-            gender: 'female',
-            sport_min: 120,
-            deficit: 300,
-            opt_galettes: false,
-            opt_fromage: 0
-        }
-    };
+    // Moved to ../utils/dietAlgo.js
 
     // --- 2. STATE ---
     const [profiles, setProfiles] = useState(() => {
+        // Init from localStorage first (temporary fallback), will be overridden by CSV if available
         const saved = localStorage.getItem('smart_diet_profiles_v2');
         return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
     });
 
     const [activeTab, setActiveTab] = useState('axel');
 
+    const [batchConfig, setBatchConfig] = useState({
+        days: 6,
+        potWeight: 1930,
+        totalWeighed: 0
+    });
+
+    // --- LOAD CONFIG FROM CSV (Source of Truth) ---
+    useEffect(() => {
+        if (!csvData || csvData.length === 0) return;
+
+        // Check for Config rows
+        const configRows = csvData.filter(row => row.Type === 'Config');
+
+        if (configRows.length > 0) {
+            const newProfiles = { ...profiles };
+            let hasChanges = false;
+
+            configRows.forEach(row => {
+                const param = row.Item; // Weight, Height, SportMin, etc
+                const valAxel = row.Axel;
+                const valPrisca = row.Prisca;
+
+                if (param === 'Weight') {
+                    newProfiles.axel.weight = parseFloat(valAxel);
+                    newProfiles.prisca.weight = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+                if (param === 'Height') {
+                    newProfiles.axel.height = parseFloat(valAxel);
+                    newProfiles.prisca.height = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+                if (param === 'Age') {
+                    newProfiles.axel.age = parseFloat(valAxel);
+                    newProfiles.prisca.age = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+                if (param === 'SportMin') {
+                    newProfiles.axel.sport_min = parseFloat(valAxel);
+                    newProfiles.prisca.sport_min = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+                if (param === 'Deficit') {
+                    newProfiles.axel.deficit = parseFloat(valAxel);
+                    newProfiles.prisca.deficit = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+                if (param === 'Opt_Galettes') {
+                    newProfiles.axel.opt_galettes = valAxel === 'true';
+                    newProfiles.prisca.opt_galettes = valPrisca === 'true';
+                    hasChanges = true;
+                }
+                if (param === 'Opt_Fromage') {
+                    newProfiles.axel.opt_fromage = parseFloat(valAxel);
+                    newProfiles.prisca.opt_fromage = parseFloat(valPrisca);
+                    hasChanges = true;
+                }
+            });
+
+            if (hasChanges) {
+                setProfiles(newProfiles);
+                // Also update localStorage to stay in sync
+                localStorage.setItem('smart_diet_profiles_v2', JSON.stringify(newProfiles));
+            }
+        }
+    }, [csvData]); // Config loads ONLY when CSV changes
+
     useEffect(() => {
         localStorage.setItem('smart_diet_profiles_v2', JSON.stringify(profiles));
     }, [profiles]);
 
     // --- 3. CORE ALGORITHM (The Engine) ---
-    const calculatePlan = (key) => {
-        const p = profiles[key];
-        const socle = { ...SOCLE_DATA.common, ...SOCLE_DATA[key] };
+    // Moved to ../utils/dietAlgo.js
 
-        // Étape 1 : TDEE Lissée
-        let bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age);
-        bmr += p.gender === 'male' ? 5 : -161;
-
-        const sedentary = bmr * 1.2;
-
-        // Sport average per day
-        const sport_cal_week = p.weight * (p.sport_min / 60) * MET_DEFAULT;
-        const sport_day = sport_cal_week / 7;
-
-        const tdee_final = sedentary + sport_day;
-
-        // Étape 2 : Cible
-        const target_daily = tdee_final - p.deficit;
-
-        // Étape 3 : Socle Fixe (Summing calories & proteins)
-        let fixed_cal = 0;
-        let fixed_prot = 0;
-
-        // DYNAMIC ITEMS LOGIC
-        // PST: Poids - 25g. Val nutritionnelle: 330kcal/50g prot pour 100g
-        const pst_qty = Math.max(0, Math.round(p.weight - 25));
-        const pst_cal = (pst_qty / 100) * 330;
-        const pst_prot = (pst_qty / 100) * 50;
-
-        // OEUFS: Si > 80kg alors 3, sinon 2. Val: ~80kcal/6g prot par unité
-        const oeuf_qty = p.weight > 80 ? 3 : 2;
-        const oeuf_cal = oeuf_qty * 80;
-        const oeuf_prot = oeuf_qty * 6;
-
-        // List of fixed items (STATIC + DYNAMIC)
-        const items = [
-            socle.pancakes,
-            socle.collation_whey,
-            socle.collation_fruit,
-            { kcal: pst_cal, prot: pst_prot }, // Dynamic PST
-            socle.midi_creme,
-            { kcal: oeuf_cal, prot: oeuf_prot }, // Dynamic Oeufs
-            socle.soir_creme,
-            socle.legumes,
-            socle.matin_whey // specific
-        ];
-
-        items.forEach(i => {
-            fixed_cal += i.kcal;
-            fixed_prot += i.prot;
-        });
-
-        // Options
-        if (p.opt_galettes) {
-            fixed_cal += SOCLE_DATA.common.galettes_2x.kcal;
-            fixed_prot += SOCLE_DATA.common.galettes_2x.prot;
-        }
-
-        if (p.opt_fromage > 0) {
-            const cheese_cal = p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal;
-            const cheese_prot = p.opt_fromage * SOCLE_DATA.common.fromage_unit.prot;
-            fixed_cal += cheese_cal;
-            fixed_prot += cheese_prot;
-        }
-
-        // Étape 4 : Variable (Pâtes)
-        const remaining_cal = target_daily - fixed_cal;
-
-        // Safety: don't go negative
-        const pasta_grams_day = remaining_cal > 0
-            ? (remaining_cal / PASTA_REF.kcal) * 100
-            : 0;
-
-        // Étape 5 : Répartition
-        const pasta_midi = pasta_grams_day * 0.55; // 55%
-        const pasta_soir = pasta_grams_day * 0.45; // 45%
-
-        // Étape 6 : Check Protéines
-        const pasta_prot = (pasta_grams_day / 100) * PASTA_REF.prot;
-        const total_prot = fixed_prot + pasta_prot;
-        const prot_goal = p.weight * 1.6;
-        const prot_warning = total_prot < prot_goal;
-
-        // Total calories in the plan = Fixed items + Options + Calculated Pasta
-        // Note: remaining_cal represents the calories allocated to pasta.
-        // So total_estimated should be very close to target_daily.
-        const total_estimated = fixed_cal + (remaining_cal > 0 ? remaining_cal : 0);
-
-        return {
-            bmr,
-            tdee_final,
-            target_daily,
-            fixed_cal,
-            fixed_prot,
-            remaining_cal,
-            pasta_grams_day,
-            pasta_midi,
-            pasta_soir,
-            total_prot,
-            prot_goal,
-            prot_warning,
-            // Exposed Dynamic Vars
-            pst_qty,
-            oeuf_qty,
-            total_estimated
-        };
-    };
-
-    const resAxel = calculatePlan('axel');
-    const resPrisca = calculatePlan('prisca');
+    const resAxel = calculatePlan('axel', profiles);
+    const resPrisca = calculatePlan('prisca', profiles);
 
     // --- 4. HANDLERS ---
     const handleInput = (key, field, val) => {
@@ -200,10 +119,20 @@ const SmartDiet = () => {
 
     // --- 5. CSV EXPORT ---
     const generateCSV = () => {
-        const rows = [
-            // HEADING
-            ['Type', 'Section', 'Item', 'Axel', 'Prisca', 'Note'],
+        const header = ['Type', 'Section', 'Item', 'Axel', 'Prisca', 'Note'];
 
+        // PREPARE CONFIG ROWS
+        const configRows = [
+            ['Config', 'Profile', 'Weight', profiles.axel.weight, profiles.prisca.weight, 'System Config'],
+            ['Config', 'Profile', 'Height', profiles.axel.height, profiles.prisca.height, 'System Config'],
+            ['Config', 'Profile', 'Age', profiles.axel.age, profiles.prisca.age, 'System Config'],
+            ['Config', 'Profile', 'SportMin', profiles.axel.sport_min, profiles.prisca.sport_min, 'System Config'],
+            ['Config', 'Profile', 'Deficit', profiles.axel.deficit, profiles.prisca.deficit, 'System Config'],
+            ['Config', 'Profile', 'Opt_Galettes', profiles.axel.opt_galettes, profiles.prisca.opt_galettes, 'System Config'],
+            ['Config', 'Profile', 'Opt_Fromage', profiles.axel.opt_fromage, profiles.prisca.opt_fromage, 'System Config'],
+        ];
+
+        const dataRows = [
             // DIET - MATIN
             ['Diet', 'Matin', 'Pancakes', '3 Pancakes (+ Beurre cacahuète/Confiture)', '2 Pancakes (+ Beurre cacahuète/Confiture)', 'Base fixe'],
             ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
@@ -224,20 +153,10 @@ const SmartDiet = () => {
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
             ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
-
-            // SUPPLEMENTS (Standard)
-            ['Supplement', 'Matin', 'Collagène', '10-15g', '10g', 'Dans shaker ou boisson chaude'],
-            ['Supplement', 'Matin', 'Vitamine D3 + K2', '1 gélule', '1 gélule', 'Avec le gras du matin'],
-            ['Supplement', 'Matin', 'Whey', '1 dose', 'Rien', '(Si déjà compté plus haut)'],
-            ['Supplement', '16H00', 'Whey', '1 dose', '1 dose', ''],
-            ['Supplement', 'Avant Sport', 'BCAA (Comprimés)', '8 à 10 cp', '5 cp', '30 min avant séance'],
-            ['Supplement', 'Coucher', 'Zinc', '1 gélule', '1 gélule', 'Immunité'],
-            ['Supplement', 'Coucher', 'Magnésium', '1 gélule', '1 gélule', 'Sommeil'],
-
-            // INFO
-            ['Info', 'Rappel', 'Eau', '4 Litres / jour', '2.5 Litres / jour', 'Augmenté pour Créatine + Sport'],
-            ['Info', 'Rappel', 'Jours de Repos', 'Aucun changement alimentaire', 'Aucun changement alimentaire', 'Lissage sur la semaine']
         ];
+
+        // Combine: Header -> Config -> Data
+        const rows = [header, ...configRows, ...dataRows];
 
         // Convert to CSV string
         const csvContent = rows.map(row => row.join(',')).join('\n');
@@ -247,7 +166,7 @@ const SmartDiet = () => {
     const handleCopyCSV = () => {
         const csv = generateCSV();
         navigator.clipboard.writeText(csv).then(() => {
-            alert("CSV copié ! Collez-le dans public/roadmap.csv pour mettre à jour tout le site.");
+            alert("CSV copié ! Collez-le dans public/diet.csv pour mettre à jour la diète (les suppléments sont dans un fichier à part).");
         });
     };
 
@@ -260,6 +179,13 @@ const SmartDiet = () => {
             <div className="col-note">{note}</div>
         </div>
     );
+
+    // --- BATCH CALCULATION ---
+    const totalRawDaily = resAxel.pasta_midi + resAxel.pasta_soir + resPrisca.pasta_midi + resPrisca.pasta_soir;
+    const totalRawBatch = totalRawDaily * batchConfig.days;
+    // Safety check just in case
+    const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
+    const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
 
 
     return (
@@ -465,6 +391,80 @@ const SmartDiet = () => {
                     </div>
                 </div>
             )}
+
+            {/* --- BATCH COOKING SECTION --- */}
+            <h2 className="section-title" style={{ marginTop: '3rem', color: '#10b981' }}>
+                <Scale className="icon-mr" /> Batch Cooking (Dimanche)
+            </h2>
+
+            <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
+                <div className="inputs-grid">
+                    <div className="input-group">
+                        <label>Jours de Batch</label>
+                        <input
+                            type="number"
+                            value={batchConfig.days}
+                            onChange={(e) => setBatchConfig({ ...batchConfig, days: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label>Poids Casserole (Vide)</label>
+                        <input
+                            type="number"
+                            value={batchConfig.potWeight}
+                            onChange={(e) => setBatchConfig({ ...batchConfig, potWeight: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label style={{ color: '#fbbf24', fontWeight: 'bold' }}>POIDS TOTAL (Casserole + Pâtes)</label>
+                        <input
+                            type="number"
+                            value={batchConfig.totalWeighed}
+                            onChange={(e) => setBatchConfig({ ...batchConfig, totalWeighed: parseFloat(e.target.value) || 0 })}
+                            style={{ borderColor: '#fbbf24', background: 'rgba(251, 191, 36, 0.1)' }}
+                            placeholder="Ex: 5800"
+                        />
+                    </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#94a3b8' }}>
+                            Total Cru Semaine: <strong>{Math.round(totalRawBatch)}g</strong> ({batchConfig.days} jours)
+                        </span>
+                        <span style={{ fontSize: '1.1rem', color: '#10b981' }}>
+                            Coef Cuisson: <strong>x{cookCoef.toFixed(2)}</strong>
+                        </span>
+                    </div>
+
+                    <div className="plan-table">
+                        <div className="plan-row header-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                            <div className="col-item">BOÎTES À PRÉPARER</div>
+                            <div className="col-val">POIDS CUIT / BOÎTE</div>
+                        </div>
+
+                        {/* AXEL */}
+                        <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel MIDI (x{batchConfig.days})</div>
+                            <div className="col-val">{Math.round(resAxel.pasta_midi * cookCoef)}g</div>
+                        </div>
+                        <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel SOIR (x{batchConfig.days})</div>
+                            <div className="col-val">{Math.round(resAxel.pasta_soir * cookCoef)}g</div>
+                        </div>
+
+                        {/* PRISCA */}
+                        <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca MIDI (x{batchConfig.days})</div>
+                            <div className="col-val">{Math.round(resPrisca.pasta_midi * cookCoef)}g</div>
+                        </div>
+                        <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca SOIR (x{batchConfig.days})</div>
+                            <div className="col-val">{Math.round(resPrisca.pasta_soir * cookCoef)}g</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             {/* DEBUG / LOGS SECTION */}
             <div style={{ marginTop: '4rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>

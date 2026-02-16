@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Papa from 'papaparse';
-import { Calculator as CalcIcon, ShoppingCart, User, Users } from 'lucide-react';
+import { Calculator as CalcIcon, ShoppingCart } from 'lucide-react';
+// import { DEFAULT_PROFILES, calculatePlan } from '../utils/dietAlgo'; // DISABLED: Using CSV source of truth
 
 const Calculator = ({ csvData }) => {
     // State for selected meals: { "Monday-Midi": { axel: true, prisca: true } }
@@ -81,8 +82,9 @@ const Calculator = ({ csvData }) => {
 
         const newTotals = {};
 
-        // Helper to find amount in CSV
+        // Helper to find amount
         const getAmount = (itemName, person) => {
+            // FALLBACK TO CSV ONLY
             const row = csvData.find(r => r.Item === itemName && r.Type === 'Diet');
             if (!row) return 0;
             return parseGram(row[person === 'axel' ? 'Axel' : 'Prisca']);
