@@ -315,8 +315,8 @@ const SmartDiet = ({ csvData }) => {
                 />
                 <PlanRow
                     label="PST (Cru)"
-                    axelVal={`${resAxel.pst_qty_per_meal}g`}
-                    priscaVal={`${resPrisca.pst_qty_per_meal}g`}
+                    axelVal={`${resAxel.pst_qty}g`}
+                    priscaVal={`${resPrisca.pst_qty}g`}
                     note="Source Protéines (Poids - 25)"
                 />
                 <PlanRow
@@ -357,8 +357,8 @@ const SmartDiet = ({ csvData }) => {
                 />
                 <PlanRow
                     label="Œufs"
-                    axelVal={`${resAxel.oeuf_qty} (Plat/Mollet)`}
-                    priscaVal={`${resPrisca.oeuf_qty} (Plat/Mollet)`}
+                    axelVal={`${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`}
+                    priscaVal={`${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`}
                     note="OBLIGATOIRE"
                 />
                 <PlanRow
