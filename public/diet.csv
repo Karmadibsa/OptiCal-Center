@@ -2,20 +2,20 @@ Type,Section,Item,Axel,Prisca,Note
 Config,Profile,Weight,110,62,System Config
 Config,Profile,Height,183,160,System Config
 Config,Profile,Age,27,25,System Config
-Config,Profile,SportMin,190,190,System Config
+Config,Profile,SportMin,0,0,System Config
 Config,Profile,Deficit,300,0,System Config
-Config,Profile,Opt_Galettes,true,true,System Config
+Config,Profile,Opt_Galettes,false,false,System Config
 Config,Profile,Opt_Fromage,20,20,System Config
-Diet,Matin,Pancakes,3 Pancakes (+ Beurre cacahuète/Confiture),2 Pancakes (+ Beurre cacahuète/Confiture),Base fixe
+Diet,Matin,Pain + Cancoillotte + Œufs,140g Pain + 30g Canc. + 3 Œufs,80g Pain + 20g Canc. + 2 Œufs,Base fixe
 Diet,Matin,Whey,1 Shaker de Whey (30g),Rien,
-Diet,Midi,Pâtes Protein+ (Cru),83g,41g,Calculé (55%)
+Diet,Midi,Pâtes Protein+ (Cru),60g,54g,Calculé (55%)
 Diet,Midi,PST (Cru),85g,37g,Source Protéines (Poids - 25)
 Diet,Midi,Légumes,À volonté,À volonté,Volume
 Diet,Midi,Crème Fraîche,30g (1 c.à.s),30g (1 c.à.s),Lipides
 Diet,16H00,Banane,1 Banane,1 Banane,Glucides rapides
 Diet,16H00,Whey,1 Shaker de Whey (30g),1 Shaker de Whey (25g),Récupération
-Diet,Soir,Pâtes Protein+ (Cru),68g,34g,Ajustement (45%)
+Diet,Soir,Pâtes Protein+ (Cru),49g,44g,Ajustement (45%)
 Diet,Soir,Œufs,3 (Plat/Mollet),2 (Plat/Mollet),OBLIGATOIRE
 Diet,Soir,Légumes + Crème,Légumes + 30g Crème,Légumes + 30g Crème,
-Diet,Soir,Option Galettes,2 Galettes Iglo,2 Galettes Iglo,Si activé, pâtes réduites
+Diet,Soir,Option Galettes,-,-,Si activé, pâtes réduites
 Diet,Soir,Option Fromage,20g,20g,Extra variable
