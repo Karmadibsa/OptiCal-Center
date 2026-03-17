@@ -134,7 +134,7 @@ const SmartDiet = ({ csvData }) => {
 
         const dataRows = [
             // DIET - MATIN
-            ['Diet', 'Matin', 'Pancakes', '3 Pancakes (+ Beurre cacahuète/Confiture)', '2 Pancakes (+ Beurre cacahuète/Confiture)', 'Base fixe'],
+            ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', '140g Pain + 30g Canc. + 3 Œufs', '80g Pain + 20g Canc. + 2 Œufs', 'Base fixe'],
             ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
 
             // DIET - MIDI
@@ -293,9 +293,9 @@ const SmartDiet = ({ csvData }) => {
                 {/* MATIN */}
                 <div className="section-divider">MATIN</div>
                 <PlanRow
-                    label="Pancakes"
-                    axelVal="3 Pancakes (+ PB/Confi)"
-                    priscaVal="2 Pancakes (+ PB/Confi)"
+                    label="Pain + Cancoillotte + Œufs"
+                    axelVal="140g Pain + 30g Canc. + 3 Œufs"
+                    priscaVal="80g Pain + 20g Canc. + 2 Œufs"
                     note="Base fixe"
                 />
                 <PlanRow
