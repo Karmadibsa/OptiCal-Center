@@ -149,7 +149,7 @@ const SmartDiet = ({ csvData }) => {
 
             // DIET - SOIR
             ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
-            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty} (Plat/Mollet)`, `${resPrisca.oeuf_qty} (Plat/Mollet)`, 'OBLIGATOIRE'],
+            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`, `${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`, 'OBLIGATOIRE'],
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
             ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
@@ -315,8 +315,8 @@ const SmartDiet = ({ csvData }) => {
                 />
                 <PlanRow
                     label="PST (Cru)"
-                    axelVal={`${resAxel.pst_qty}g`}
-                    priscaVal={`${resPrisca.pst_qty}g`}
+                    axelVal={`${resAxel.pst_qty_per_meal}g`}
+                    priscaVal={`${resPrisca.pst_qty_per_meal}g`}
                     note="Source Protéines (Poids - 25)"
                 />
                 <PlanRow
