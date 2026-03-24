@@ -30,7 +30,7 @@ export const SOCLE_DATA = {
 
 export const DEFAULT_PROFILES = {
     axel: {
-        weight: 105,
+        weight: 110,
         height: 183,
         age: 27,
         gender: 'male',
@@ -40,8 +40,8 @@ export const DEFAULT_PROFILES = {
         opt_fromage: 0 // grams
     },
     prisca: {
-        weight: 70,
-        height: 165,
+        weight: 62,
+        height: 160,
         age: 25,
         gender: 'female',
         sport_min: 120,
