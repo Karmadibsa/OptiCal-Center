@@ -134,7 +134,7 @@ const SmartDiet = ({ csvData }) => {
 
         const dataRows = [
             // DIET - MATIN
-            ['Diet', 'Matin', 'Pancakes', '3 Pancakes (+ Beurre cacahuète/Confiture)', '2 Pancakes (+ Beurre cacahuète/Confiture)', 'Base fixe'],
+            ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', '140g Pain + 30g Canc. + 3 Œufs', '80g Pain + 20g Canc. + 2 Œufs', 'Base fixe'],
             ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
 
             // DIET - MIDI
@@ -149,7 +149,7 @@ const SmartDiet = ({ csvData }) => {
 
             // DIET - SOIR
             ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
-            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty} (Plat/Mollet)`, `${resPrisca.oeuf_qty} (Plat/Mollet)`, 'OBLIGATOIRE'],
+            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`, `${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`, 'OBLIGATOIRE'],
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
             ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
@@ -293,9 +293,9 @@ const SmartDiet = ({ csvData }) => {
                 {/* MATIN */}
                 <div className="section-divider">MATIN</div>
                 <PlanRow
-                    label="Pancakes"
-                    axelVal="3 Pancakes (+ PB/Confi)"
-                    priscaVal="2 Pancakes (+ PB/Confi)"
+                    label="Pain + Cancoillotte + Œufs"
+                    axelVal="140g Pain + 30g Canc. + 3 Œufs"
+                    priscaVal="80g Pain + 20g Canc. + 2 Œufs"
                     note="Base fixe"
                 />
                 <PlanRow
@@ -357,8 +357,8 @@ const SmartDiet = ({ csvData }) => {
                 />
                 <PlanRow
                     label="Œufs"
-                    axelVal={`${resAxel.oeuf_qty} (Plat/Mollet)`}
-                    priscaVal={`${resPrisca.oeuf_qty} (Plat/Mollet)`}
+                    axelVal={`${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`}
+                    priscaVal={`${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`}
                     note="OBLIGATOIRE"
                 />
                 <PlanRow

@@ -19,11 +19,11 @@ export const SOCLE_DATA = {
         galettes_2x: { kcal: 334, prot: 13.4 } // 2 Galettes (Standardized)
     },
     axel: {
-        pancakes: { kcal: 550, prot: 15 }, // 3 Pancakes + Garniture
+        pain_matin: { kcal: 400, prot: 16 }, // 140g pain + 30g cancoillotte
         matin_whey: { kcal: 110, prot: 25 },
     },
     prisca: {
-        pancakes: { kcal: 366, prot: 10 }, // 2 Pancakes + Garniture (Valeur ajustée)
+        pain_matin: { kcal: 232, prot: 10 }, // 80g pain + 20g cancoillotte
         matin_whey: { kcal: 0, prot: 0 },
     }
 };
@@ -81,24 +81,24 @@ export const calculatePlan = (key, profiles) => {
     const pst_cal = (pst_qty / 100) * 330;
     const pst_prot = (pst_qty / 100) * 50;
 
-    // OEUFS: Si > 80kg alors 3, sinon 2. Val: ~80kcal/6g prot par unité
-    const oeuf_qty = p.weight > 80 ? 3 : 2;
-    const oeuf_cal = oeuf_qty * 80;
-    const oeuf_prot = oeuf_qty * 6;
+// OEUFS: Matin ET Soir (Multiplié par 2)
+    const oeuf_qty_per_meal = p.weight > 80 ? 3 : 2;
+    const total_oeufs_day = oeuf_qty_per_meal * 2;
+    const oeuf_cal = total_oeufs_day * 80;
+    const oeuf_prot = total_oeufs_day * 6;
 
     // List of fixed items (STATIC + DYNAMIC)
     const items = [
-        socle.pancakes,
+        socle.pain_matin, // <-- Remplacer socle.pancakes par socle.pain_matin
         socle.collation_whey,
         socle.collation_fruit,
-        { kcal: pst_cal, prot: pst_prot }, // Dynamic PST
+        { kcal: pst_cal, prot: pst_prot }, 
         socle.midi_creme,
-        { kcal: oeuf_cal, prot: oeuf_prot }, // Dynamic Oeufs
+        { kcal: oeuf_cal, prot: oeuf_prot }, // Utilise maintenant le total sur la journée
         socle.soir_creme,
         socle.legumes,
-        socle.matin_whey // specific
+        socle.matin_whey 
     ];
-
     items.forEach(i => {
         fixed_cal += i.kcal;
         fixed_prot += i.prot;
@@ -153,7 +153,7 @@ export const calculatePlan = (key, profiles) => {
         prot_warning,
         // Exposed Dynamic Vars
         pst_qty,
-        oeuf_qty,
+        oeuf_qty_per_meal,
         total_estimated
     };
 };
