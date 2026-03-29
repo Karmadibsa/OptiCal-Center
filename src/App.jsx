@@ -6,13 +6,13 @@ import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import Calculator from './components/Calculator';
 import SmartDiet from './components/SmartDiet';
-import { DEFAULT_PROFILES } from './utils/dietAlgo';
+import BreadRecipe from './components/BreadRecipe';
+import { DEFAULT_PROFILES, DEFAULT_ACTIVITIES } from './utils/dietAlgo';
 
 const App = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Source unique de vérité pour les profils — partagée entre SmartDiet et Calculator
   const [profiles, setProfiles] = useState(() => {
     const saved = localStorage.getItem('smart_diet_profiles_v2');
     return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
@@ -35,7 +35,7 @@ const App = () => {
     });
   }, []);
 
-  // Charge la config depuis le CSV (source de vérité) — une seule fois au démarrage
+  // Charge la config depuis le CSV (source de vérité)
   useEffect(() => {
     if (data.length === 0) return;
     const configRows = data.filter(row => row.Type === 'Config');
@@ -43,33 +43,44 @@ const App = () => {
 
     setProfiles(prev => {
       const next = {
-        axel: { ...prev.axel },
-        prisca: { ...prev.prisca }
+        axel: { ...prev.axel, activities: { ...DEFAULT_ACTIVITIES, ...(prev.axel.activities || {}) } },
+        prisca: { ...prev.prisca, activities: { ...DEFAULT_ACTIVITIES, ...(prev.prisca.activities || {}) } }
       };
 
       configRows.forEach(row => {
-        const param = row.Item;
-        if (param === 'Weight') {
-          next.axel.weight = parseFloat(row.Axel);
-          next.prisca.weight = parseFloat(row.Prisca);
-        } else if (param === 'Height') {
-          next.axel.height = parseFloat(row.Axel);
-          next.prisca.height = parseFloat(row.Prisca);
-        } else if (param === 'Age') {
-          next.axel.age = parseFloat(row.Axel);
-          next.prisca.age = parseFloat(row.Prisca);
-        } else if (param === 'SportMin') {
-          next.axel.sport_min = parseFloat(row.Axel);
-          next.prisca.sport_min = parseFloat(row.Prisca);
-        } else if (param === 'Deficit') {
-          next.axel.deficit = parseFloat(row.Axel);
-          next.prisca.deficit = parseFloat(row.Prisca);
-        } else if (param === 'Opt_Galettes') {
-          next.axel.opt_galettes = row.Axel === 'true';
-          next.prisca.opt_galettes = row.Prisca === 'true';
-        } else if (param === 'Opt_Fromage') {
-          next.axel.opt_fromage = parseFloat(row.Axel);
-          next.prisca.opt_fromage = parseFloat(row.Prisca);
+        if (row.Section === 'Sport') {
+          // Nouvelles lignes d'activité avec MET précis
+          const actId = row.Item;
+          if (actId in DEFAULT_ACTIVITIES) {
+            next.axel.activities[actId] = parseFloat(row.Axel) || 0;
+            next.prisca.activities[actId] = parseFloat(row.Prisca) || 0;
+          }
+        } else {
+          // Lignes de profil standard
+          const param = row.Item;
+          if (param === 'Weight') {
+            next.axel.weight = parseFloat(row.Axel);
+            next.prisca.weight = parseFloat(row.Prisca);
+          } else if (param === 'Height') {
+            next.axel.height = parseFloat(row.Axel);
+            next.prisca.height = parseFloat(row.Prisca);
+          } else if (param === 'Age') {
+            next.axel.age = parseFloat(row.Axel);
+            next.prisca.age = parseFloat(row.Prisca);
+          } else if (param === 'Deficit') {
+            next.axel.deficit = parseFloat(row.Axel);
+            next.prisca.deficit = parseFloat(row.Prisca);
+          } else if (param === 'Opt_Galettes') {
+            next.axel.opt_galettes = row.Axel === 'true';
+            next.prisca.opt_galettes = row.Prisca === 'true';
+          } else if (param === 'Opt_Fromage') {
+            next.axel.opt_fromage = parseFloat(row.Axel);
+            next.prisca.opt_fromage = parseFloat(row.Prisca);
+          } else if (param === 'SportMin') {
+            // Migration ancien format : assigner toutes les minutes à muscu_pdc
+            next.axel.activities.muscu_pdc = parseFloat(row.Axel) || 0;
+            next.prisca.activities.muscu_pdc = parseFloat(row.Prisca) || 0;
+          }
         }
       });
 
@@ -77,7 +88,7 @@ const App = () => {
     });
   }, [data]);
 
-  // Sync localStorage à chaque changement de profiles
+  // Sync localStorage
   useEffect(() => {
     localStorage.setItem('smart_diet_profiles_v2', JSON.stringify(profiles));
   }, [profiles]);
@@ -110,7 +121,8 @@ const App = () => {
       <Routes>
         <Route path="/" element={<Dashboard csvData={data} />} />
         <Route path="/calculator" element={<Calculator profiles={profiles} />} />
-        <Route path="/smart-diet" element={<SmartDiet csvData={data} profiles={profiles} setProfiles={setProfiles} />} />
+        <Route path="/smart-diet" element={<SmartDiet profiles={profiles} setProfiles={setProfiles} />} />
+        <Route path="/recette" element={<BreadRecipe />} />
       </Routes>
 
       <footer style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>

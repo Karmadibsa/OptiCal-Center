@@ -156,7 +156,19 @@ const Dashboard = ({ csvData }) => {
                 tableWidth: 'auto'
             });
 
-            doc.save('Roadmap_Frigo_Compact.pdf');
+            const today = new Date().toISOString().split('T')[0];
+            const filename = `OptiCal-Diet-${today}.pdf`;
+
+            // Compatibilité mobile : blob URL au lieu de doc.save()
+            const blob = doc.output('blob');
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
         } catch (error) {
             console.error("PDF Export Error:", error);
             alert("Erreur export PDF");

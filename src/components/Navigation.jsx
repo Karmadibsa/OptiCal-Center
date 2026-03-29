@@ -22,6 +22,12 @@ const Navigation = () => {
             >
                 Macro Plan
             </NavLink>
+            <NavLink
+                to="/recette"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+            >
+                Recette Pain
+            </NavLink>
         </nav>
     );
 };
