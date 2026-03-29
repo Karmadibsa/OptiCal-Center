@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     Settings,
     Activity,
@@ -12,20 +12,11 @@ import {
     MET_DEFAULT,
     PASTA_REF,
     SOCLE_DATA,
-    DEFAULT_PROFILES,
     calculatePlan
 } from '../utils/dietAlgo';
 
-const SmartDiet = ({ csvData }) => {
-    // --- 1. CONSTANTS & DATA ---
-    // Moved to ../utils/dietAlgo.js
-
-    // --- 2. STATE ---
-    const [profiles, setProfiles] = useState(() => {
-        // Init from localStorage first (temporary fallback), will be overridden by CSV if available
-        const saved = localStorage.getItem('smart_diet_profiles_v2');
-        return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
-    });
+// profiles + setProfiles viennent de App.jsx (source unique de vérité)
+const SmartDiet = ({ profiles, setProfiles }) => {
 
     const [activeTab, setActiveTab] = useState('axel');
 
@@ -35,74 +26,7 @@ const SmartDiet = ({ csvData }) => {
         totalWeighed: 0
     });
 
-    // --- LOAD CONFIG FROM CSV (Source of Truth) ---
-    useEffect(() => {
-        if (!csvData || csvData.length === 0) return;
-
-        // Check for Config rows
-        const configRows = csvData.filter(row => row.Type === 'Config');
-
-        if (configRows.length > 0) {
-            const newProfiles = { ...profiles };
-            let hasChanges = false;
-
-            configRows.forEach(row => {
-                const param = row.Item; // Weight, Height, SportMin, etc
-                const valAxel = row.Axel;
-                const valPrisca = row.Prisca;
-
-                if (param === 'Weight') {
-                    newProfiles.axel.weight = parseFloat(valAxel);
-                    newProfiles.prisca.weight = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-                if (param === 'Height') {
-                    newProfiles.axel.height = parseFloat(valAxel);
-                    newProfiles.prisca.height = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-                if (param === 'Age') {
-                    newProfiles.axel.age = parseFloat(valAxel);
-                    newProfiles.prisca.age = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-                if (param === 'SportMin') {
-                    newProfiles.axel.sport_min = parseFloat(valAxel);
-                    newProfiles.prisca.sport_min = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-                if (param === 'Deficit') {
-                    newProfiles.axel.deficit = parseFloat(valAxel);
-                    newProfiles.prisca.deficit = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-                if (param === 'Opt_Galettes') {
-                    newProfiles.axel.opt_galettes = valAxel === 'true';
-                    newProfiles.prisca.opt_galettes = valPrisca === 'true';
-                    hasChanges = true;
-                }
-                if (param === 'Opt_Fromage') {
-                    newProfiles.axel.opt_fromage = parseFloat(valAxel);
-                    newProfiles.prisca.opt_fromage = parseFloat(valPrisca);
-                    hasChanges = true;
-                }
-            });
-
-            if (hasChanges) {
-                setProfiles(newProfiles);
-                // Also update localStorage to stay in sync
-                localStorage.setItem('smart_diet_profiles_v2', JSON.stringify(newProfiles));
-            }
-        }
-    }, [csvData]); // Config loads ONLY when CSV changes
-
-    useEffect(() => {
-        localStorage.setItem('smart_diet_profiles_v2', JSON.stringify(profiles));
-    }, [profiles]);
-
-    // --- 3. CORE ALGORITHM (The Engine) ---
-    // Moved to ../utils/dietAlgo.js
-
+    // --- 3. CORE ALGORITHM ---
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
 
@@ -118,10 +42,17 @@ const SmartDiet = ({ csvData }) => {
     };
 
     // --- 5. CSV EXPORT ---
+    const escapeCSV = (val) => {
+        const str = String(val);
+        if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
     const generateCSV = () => {
         const header = ['Type', 'Section', 'Item', 'Axel', 'Prisca', 'Note'];
 
-        // PREPARE CONFIG ROWS
         const configRows = [
             ['Config', 'Profile', 'Weight', profiles.axel.weight, profiles.prisca.weight, 'System Config'],
             ['Config', 'Profile', 'Height', profiles.axel.height, profiles.prisca.height, 'System Config'],
@@ -133,21 +64,17 @@ const SmartDiet = ({ csvData }) => {
         ];
 
         const dataRows = [
-            // DIET - MATIN
             ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', '140g Pain + 30g Canc. + 3 Œufs', '80g Pain + 20g Canc. + 2 Œufs', 'Base fixe'],
             ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
 
-            // DIET - MIDI
             ['Diet', 'Midi', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_midi)}g`, `${Math.round(resPrisca.pasta_midi)}g`, 'Calculé (55%)'],
             ['Diet', 'Midi', 'PST (Cru)', `${resAxel.pst_qty}g`, `${resPrisca.pst_qty}g`, 'Source Protéines (Poids - 25)'],
             ['Diet', 'Midi', 'Légumes', 'À volonté', 'À volonté', 'Volume'],
             ['Diet', 'Midi', 'Crème Fraîche', '30g (1 c.à.s)', '30g (1 c.à.s)', 'Lipides'],
 
-            // DIET - 16H
             ['Diet', '16H00', 'Banane', '1 Banane', '1 Banane', 'Glucides rapides'],
             ['Diet', '16H00', 'Whey', '1 Shaker de Whey (30g)', '1 Shaker de Whey (25g)', 'Récupération'],
 
-            // DIET - SOIR
             ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
             ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`, `${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`, 'OBLIGATOIRE'],
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
@@ -155,12 +82,8 @@ const SmartDiet = ({ csvData }) => {
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
         ];
 
-        // Combine: Header -> Config -> Data
         const rows = [header, ...configRows, ...dataRows];
-
-        // Convert to CSV string
-        const csvContent = rows.map(row => row.join(',')).join('\n');
-        return csvContent;
+        return rows.map(row => row.map(escapeCSV).join(',')).join('\n');
     };
 
     const handleCopyCSV = () => {
@@ -183,7 +106,6 @@ const SmartDiet = ({ csvData }) => {
     // --- BATCH CALCULATION ---
     const totalRawDaily = resAxel.pasta_midi + resAxel.pasta_soir + resPrisca.pasta_midi + resPrisca.pasta_soir;
     const totalRawBatch = totalRawDaily * batchConfig.days;
-    // Safety check just in case
     const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
     const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
 
@@ -535,7 +457,7 @@ const SmartDiet = ({ csvData }) => {
                 }
                 .tab-btn.active.axel { background: rgba(14, 165, 233, 0.2); border-color: #0ea5e9; color: #38bdf8; }
                 .tab-btn.active.prisca { background: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; color: #a78bfa; }
-                
+
                 .inputs-grid {
                     display: grid;
                     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

@@ -1,45 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import Papa from 'papaparse';
 import { Calculator as CalcIcon, ShoppingCart } from 'lucide-react';
-// import { DEFAULT_PROFILES, calculatePlan } from '../utils/dietAlgo'; // DISABLED: Using CSV source of truth
+import { calculatePlan } from '../utils/dietAlgo';
 
-const Calculator = ({ csvData }) => {
-    // State for selected meals: { "Monday-Midi": { axel: true, prisca: true } }
+const Calculator = ({ profiles }) => {
     const [schedule, setSchedule] = useState({});
     const [totals, setTotals] = useState({});
 
     const DAYS = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
     const MEALS = ['Midi', 'Soir'];
 
-    // Helper to extract numeric value from string like "115g" or "35-40g"
-    const parseGram = (str) => {
-        if (!str) return 0;
-        const matches = str.match(/(\d+)/g);
-        if (!matches) return 0;
-
-        // If range 92-100, take average? Or max? Let's take average for accuracy to 0
-        if (matches.length > 1) {
-            const v1 = parseFloat(matches[0]);
-            const v2 = parseFloat(matches[1]);
-            return (v1 + v2) / 2;
-        }
-        return parseFloat(matches[0]);
-    };
-
-    // Identify ingredients from the CSV data automatically if possible, 
-    // but for the calculator logic we need to know WHICH item maps to Lunch/Dinner carboydrates.
-    // We can hardcode the mapping based on the known "Item" names in the CSV to be safe.
-    // CSV Items: "Riz (cru)", "Pâtes (cru)", "PST (cru)", "Crème Fraîche", "Œufs"
-
-    const INGREDIENTS_MAP = {
-        'Midi': ['Pâtes Protein+ (Cru)', 'PST (Cru)', 'Crème Fraîche'],
-        'Soir': ['Pâtes Protein+ (Cru)', 'Œufs', 'Crème Fraîche']
-    };
-
     useEffect(() => {
         calculateTotals();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [schedule, csvData]);
+    }, [schedule, profiles]);
 
     const toggleMeal = (day, meal, person) => {
         const key = `${day}-${meal}`;
@@ -64,8 +37,7 @@ const Calculator = ({ csvData }) => {
 
     const selectMonSat = () => {
         const newSchedule = {};
-        const weekDays = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
-        weekDays.forEach(day => {
+        ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'].forEach(day => {
             MEALS.forEach(meal => {
                 newSchedule[`${day}-${meal}`] = { axel: true, prisca: true };
             });
@@ -73,47 +45,44 @@ const Calculator = ({ csvData }) => {
         setSchedule(newSchedule);
     };
 
-    const resetSchedule = () => {
-        setSchedule({}); // Clear all
-    };
+    const resetSchedule = () => setSchedule({});
 
     const calculateTotals = () => {
-        if (!csvData || csvData.length === 0) return;
+        // Calcul temps réel depuis les profils — même source de vérité que SmartDiet
+        const resAxel = calculatePlan('axel', profiles);
+        const resPrisca = calculatePlan('prisca', profiles);
 
-        const newTotals = {};
+        const PASTA = 'Pâtes Protein+ (Cru)';
+        const PST = 'PST (Cru)';
 
-        // Helper to find amount
-        const getAmount = (itemName, person) => {
-            // FALLBACK TO CSV ONLY
-            const row = csvData.find(r => r.Item === itemName && r.Type === 'Diet');
-            if (!row) return 0;
-            return parseGram(row[person === 'axel' ? 'Axel' : 'Prisca']);
-        };
+        const newTotals = { [PASTA]: 0, [PST]: 0 };
 
         Object.entries(schedule).forEach(([key, people]) => {
-            const [_day, mealType] = key.split('-');
-            const ingredients = INGREDIENTS_MAP[mealType];
+            const [, mealType] = key.split('-');
 
-            if (ingredients) {
-                ingredients.forEach(ing => {
-                    // Filter out unwanted items from totals
-                    if (ing.includes('Crème') || ing.includes('Œufs')) return;
-
-                    if (!newTotals[ing]) newTotals[ing] = 0;
-
-                    if (people.axel) newTotals[ing] += getAmount(ing, 'axel');
-                    if (people.prisca) newTotals[ing] += getAmount(ing, 'prisca');
-                });
+            if (mealType === 'Midi') {
+                if (people.axel) {
+                    newTotals[PASTA] += resAxel.pasta_midi;
+                    newTotals[PST] += resAxel.pst_qty;
+                }
+                if (people.prisca) {
+                    newTotals[PASTA] += resPrisca.pasta_midi;
+                    newTotals[PST] += resPrisca.pst_qty;
+                }
+            } else if (mealType === 'Soir') {
+                if (people.axel) newTotals[PASTA] += resAxel.pasta_soir;
+                if (people.prisca) newTotals[PASTA] += resPrisca.pasta_soir;
             }
         });
+
+        // Ne pas afficher les ingrédients à zéro
+        if (newTotals[PASTA] === 0) delete newTotals[PASTA];
+        if (newTotals[PST] === 0) delete newTotals[PST];
 
         setTotals(newTotals);
     };
 
-    const getDayState = (day, meal) => {
-        const key = `${day}-${meal}`;
-        return schedule[key] || { axel: false, prisca: false };
-    };
+    const getDayState = (day, meal) => schedule[`${day}-${meal}`] || { axel: false, prisca: false };
 
     return (
         <div className="section-container animate-fade-in">
@@ -173,7 +142,7 @@ const Calculator = ({ csvData }) => {
                     </button>
                 </h3>
                 {Object.keys(totals).length === 0 ? (
-                    <p className="empty-state">Sélectionne des repas pour voir les quantités (Riz, Pâtes, PST uniquement).</p>
+                    <p className="empty-state">Sélectionne des repas pour voir les quantités (Pâtes, PST uniquement).</p>
                 ) : (
                     <div className="totals-grid">
                         {Object.entries(totals).map(([item, amount]) => (
