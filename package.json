@@ -8,12 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "issues:list": "gh issue list",
-    "issues:view": "gh issue view",
+    "issues:list": "gh issue list --limit 20",
+    "issues:view": "echo 'Usage: npm run issues:view -- <numéro>' && gh issue view",
     "issues:create": "gh issue create",
-    "issues:close": "gh issue close",
-    "branch:create": "git checkout -b",
-    "issues:workflow": "node scripts/gh-issue-workflow.js"
+    "issues:close": "echo 'Usage: npm run issues:close -- <numéro>' && gh issue close",
+    "issues:workflow": "node scripts/gh-issue-workflow.js",
+    "branch:create": "echo 'Usage: npm run \"branch:create -- <nom-branche>\"' && git checkout -b"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",

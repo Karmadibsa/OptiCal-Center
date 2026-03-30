@@ -13,32 +13,10 @@ const question = (query) => new Promise((resolve) => rl.question(query, resolve)
 async function main() {
     console.log('🚀 Workflow GitHub CLI pour les issues\n');
 
-    try {
-        // Vérifier si gh est installé
-        execSync('gh --version', { stdio: 'ignore' });
-    } catch (error) {
-        console.error('❌ GitHub CLI (gh) n\'est pas installé.');
-        console.log('📦 Installez-le depuis: https://cli.github.com/');
-        console.log('   Ou via winget: winget install --id GitHub.cli');
-        console.log('   Ou via scoop: scoop install gh');
-        rl.close();
-        process.exit(1);
-    }
-
-    // Vérifier si on est authentifié
-    try {
-        execSync('gh auth status', { stdio: 'ignore' });
-    } catch (error) {
-        console.log('🔐 Vous n\'êtes pas authentifié avec GitHub CLI.');
-        console.log('   Exécutez: gh auth login');
-        rl.close();
-        process.exit(1);
-    }
-
     // Lister les issues
     console.log('📋 Liste des issues ouvertes:');
     try {
-        execSync('gh issue list --limit 10', { stdio: 'inherit' });
+        execSync('gh issue list --limit 15', { stdio: 'inherit' });
     } catch (error) {
         console.log('⚠️  Aucune issue ou erreur lors de la récupération.');
     }
@@ -51,9 +29,10 @@ async function main() {
     console.log('2. Voir une issue spécifique');
     console.log('3. Créer une branche pour une issue');
     console.log('4. Fermer une issue');
-    console.log('5. Quitter');
+    console.log('5. Lister toutes les issues');
+    console.log('6. Quitter');
 
-    const choice = await question('\nVotre choix (1-5): ');
+    const choice = await question('\nVotre choix (1-6): ');
 
     switch (choice.trim()) {
         case '1':
@@ -80,6 +59,9 @@ async function main() {
             execSync(`gh issue close ${closeIssue}`, { stdio: 'inherit' });
             break;
         case '5':
+            execSync('gh issue list --limit 30', { stdio: 'inherit' });
+            break;
+        case '6':
             console.log('👋 Au revoir !');
             break;
         default:

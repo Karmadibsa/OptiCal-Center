@@ -1,57 +1,82 @@
-# Scripts GitHub
+# Scripts GitHub CLI
 
-## Utilisation avec GitHub CLI (Recommandé)
-
-1. Installez GitHub CLI: https://cli.github.com/
-2. Authentifiez-vous: `gh auth login`
-3. Utilisez les commandes npm:
+## Commandes rapides (vous êtes déjà authentifié)
 
 ```bash
-# Lister les issues
+# Lister les issues (20 dernières)
 npm run issues:list
 
-# Créer une issue
+# Créer une nouvelle issue
 npm run issues:create
 
 # Voir une issue spécifique
-npm run issues:view -- <numéro>
+npm run issues:view -- 123
 
 # Fermer une issue
-npm run issues:close -- <numéro>
+npm run issues:close -- 123
 
 # Workflow interactif
 npm run issues:workflow
+
+# Créer une branche (manuellement)
+git checkout -b nom-branche
 ```
 
-## Commandes directes avec gh
+## Commandes directes `gh`
 
 ```bash
 # Lister les issues
 gh issue list
 
-# Créer une issue
+# Créer une issue (interactif)
 gh issue create
 
 # Voir une issue
 gh issue view <numéro>
 
-# Créer une branche pour une issue
-git checkout -b fix/issue-<numéro>
+# Fermer une issue
+gh issue close <numéro>
 
-# Pousser la branche
-git push -u origin fix/issue-<numéro>
+# Lister les branches
+git branch -a
+
+# Créer et pousser une branche
+git checkout -b feature/xyz
+git push -u origin feature/xyz
 ```
 
-## Anciens scripts (API manuelle)
+## Workflow recommandé
 
-Les scripts `fetch-issues.js`, `create-branch.js`, et `start-issue-workflow.js` utilisent l'API GitHub directement.
-Ils nécessitent un token dans un fichier `.env`.
+1. **Voir les issues existantes**
+   ```bash
+   npm run issues:list
+   ```
 
-Pour les utiliser:
-1. Créez un token sur https://github.com/settings/tokens (scope "repo")
-2. Copiez `.env.example` en `.env` et remplissez les variables
-3. Exécutez `npm run issues:fetch` (ancienne commande)
+2. **Travailler sur une issue**
+   ```bash
+   # Créer une branche
+   git checkout -b fix/issue-<numéro>
+   
+   # Faire vos modifications
+   git add .
+   git commit -m "fix: résoudre l'issue #<numéro>"
+   
+   # Pousser
+   git push -u origin fix/issue-<numéro>
+   ```
 
-## Recommandation
+3. **Créer une Pull Request**
+   ```bash
+   gh pr create --fill
+   ```
 
-Utilisez GitHub CLI (`gh`) pour une expérience plus simple et intégrée.
+4. **Fermer l'issue après merge**
+   ```bash
+   gh issue close <numéro>
+   ```
+
+## Notes
+
+- Vous êtes déjà connecté avec `gh auth login`
+- Les anciens scripts API (`fetch-issues.js`, etc.) sont conservés mais non nécessaires
+- Utilisez `gh` pour une intégration GitHub optimale
