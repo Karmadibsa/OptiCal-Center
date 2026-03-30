@@ -8,9 +8,12 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "issues:fetch": "node scripts/fetch-issues.js",
-    "issues:create-branch": "node scripts/create-branch.js",
-    "issues:start": "node scripts/start-issue-workflow.js"
+    "issues:list": "gh issue list",
+    "issues:view": "gh issue view",
+    "issues:create": "gh issue create",
+    "issues:close": "gh issue close",
+    "branch:create": "git checkout -b",
+    "issues:workflow": "node scripts/gh-issue-workflow.js"
   },
   "dependencies": {
     "html2canvas": "^1.4.1",
