@@ -156,8 +156,8 @@ const Dashboard = ({ csvData }) => {
                 tableWidth: 'auto'
             });
 
-            const today = new Date().toISOString().split('T')[0];
-            const filename = `OptiCal-Diet-${today}.pdf`;
+            const today = new Date().toLocaleDateString('fr-FR').replace(/\//g, '-');
+            const filename = `OptiCal-${today}-Axel-Prisca.pdf`;
 
             // Compatibilité mobile : blob URL au lieu de doc.save()
             const blob = doc.output('blob');

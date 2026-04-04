@@ -13,6 +13,89 @@ import {
     calculatePlan
 } from '../utils/dietAlgo';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FIX #8 / #4 : ActivityGrid est déclaré HORS de SmartDiet pour éviter que
+// React le recrée à chaque re-render (perte de focus sur les inputs).
+// ─────────────────────────────────────────────────────────────────────────────
+const ActivityGrid = ({ profileKey, profiles, res, handleActivity }) => {
+    const acts = profiles[profileKey].activities || {};
+    const color = profileKey === 'axel' ? '#38bdf8' : '#a78bfa';
+
+    return (
+        <div style={{ marginTop: '1.5rem' }}>
+            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', marginBottom: '0.75rem' }}>
+                ACTIVITÉS HEBDOMADAIRES
+            </div>
+            {/* FIX #5 : grid resserré, gap réduit pour meilleur alignement label/input */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px', gap: '0.35rem 0.75rem', alignItems: 'center' }}>
+                {/* Header */}
+                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Activité (MET)</span>
+                {/* FIX #10 : ajout de l'unité "min" */}
+                <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>min/sem</span>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>kcal/sem</span>
+
+                {ACTIVITIES.map(act => {
+                    const mins = acts[act.id] || 0;
+                    const kcal = Math.round(profiles[profileKey].weight * (mins / 60) * act.met);
+                    const inputId = `act-${profileKey}-${act.id}`;
+                    return (
+                        <React.Fragment key={act.id}>
+                            {/* FIX #10 : htmlFor lié à l'id de l'input */}
+                            <label
+                                htmlFor={inputId}
+                                style={{
+                                    fontSize: '0.85rem',
+                                    color: mins > 0 ? '#e2e8f0' : '#475569',
+                                    cursor: 'pointer',
+                                    lineHeight: 1.3
+                                }}
+                            >
+                                {act.label} <span style={{ color: '#64748b', fontSize: '0.75rem' }}>× {act.met}</span>
+                            </label>
+                            <input
+                                id={inputId}
+                                type="number"
+                                min="0"
+                                // FIX #11 : affiche '' si 0 pour ne pas bloquer la saisie
+                                value={mins === 0 ? '' : mins}
+                                placeholder="0"
+                                onChange={(e) => handleActivity(profileKey, act.id, e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    background: 'rgba(0,0,0,0.25)',
+                                    border: `1px solid ${mins > 0 ? color : '#334155'}`,
+                                    padding: '0.3rem 0.4rem',
+                                    borderRadius: '5px',
+                                    color: mins > 0 ? color : '#94a3b8',
+                                    textAlign: 'right',
+                                    fontSize: '0.9rem'
+                                }}
+                            />
+                            <span style={{ fontSize: '0.82rem', color: mins > 0 ? '#fbbf24' : '#334155', textAlign: 'right', fontFamily: 'monospace' }}>
+                                {mins > 0 ? `+${kcal}` : '—'}
+                            </span>
+                        </React.Fragment>
+                    );
+                })}
+
+                {/* Totaux */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700 }}>
+                    TOTAL
+                </div>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color, fontFamily: 'monospace', fontWeight: 700 }}>
+                    {res.total_sport_min} min
+                </div>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700 }}>
+                    +{Math.round(res.sport_cal_week)} kcal
+                </div>
+            </div>
+        </div>
+    );
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMPOSANT PRINCIPAL
+// ─────────────────────────────────────────────────────────────────────────────
 const SmartDiet = ({ profiles, setProfiles }) => {
 
     const [activeTab, setActiveTab] = useState('axel');
@@ -27,12 +110,25 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     const resPrisca = calculatePlan('prisca', profiles);
 
     // --- HANDLERS ---
+    // Champs numériques : weight, height, age, deficit, opt_fromage, prot_ratio
+    // Champs string : gender
+    // Champs boolean : opt_galettes
+    const NUMERIC_FIELDS = new Set(['weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio']);
+
     const handleInput = (key, field, val) => {
         setProfiles(prev => ({
             ...prev,
-            [key]: { ...prev[key], [field]: val }
+            [key]: {
+                ...prev[key],
+                // Pour les champs numériques : accepter '' (saisie en cours) ou parser
+                // Pour les autres (goal, opt_galettes…) : stocker la valeur brute directement
+                [field]: NUMERIC_FIELDS.has(field)
+                    ? (val === '' ? '' : (parseFloat(val) || 0))
+                    : val
+            }
         }));
     };
+
 
     const handleActivity = (key, actId, mins) => {
         setProfiles(prev => ({
@@ -41,7 +137,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 ...prev[key],
                 activities: {
                     ...prev[key].activities,
-                    [actId]: parseFloat(mins) || 0
+                    // FIX #11 : éviter NaN si le champ est vidé
+                    [actId]: mins === '' ? 0 : (parseFloat(mins) || 0)
                 }
             }
         }));
@@ -64,9 +161,9 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Config', 'Profile', 'Height', profiles.axel.height, profiles.prisca.height, 'System Config'],
             ['Config', 'Profile', 'Age', profiles.axel.age, profiles.prisca.age, 'System Config'],
             ['Config', 'Profile', 'Deficit', profiles.axel.deficit, profiles.prisca.deficit, 'System Config'],
+            ['Config', 'Profile', 'Prot_Ratio', profiles.axel.prot_ratio, profiles.prisca.prot_ratio, 'System Config'],
             ['Config', 'Profile', 'Opt_Galettes', profiles.axel.opt_galettes, profiles.prisca.opt_galettes, 'System Config'],
             ['Config', 'Profile', 'Opt_Fromage', profiles.axel.opt_fromage, profiles.prisca.opt_fromage, 'System Config'],
-            // Lignes Sport par activité
             ...ACTIVITIES.map(act => [
                 'Config', 'Sport', act.id,
                 profiles.axel.activities?.[act.id] || 0,
@@ -120,69 +217,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
     const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
 
-    // Bloc activités pour un profil
-    const ActivityGrid = ({ profileKey }) => {
-        const res = profileKey === 'axel' ? resAxel : resPrisca;
-        const acts = profiles[profileKey].activities || {};
-        const color = profileKey === 'axel' ? '#38bdf8' : '#a78bfa';
-
-        return (
-            <div style={{ marginTop: '1.5rem' }}>
-                <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', marginBottom: '0.75rem' }}>
-                    ACTIVITÉS HEBDOMADAIRES
-                </div>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto', gap: '0.4rem 1rem', alignItems: 'center' }}>
-                    {/* Header */}
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Activité (MET)</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>Min/sem</span>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>kcal/sem</span>
-
-                    {ACTIVITIES.map(act => {
-                        const mins = acts[act.id] || 0;
-                        const kcal = Math.round(profiles[profileKey].weight * (mins / 60) * act.met);
-                        return (
-                            <React.Fragment key={act.id}>
-                                <label style={{ fontSize: '0.85rem', color: mins > 0 ? '#e2e8f0' : '#475569' }}>
-                                    {act.label} <span style={{ color: '#64748b', fontSize: '0.75rem' }}>× {act.met}</span>
-                                </label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={mins}
-                                    onChange={(e) => handleActivity(profileKey, act.id, e.target.value)}
-                                    style={{
-                                        width: '70px',
-                                        background: 'rgba(0,0,0,0.25)',
-                                        border: `1px solid ${mins > 0 ? color : '#334155'}`,
-                                        padding: '0.3rem 0.5rem',
-                                        borderRadius: '5px',
-                                        color: mins > 0 ? color : '#94a3b8',
-                                        textAlign: 'right',
-                                        fontSize: '0.9rem'
-                                    }}
-                                />
-                                <span style={{ fontSize: '0.82rem', color: mins > 0 ? '#fbbf24' : '#334155', textAlign: 'right', fontFamily: 'monospace' }}>
-                                    {mins > 0 ? `+${kcal}` : '—'}
-                                </span>
-                            </React.Fragment>
-                        );
-                    })}
-
-                    {/* Totaux */}
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700 }}>
-                        TOTAL
-                    </div>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color, fontFamily: 'monospace', fontWeight: 700 }}>
-                        {res.total_sport_min} min
-                    </div>
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700 }}>
-                        +{Math.round(res.sport_cal_week)} kcal
-                    </div>
-                </div>
-            </div>
-        );
-    };
-
     return (
         <div className="animate-fade-in section-container">
 
@@ -194,49 +228,103 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             </div>
 
             <div className="config-card card">
-                {['axel', 'prisca'].map(key => (
-                    <div key={key} style={{ display: activeTab === key ? 'block' : 'none' }}>
-                        <div className="inputs-grid">
-                            <div className="input-group">
-                                <label>Poids (kg)</label>
-                                <input type="number" value={profiles[key].weight}
-                                    onChange={(e) => handleInput(key, 'weight', parseFloat(e.target.value) || 0)} />
+                {['axel', 'prisca'].map(key => {
+                    const res = key === 'axel' ? resAxel : resPrisca;
+                    const weightId = `profile-${key}-weight`;
+                    const deficitId = `profile-${key}-deficit`;
+                    const galettesId = `profile-${key}-galettes`;
+                    const fromageId = `profile-${key}-fromage`;
+
+                    return (
+                        <div key={key} style={{ display: activeTab === key ? 'block' : 'none' }}>
+                            <div className="inputs-grid">
+                                <div className="input-group">
+                                    {/* FIX #10 : unités dans le label + htmlFor */}
+                                    <label htmlFor={weightId}>Poids <span className="unit-badge">kg</span></label>
+                                    <input
+                                        id={weightId}
+                                        type="number"
+                                        // FIX #11 : affiche '' si 0 pour permettre la saisie naturelle
+                                        value={profiles[key].weight === 0 ? '' : profiles[key].weight}
+                                        placeholder="0"
+                                        onChange={(e) => handleInput(key, 'weight', e.target.value)}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label htmlFor={deficitId}>Déficit cible <span className="unit-badge">kcal</span></label>
+                                    <input
+                                        id={deficitId}
+                                        type="number"
+                                        value={profiles[key].deficit === 0 ? '' : profiles[key].deficit}
+                                        placeholder="0"
+                                        onChange={(e) => handleInput(key, 'deficit', e.target.value)}
+                                    />
+                                </div>
+                                {/* Objectif protéines : input numérique libre */}
+                                <div className="input-group">
+                                    <label htmlFor={`profile-${key}-prot`}>
+                                        Protéines cible
+                                        <span className="unit-badge">g/kg</span>
+                                    </label>
+                                    <input
+                                        id={`profile-${key}-prot`}
+                                        type="number"
+                                        min="0.5"
+                                        max="3"
+                                        step="0.1"
+                                        value={profiles[key].prot_ratio === 0 ? '' : profiles[key].prot_ratio}
+                                        placeholder="1.8"
+                                        onChange={(e) => handleInput(key, 'prot_ratio', e.target.value)}
+                                    />
+                                </div>
+                                <div className="input-group checkbox">
+                                    <label htmlFor={galettesId}>
+                                        <input
+                                            id={galettesId}
+                                            type="checkbox"
+                                            checked={profiles[key].opt_galettes}
+                                            onChange={(e) => handleInput(key, 'opt_galettes', e.target.checked)}
+                                        />
+                                        Option Galettes Soir
+                                    </label>
+                                </div>
+                                <div className="input-group">
+                                    <label htmlFor={fromageId}>Option Fromage <span className="unit-badge">g</span></label>
+                                    <input
+                                        id={fromageId}
+                                        type="number"
+                                        value={profiles[key].opt_fromage === 0 ? '' : profiles[key].opt_fromage}
+                                        placeholder="0"
+                                        onChange={(e) => handleInput(key, 'opt_fromage', e.target.value)}
+                                    />
+                                </div>
                             </div>
-                            <div className="input-group">
-                                <label>Déficit Cible (kcal)</label>
-                                <input type="number" value={profiles[key].deficit}
-                                    onChange={(e) => handleInput(key, 'deficit', parseFloat(e.target.value) || 0)} />
-                            </div>
-                            <div className="input-group checkbox">
-                                <label>
-                                    <input type="checkbox" checked={profiles[key].opt_galettes}
-                                        onChange={(e) => handleInput(key, 'opt_galettes', e.target.checked)} />
-                                    Option Galettes Soir
-                                </label>
-                            </div>
-                            <div className="input-group">
-                                <label>Option Fromage (g)</label>
-                                <input type="number" value={profiles[key].opt_fromage}
-                                    onChange={(e) => handleInput(key, 'opt_fromage', parseFloat(e.target.value) || 0)} />
+
+                            {/* ActivityGrid extrait HORS du composant (fix #8/#4) — passé par props */}
+                            <ActivityGrid
+                                profileKey={key}
+                                profiles={profiles}
+                                res={res}
+                                handleActivity={handleActivity}
+                            />
+
+                            <div className="stats-mini">
+                                <span>TDEE: {Math.round(res.tdee_final)} kcal</span>
+                                <span> | </span>
+                                <span>Cible: {Math.round(res.target_daily)} kcal</span>
+                                <span> | </span>
+                                <span style={{ color: '#fbbf24' }}>Estimé: {Math.round(res.total_estimated)} kcal</span>
+                                <br />
+                                {/* FIX #12 : afficher l'objectif protéines dynamique */}
+                                <span style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>
+                                    Protéines: {Math.round(res.total_prot)}g / {Math.round(res.prot_goal)}g
+                                    {' → '}{profiles[key].prot_ratio}g/kg × {profiles[key].weight}kg
+                                    {res.prot_warning && " (⚠️ Trop bas !)"}
+                                </span>
                             </div>
                         </div>
-
-                        <ActivityGrid profileKey={key} />
-
-                        <div className="stats-mini">
-                            <span>TDEE: {Math.round(key === 'axel' ? resAxel.tdee_final : resPrisca.tdee_final)} kcal</span>
-                            <span> | </span>
-                            <span>Cible: {Math.round(key === 'axel' ? resAxel.target_daily : resPrisca.target_daily)} kcal</span>
-                            <span> | </span>
-                            <span style={{ color: '#fbbf24' }}>Estimé: {Math.round(key === 'axel' ? resAxel.total_estimated : resPrisca.total_estimated)} kcal</span>
-                            <br />
-                            <span style={{ color: (key === 'axel' ? resAxel.prot_warning : resPrisca.prot_warning) ? '#f87171' : '#4ade80' }}>
-                                Protéines: {Math.round(key === 'axel' ? resAxel.total_prot : resPrisca.total_prot)}g
-                                {(key === 'axel' ? resAxel.prot_warning : resPrisca.prot_warning) && " (⚠️ Trop bas !)"}
-                            </span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <button onClick={handleCopyCSV} className="action-btn"
@@ -292,21 +380,38 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
                 <div className="inputs-grid">
                     <div className="input-group">
-                        <label>Jours de Batch</label>
-                        <input type="number" value={batchConfig.days}
-                            onChange={(e) => setBatchConfig({ ...batchConfig, days: parseFloat(e.target.value) || 0 })} />
+                        <label htmlFor="batch-days">Jours de Batch</label>
+                        <input
+                            id="batch-days"
+                            type="number"
+                            value={batchConfig.days === 0 ? '' : batchConfig.days}
+                            placeholder="6"
+                            onChange={(e) => setBatchConfig({ ...batchConfig, days: parseFloat(e.target.value) || 0 })}
+                        />
                     </div>
                     <div className="input-group">
-                        <label>Poids Casserole (Vide)</label>
-                        <input type="number" value={batchConfig.potWeight}
-                            onChange={(e) => setBatchConfig({ ...batchConfig, potWeight: parseFloat(e.target.value) || 0 })} />
+                        {/* FIX #10 : unité g dans le label */}
+                        <label htmlFor="batch-pot">Poids Casserole (Vide) <span className="unit-badge">g</span></label>
+                        <input
+                            id="batch-pot"
+                            type="number"
+                            value={batchConfig.potWeight === 0 ? '' : batchConfig.potWeight}
+                            placeholder="1930"
+                            onChange={(e) => setBatchConfig({ ...batchConfig, potWeight: parseFloat(e.target.value) || 0 })}
+                        />
                     </div>
                     <div className="input-group">
-                        <label style={{ color: '#fbbf24', fontWeight: 'bold' }}>POIDS TOTAL (Casserole + Pâtes)</label>
-                        <input type="number" value={batchConfig.totalWeighed}
+                        <label htmlFor="batch-total" style={{ color: '#fbbf24', fontWeight: 'bold' }}>
+                            POIDS TOTAL (Casserole + Pâtes) <span className="unit-badge">g</span>
+                        </label>
+                        <input
+                            id="batch-total"
+                            type="number"
+                            value={batchConfig.totalWeighed === 0 ? '' : batchConfig.totalWeighed}
                             onChange={(e) => setBatchConfig({ ...batchConfig, totalWeighed: parseFloat(e.target.value) || 0 })}
                             style={{ borderColor: '#fbbf24', background: 'rgba(251,191,36,0.1)' }}
-                            placeholder="Ex: 5800" />
+                            placeholder="Ex: 5800"
+                        />
                     </div>
                 </div>
 
@@ -351,11 +456,12 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     <Activity size={18} /> Détails de Calcul (Logs)
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', fontSize: '0.85rem', fontFamily: 'monospace', color: '#cbd5e1' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '2rem', fontSize: '0.85rem', fontFamily: 'monospace', color: '#cbd5e1' }}>
                     {[{ key: 'axel', res: resAxel, color: '#38bdf8', label: 'AXEL' }, { key: 'prisca', res: resPrisca, color: '#a78bfa', label: 'PRISCA' }].map(({ key, res, color, label }) => (
                         <div key={key} style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px' }}>
                             <h4 style={{ color, marginBottom: '1rem' }}>LOGS {label}</h4>
                             <p>Poids: {profiles[key].weight}kg | Taille: {profiles[key].height}cm | Age: {profiles[key].age}</p>
+                            <p>Protéines cible: <strong style={{ color }}>{profiles[key].prot_ratio}g/kg → {Math.round(res.prot_goal)}g/jour</strong></p>
                             <p>BMR (Mifflin): {Math.round(res.bmr)} kcal</p>
                             <p>Facteur Sédentaire (×1.2): {Math.round(res.bmr * 1.2)} kcal</p>
                             <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
@@ -373,6 +479,10 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                             <p>Socle Fixe: -{Math.round(res.fixed_cal)} kcal</p>
                             <p>Reste pour Pâtes: {Math.round(res.remaining_cal)} kcal</p>
                             <p><strong>= {Math.round(res.pasta_grams_day)}g Pâtes (Cru)</strong></p>
+                            <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
+                            <p style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>
+                                Protéines: {Math.round(res.total_prot)}g / {Math.round(res.prot_goal)}g ({profiles[key].prot_ratio}g/kg)
+                            </p>
                         </div>
                     ))}
                 </div>
@@ -389,6 +499,27 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 .input-group input[type="number"] { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #334155; padding: 0.5rem; border-radius: 6px; color: #fff; }
                 .input-group.checkbox { display: flex; align-items: center; }
                 .input-group.checkbox input { margin-right: 0.5rem; transform: scale(1.2); }
+                .unit-badge { font-size: 0.7rem; color: #64748b; background: rgba(255,255,255,0.07); padding: 0.1rem 0.35rem; border-radius: 4px; font-family: monospace; margin-left: 0.25rem; }
+                .goal-toggle { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+                .goal-btn { 
+                    flex: 1; 
+                    padding: 0.5rem 0.25rem; 
+                    border: 1px solid #334155; 
+                    background: transparent; 
+                    color: #64748b; 
+                    border-radius: 6px; 
+                    cursor: pointer; 
+                    font-size: 0.85rem; 
+                    font-weight: 700; 
+                    transition: all 0.2s;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 0;
+                    line-height: 1.1;
+                }
+                .goal-btn.active-sport { background: rgba(56,189,248,0.15); border-color: #38bdf8; color: #38bdf8; }
+                .goal-btn.active-sante { background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; }
                 .stats-mini { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; color: #cbd5e1; font-family: monospace; text-align: center; }
                 .plan-table { background: rgba(15,23,42,0.6); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; overflow: hidden; }
                 .plan-row { display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 2fr; padding: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); align-items: center; }
