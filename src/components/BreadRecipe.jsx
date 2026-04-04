@@ -58,7 +58,7 @@ const BreadRecipe = () => {
                 ))}
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div className="bread-grid">
 
                 {/* INGRÉDIENTS */}
                 <div className="card">
@@ -137,8 +137,19 @@ const BreadRecipe = () => {
             </div>
 
             <style>{`
+                .bread-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 2rem;
+                }
                 @media (max-width: 768px) {
-                    .bread-grid { grid-template-columns: 1fr !important; }
+                    .bread-grid {
+                        grid-template-columns: 1fr;
+                        gap: 1.5rem;
+                    }
+                    .bread-grid .card {
+                        min-width: 0;
+                    }
                 }
             `}</style>
         </div>

@@ -45,6 +45,8 @@ export const DEFAULT_PROFILES = {
         height: 183,
         age: 27,
         gender: 'male',
+        // Objectif protéines libre en g/kg (ex: 1.8, 2.0, 1.6...)
+        prot_ratio: 1.8,
         activities: { ...DEFAULT_ACTIVITIES },
         deficit: 300,
         opt_galettes: false,
@@ -55,6 +57,7 @@ export const DEFAULT_PROFILES = {
         height: 160,
         age: 25,
         gender: 'female',
+        prot_ratio: 1.2,
         activities: { ...DEFAULT_ACTIVITIES },
         deficit: 300,
         opt_galettes: false,
@@ -64,8 +67,35 @@ export const DEFAULT_PROFILES = {
 
 // --- CORE ALGORITHM ---
 export const calculatePlan = (key, profiles) => {
-    const p = profiles[key];
+    const raw = profiles[key];
+
+    // FIX #11 : guards NaN — toutes les valeurs numériques sont sécurisées
+    const p = {
+        ...raw,
+        weight:      Math.max(0, Number(raw.weight)  || 0),
+        height:      Math.max(0, Number(raw.height)  || 0),
+        age:         Math.max(0, Number(raw.age)     || 0),
+        deficit:     Math.max(0, Number(raw.deficit) || 0),
+        opt_fromage: Math.max(0, Number(raw.opt_fromage) || 0),
+        opt_galettes: Boolean(raw.opt_galettes),
+        // Objectif protéines en g/kg — si absent ou invalide, défaut à 1.8
+        prot_ratio:  Math.max(0.5, Number(raw.prot_ratio) || 1.8),
+        activities:  raw.activities || {},
+    };
+
     const socle = { ...SOCLE_DATA.common, ...SOCLE_DATA[key] };
+
+    // Garde : si les données de base sont nulles, tout retourner à 0
+    if (p.weight === 0 || p.height === 0) {
+        return {
+            bmr: 0, tdee_final: 0, target_daily: 0,
+            fixed_cal: 0, fixed_prot: 0, remaining_cal: 0,
+            pasta_grams_day: 0, pasta_midi: 0, pasta_soir: 0,
+            total_prot: 0, prot_goal: 0, prot_warning: false,
+            pst_qty: 0, oeuf_qty_per_meal: 0, total_estimated: 0,
+            sport_cal_week: 0, sport_day: 0, total_sport_min: 0,
+        };
+    }
 
     // Étape 1 : BMR (Mifflin-St Jeor)
     let bmr = (10 * p.weight) + (6.25 * p.height) - (5 * p.age);
@@ -73,10 +103,9 @@ export const calculatePlan = (key, profiles) => {
 
     const sedentary = bmr * 1.2;
 
-    // Sport : somme pondérée par MET pour chaque activité
-    const activities = p.activities || {};
+    // FIX #7 (déjà correct) : Sport : Calories = MET × Poids(kg) × Durée(h)
     const sport_cal_week = ACTIVITIES.reduce((total, act) => {
-        const mins = activities[act.id] || 0;
+        const mins = Number(p.activities[act.id]) || 0;
         return total + p.weight * (mins / 60) * act.met;
     }, 0);
     const sport_day = sport_cal_week / 7;
@@ -131,16 +160,16 @@ export const calculatePlan = (key, profiles) => {
     const pasta_midi = pasta_grams_day * 0.55;
     const pasta_soir = pasta_grams_day * 0.45;
 
-    // Étape 5 : Check Protéines
+    // Objectif protéines libre : prot_ratio g/kg (ex: 1.8)
     const pasta_prot = (pasta_grams_day / 100) * PASTA_REF.prot;
     const total_prot = fixed_prot + pasta_prot;
-    const prot_goal = p.weight * 1.6;
+    const prot_goal = p.weight * p.prot_ratio;
     const prot_warning = total_prot < prot_goal;
 
     const total_estimated = fixed_cal + (remaining_cal > 0 ? remaining_cal : 0);
 
     // Stats sport pour l'affichage
-    const total_sport_min = ACTIVITIES.reduce((sum, act) => sum + (activities[act.id] || 0), 0);
+    const total_sport_min = ACTIVITIES.reduce((sum, act) => sum + (Number(p.activities[act.id]) || 0), 0);
 
     return {
         bmr,

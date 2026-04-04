@@ -15,7 +15,17 @@ const App = () => {
 
   const [profiles, setProfiles] = useState(() => {
     const saved = localStorage.getItem('smart_diet_profiles_v2');
-    return saved ? JSON.parse(saved) : DEFAULT_PROFILES;
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Migration : garantit que prot_ratio existe même pour les anciens localStorage (avec goal)
+      const axelRatio   = parsed.axel?.prot_ratio   ?? (parsed.axel?.goal === 'sante' ? 1.2 : 1.8);
+      const priscaRatio = parsed.prisca?.prot_ratio ?? (parsed.prisca?.goal === 'sante' ? 1.2 : 1.8);
+      return {
+        axel:   { ...DEFAULT_PROFILES.axel,   ...parsed.axel,   prot_ratio: axelRatio },
+        prisca: { ...DEFAULT_PROFILES.prisca, ...parsed.prisca, prot_ratio: priscaRatio },
+      };
+    }
+    return DEFAULT_PROFILES;
   });
 
   useEffect(() => {
@@ -76,6 +86,9 @@ const App = () => {
           } else if (param === 'Opt_Fromage') {
             next.axel.opt_fromage = parseFloat(row.Axel);
             next.prisca.opt_fromage = parseFloat(row.Prisca);
+          } else if (param === 'Prot_Ratio') {
+            next.axel.prot_ratio   = parseFloat(row.Axel)   || 1.8;
+            next.prisca.prot_ratio = parseFloat(row.Prisca) || 1.2;
           } else if (param === 'SportMin') {
             // Migration ancien format : assigner toutes les minutes à muscu_pdc
             next.axel.activities.muscu_pdc = parseFloat(row.Axel) || 0;
