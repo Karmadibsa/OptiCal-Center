@@ -106,6 +106,12 @@ const SmartDiet = ({ profiles, setProfiles }) => {
         totalWeighed: 0
     });
 
+    const [pstBatchConfig, setPstBatchConfig] = useState({
+        days: 6,
+        bowlWeight: 683, // poids des deux cul de poule ensemble
+        totalWeighed: 0
+    });
+
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
 
@@ -211,11 +217,17 @@ const SmartDiet = ({ profiles, setProfiles }) => {
         </div>
     );
 
-    // --- BATCH ---
+    // --- BATCH PÂTES ---
     const totalRawDaily = resAxel.pasta_midi + resAxel.pasta_soir + resPrisca.pasta_midi + resPrisca.pasta_soir;
     const totalRawBatch = totalRawDaily * batchConfig.days;
     const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
     const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
+
+    // --- BATCH PST ---
+    const totalPstRawDaily = resAxel.pst_qty + resPrisca.pst_qty;
+    const totalPstRawBatch = totalPstRawDaily * pstBatchConfig.days;
+    const netPstCooked = Math.max(0, pstBatchConfig.totalWeighed - pstBatchConfig.bowlWeight);
+    const pstCookCoef = (totalPstRawBatch > 0 && netPstCooked > 0) ? netPstCooked / totalPstRawBatch : 0;
 
     return (
         <div className="animate-fade-in section-container">
@@ -447,6 +459,81 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                             <div className="col-val">{Math.round(resPrisca.pasta_soir * cookCoef)}g</div>
                         </div>
                     </div>
+                </div>
+            </div>
+
+            {/* --- BATCH PST --- */}
+            <h2 className="section-title" style={{ marginTop: '3rem', color: '#f97316' }}>
+                <Scale className="icon-mr" /> Batch PST (Dimanche)
+            </h2>
+
+            <div className="card" style={{ borderLeft: '4px solid #f97316' }}>
+                <div className="inputs-grid">
+                    <div className="input-group">
+                        <label htmlFor="pst-days">Jours de Batch</label>
+                        <input
+                            id="pst-days"
+                            type="number"
+                            value={pstBatchConfig.days === 0 ? '' : pstBatchConfig.days}
+                            placeholder="6"
+                            onChange={(e) => setPstBatchConfig({ ...pstBatchConfig, days: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="pst-bowl">Poids 2x Cul de Poule (Vides) <span className="unit-badge">g</span></label>
+                        <input
+                            id="pst-bowl"
+                            type="number"
+                            value={pstBatchConfig.bowlWeight === 0 ? '' : pstBatchConfig.bowlWeight}
+                            placeholder="683"
+                            onChange={(e) => setPstBatchConfig({ ...pstBatchConfig, bowlWeight: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="pst-total" style={{ color: '#fb923c', fontWeight: 'bold' }}>
+                            POIDS TOTAL (Culs de Poule + PST Cuits) <span className="unit-badge">g</span>
+                        </label>
+                        <input
+                            id="pst-total"
+                            type="number"
+                            value={pstBatchConfig.totalWeighed === 0 ? '' : pstBatchConfig.totalWeighed}
+                            onChange={(e) => setPstBatchConfig({ ...pstBatchConfig, totalWeighed: parseFloat(e.target.value) || 0 })}
+                            style={{ borderColor: '#f97316', background: 'rgba(249,115,22,0.1)' }}
+                            placeholder="Ex: 2500"
+                        />
+                    </div>
+                </div>
+
+                <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#94a3b8' }}>
+                            Total PST Cru Semaine: <strong>{Math.round(totalPstRawBatch)}g</strong> ({pstBatchConfig.days} jours)
+                        </span>
+                        <span style={{ fontSize: '1.1rem', color: '#f97316' }}>
+                            Coef Cuisson PST: <strong>x{pstCookCoef.toFixed(2)}</strong>
+                        </span>
+                    </div>
+
+                    {pstCookCoef > 0 ? (
+                        <div className="plan-table">
+                            <div className="plan-row header-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                                <div className="col-item">BOÎTES PST À PRÉPARER</div>
+                                <div className="col-val">POIDS CUIT / BOX</div>
+                            </div>
+                            <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                                <div className="col-item" style={{ color: '#38bdf8' }}>Axel MIDI (x{pstBatchConfig.days})</div>
+                                <div className="col-val">{Math.round(resAxel.pst_qty * pstCookCoef)}g</div>
+                            </div>
+                            <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
+                                <div className="col-item" style={{ color: '#a78bfa' }}>Prisca MIDI (x{pstBatchConfig.days})</div>
+                                <div className="col-val">{Math.round(resPrisca.pst_qty * pstCookCoef)}g</div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div style={{ textAlign: 'center', color: '#64748b', padding: '1rem', fontStyle: 'italic', fontSize: '0.9rem' }}>
+                            ↑ Entrez le poids total après cuisson pour calculer les portions
+                        </div>
+                    )}
                 </div>
             </div>
 
