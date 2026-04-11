@@ -101,7 +101,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     const [activeTab, setActiveTab] = useState('axel');
 
     const [batchConfig, setBatchConfig] = useState({
-        days: 6,
+        midis: 6,
+        soirs: 6,
         potWeight: 1930,
         totalWeighed: 0
     });
@@ -218,8 +219,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     );
 
     // --- BATCH PÂTES ---
-    const totalRawDaily = resAxel.pasta_midi + resAxel.pasta_soir + resPrisca.pasta_midi + resPrisca.pasta_soir;
-    const totalRawBatch = totalRawDaily * batchConfig.days;
+    const totalRawBatch = (resAxel.pasta_midi + resPrisca.pasta_midi) * batchConfig.midis + 
+                          (resAxel.pasta_soir + resPrisca.pasta_soir) * batchConfig.soirs;
     const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
     const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
 
@@ -392,13 +393,23 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
                 <div className="inputs-grid">
                     <div className="input-group">
-                        <label htmlFor="batch-days">Jours de Batch</label>
+                        <label htmlFor="batch-midis">Nombre de Midis</label>
                         <input
-                            id="batch-days"
+                            id="batch-midis"
                             type="number"
-                            value={batchConfig.days === 0 ? '' : batchConfig.days}
+                            value={batchConfig.midis === 0 ? '' : batchConfig.midis}
                             placeholder="6"
-                            onChange={(e) => setBatchConfig({ ...batchConfig, days: parseFloat(e.target.value) || 0 })}
+                            onChange={(e) => setBatchConfig({ ...batchConfig, midis: parseFloat(e.target.value) || 0 })}
+                        />
+                    </div>
+                    <div className="input-group">
+                        <label htmlFor="batch-soirs">Nombre de Soirs</label>
+                        <input
+                            id="batch-soirs"
+                            type="number"
+                            value={batchConfig.soirs === 0 ? '' : batchConfig.soirs}
+                            placeholder="6"
+                            onChange={(e) => setBatchConfig({ ...batchConfig, soirs: parseFloat(e.target.value) || 0 })}
                         />
                     </div>
                     <div className="input-group">
@@ -430,7 +441,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                         <span style={{ color: '#94a3b8' }}>
-                            Total Cru Semaine: <strong>{Math.round(totalRawBatch)}g</strong> ({batchConfig.days} jours)
+                            Total Cru Semaine: <strong>{Math.round(totalRawBatch)}g</strong> ({batchConfig.midis} midis, {batchConfig.soirs} soirs)
                         </span>
                         <span style={{ fontSize: '1.1rem', color: '#10b981' }}>
                             Coef Cuisson: <strong>x{cookCoef.toFixed(2)}</strong>
@@ -443,19 +454,19 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                             <div className="col-val">POIDS CUIT / BOÎTE</div>
                         </div>
                         <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel MIDI (x{batchConfig.days})</div>
+                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel MIDI (x{batchConfig.midis})</div>
                             <div className="col-val">{Math.round(resAxel.pasta_midi * cookCoef)}g</div>
                         </div>
                         <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel SOIR (x{batchConfig.days})</div>
+                            <div className="col-item" style={{ color: '#38bdf8' }}>Axel SOIR (x{batchConfig.soirs})</div>
                             <div className="col-val">{Math.round(resAxel.pasta_soir * cookCoef)}g</div>
                         </div>
                         <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca MIDI (x{batchConfig.days})</div>
+                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca MIDI (x{batchConfig.midis})</div>
                             <div className="col-val">{Math.round(resPrisca.pasta_midi * cookCoef)}g</div>
                         </div>
                         <div className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca SOIR (x{batchConfig.days})</div>
+                            <div className="col-item" style={{ color: '#a78bfa' }}>Prisca SOIR (x{batchConfig.soirs})</div>
                             <div className="col-val">{Math.round(resPrisca.pasta_soir * cookCoef)}g</div>
                         </div>
                     </div>
