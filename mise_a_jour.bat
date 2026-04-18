@@ -14,4 +14,4 @@ git commit -m "mise a jour %current_date%"
 git push
 
 echo --- Mise a jour terminee ! ---
-pause
+pauses

@@ -301,6 +301,17 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         Option Galettes Soir
                                     </label>
                                 </div>
+                                <div className="input-group checkbox">
+                                    <label htmlFor={`profile-${key}-fb`}>
+                                        <input
+                                            id={`profile-${key}-fb`}
+                                            type="checkbox"
+                                            checked={profiles[key].opt_fb_soir || false}
+                                            onChange={(e) => handleInput(key, 'opt_fb_soir', e.target.checked)}
+                                        />
+                                        Option Fromage Blanc Soir
+                                    </label>
+                                </div>
                                 <div className="input-group">
                                     <label htmlFor={fromageId}>Option Fromage <span className="unit-badge">g</span></label>
                                     <input
@@ -373,6 +384,12 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 <PlanRow label="Légumes + Crème" axelVal="Légumes + 30g Crème" priscaVal="Légumes + 30g Crème" note="" />
                 <PlanRow label="Option Galettes" axelVal={profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-"} priscaVal={profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-"} note="Si activé, pâtes réduites" />
                 <PlanRow label="Option Fromage" axelVal={profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-"} priscaVal={profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-"} note="Extra variable" />
+                <PlanRow
+                    label="Fromage Blanc 0%"
+                    axelVal={resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-"}
+                    priscaVal={resPrisca.fb_qty > 0 ? `${resPrisca.fb_qty}g` : "-"}
+                    note="Compensation prot. soir"
+                />
             </div>
 
             {(resAxel.prot_warning || resPrisca.prot_warning) && (
@@ -574,8 +591,10 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                             <p><strong>TDEE Final: {Math.round(res.tdee_final)} kcal</strong></p>
                             <p>Cible (-{profiles[key].deficit}): {Math.round(res.target_daily)} kcal</p>
                             <br />
-                            <p>Socle Fixe: -{Math.round(res.fixed_cal)} kcal</p>
-                            <p>Reste pour Pâtes: {Math.round(res.remaining_cal)} kcal</p>
+                            <p>Socle Fixe (sans PST): -{Math.round(res.fixed_cal - res.pst_qty * 3.3)} kcal</p>
+                            <p>PST: {res.pst_qty}g → -{Math.round(res.pst_qty * 3.3)} kcal | +{Math.round(res.pst_qty * 0.5)}g prot</p>
+                            {res.fb_qty > 0 && <p style={{ color: '#a78bfa' }}>FB 0%: {res.fb_qty}g → +{Math.round(res.fb_qty * 0.08)}g prot | -{Math.round(res.fb_qty * 0.48)} kcal/pâtes</p>}
+                            <p>Reste pour Pâtes: {Math.round(res.remaining_cal - res.pst_qty * 3.3)} kcal</p>
                             <p><strong>= {Math.round(res.pasta_grams_day)}g Pâtes (Cru)</strong></p>
                             <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
                             <p style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>

@@ -3,27 +3,28 @@ Config,Profile,Weight,109,61,System Config
 Config,Profile,Height,183,160,System Config
 Config,Profile,Age,27,27,System Config
 Config,Profile,Deficit,500,150,System Config
+Config,Profile,Prot_Ratio,1.8,1.8,System Config
 Config,Profile,Opt_Galettes,false,false,System Config
 Config,Profile,Opt_Fromage,20,20,System Config
-Config,Sport,hiit,20,30,HIIT - MET 10
-Config,Sport,calisthenics,180,45,Calisthenics - MET 8
+Config,Sport,hiit,20,40,HIIT - MET 10
+Config,Sport,calisthenics,90,45,Calisthenics - MET 8
 Config,Sport,muscu_pdc,0,0,Muscu / Poids de Corps - MET 5
 Config,Sport,course,0,0,Course à pied - MET 9
 Config,Sport,velo,0,0,Vélo - MET 8
 Config,Sport,escalade,0,0,Escalade - MET 8
 Config,Sport,rando,0,0,Randonnée - MET 5.5
 Config,Sport,pilates,0,45,Pilates - MET 3
-Config,Sport,marche,150,0,Marche - MET 3.5
+Config,Sport,marche,120,0,Marche - MET 3.5
 Diet,Matin,Pain + Cancoillotte + Œufs,140g Pain + 30g Canc. + 3 Œufs,80g Pain + 20g Canc. + 2 Œufs,Base fixe
 Diet,Matin,Whey,1 Shaker de Whey (30g),Rien,
-Diet,Midi,Pâtes Protein+ (Cru),114g,45g,Calculé (55%)
-Diet,Midi,PST (Cru),84g,36g,Source Protéines (Poids - 25)
+Diet,Midi,Pâtes Protein+ (Cru),71g,42g,Calculé (55%)
+Diet,Midi,PST (Cru),85g,47g,Source Protéines (Poids - 25)
 Diet,Midi,Légumes,À volonté,À volonté,Volume
 Diet,Midi,Crème Fraîche,30g (1 c.à.s),30g (1 c.à.s),Lipides
 Diet,16H00,Banane,1 Banane,1 Banane,Glucides rapides
 Diet,16H00,Whey,1 Shaker de Whey (30g),1 Shaker de Whey (25g),Récupération
-Diet,Soir,Pâtes Protein+ (Cru),93g,37g,Ajustement (45%)
+Diet,Soir,Pâtes Protein+ (Cru),58g,34g,Ajustement (45%)
 Diet,Soir,Œufs,3 (Plat/Mollet),2 (Plat/Mollet),OBLIGATOIRE
 Diet,Soir,Légumes + Crème,Légumes + 30g Crème,Légumes + 30g Crème,
 Diet,Soir,Option Galettes,-,-,"Si activé, pâtes réduites"
-Diet,Soir,Option Fromage,20g,20g,Extra variables
+Diet,Soir,Option Fromage,20g,20g,Extra variable

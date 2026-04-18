@@ -50,7 +50,8 @@ export const DEFAULT_PROFILES = {
         activities: { ...DEFAULT_ACTIVITIES },
         deficit: 300,
         opt_galettes: false,
-        opt_fromage: 0
+        opt_fromage: 0,
+        opt_fb_soir: false
     },
     prisca: {
         weight: 62,
@@ -61,7 +62,8 @@ export const DEFAULT_PROFILES = {
         activities: { ...DEFAULT_ACTIVITIES },
         deficit: 300,
         opt_galettes: false,
-        opt_fromage: 0
+        opt_fromage: 0,
+        opt_fb_soir: false
     }
 };
 
@@ -78,6 +80,7 @@ export const calculatePlan = (key, profiles) => {
         deficit:     Math.max(0, Number(raw.deficit) || 0),
         opt_fromage: Math.max(0, Number(raw.opt_fromage) || 0),
         opt_galettes: Boolean(raw.opt_galettes),
+        opt_fb_soir:  Boolean(raw.opt_fb_soir),
         // Objectif protéines en g/kg — si absent ou invalide, défaut à 1.8
         prot_ratio:  Math.max(0.5, Number(raw.prot_ratio) || 1.8),
         activities:  raw.activities || {},
@@ -94,6 +97,7 @@ export const calculatePlan = (key, profiles) => {
             total_prot: 0, prot_goal: 0, prot_warning: false,
             pst_qty: 0, oeuf_qty_per_meal: 0, total_estimated: 0,
             sport_cal_week: 0, sport_day: 0, total_sport_min: 0,
+            fb_qty: 0,
         };
     }
 
@@ -115,13 +119,9 @@ export const calculatePlan = (key, profiles) => {
     // Étape 2 : Cible
     const target_daily = tdee_final - p.deficit;
 
-    // Étape 3 : Socle Fixe
-    let fixed_cal = 0;
-    let fixed_prot = 0;
-
-    const pst_qty = Math.max(0, Math.round(p.weight - 25));
-    const pst_cal = (pst_qty / 100) * 330;
-    const pst_prot = (pst_qty / 100) * 50;
+    // Étape 3 : Socle Fixe SANS les PST
+    let fixed_cal_sans_pst = 0;
+    let fixed_prot_sans_pst = 0;
 
     const oeuf_qty_per_meal = p.weight > 80 ? 3 : 2;
     const total_oeufs_day = oeuf_qty_per_meal * 2;
@@ -132,7 +132,6 @@ export const calculatePlan = (key, profiles) => {
         socle.pain_matin,
         socle.collation_whey,
         socle.collation_fruit,
-        { kcal: pst_cal, prot: pst_prot },
         socle.midi_creme,
         { kcal: oeuf_cal, prot: oeuf_prot },
         socle.soir_creme,
@@ -140,33 +139,68 @@ export const calculatePlan = (key, profiles) => {
         socle.matin_whey
     ];
     items.forEach(i => {
-        fixed_cal += i.kcal;
-        fixed_prot += i.prot;
+        fixed_cal_sans_pst += i.kcal;
+        fixed_prot_sans_pst += i.prot;
     });
 
     if (p.opt_galettes) {
-        fixed_cal += SOCLE_DATA.common.galettes_2x.kcal;
-        fixed_prot += SOCLE_DATA.common.galettes_2x.prot;
+        fixed_cal_sans_pst += SOCLE_DATA.common.galettes_2x.kcal;
+        fixed_prot_sans_pst += SOCLE_DATA.common.galettes_2x.prot;
     }
 
     if (p.opt_fromage > 0) {
-        fixed_cal += p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal;
-        fixed_prot += p.opt_fromage * SOCLE_DATA.common.fromage_unit.prot;
+        fixed_cal_sans_pst += p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal;
+        fixed_prot_sans_pst += p.opt_fromage * SOCLE_DATA.common.fromage_unit.prot;
     }
 
-    // Étape 4 : Pâtes (variable)
-    const remaining_cal = target_daily - fixed_cal;
-    const pasta_grams_day = remaining_cal > 0 ? (remaining_cal / PASTA_REF.kcal) * 100 : 0;
+    // Étape 4 : Résoudre dynamiquement PST + Pâtes
+    // Objectif protéines : prot_ratio g/kg
+    const prot_goal = p.weight * p.prot_ratio;
+
+    // Ce qu'il reste à couvrir après le socle fixe
+    const remaining_cal_target = target_daily - fixed_cal_sans_pst;
+    const remaining_prot_target = prot_goal - fixed_prot_sans_pst;
+
+    // Résolution du système d'équations :
+    // PST  : 3.3 kcal/g | 0.5g prot/g  → (3.3x + 3.6y = remaining_cal_target)
+    // Pâtes: 3.6 kcal/g | 0.2g prot/g  → (0.5x + 0.2y = remaining_prot_target)
+    // → x (PST) = (18 * remaining_prot_target - remaining_cal_target) / 5.7
+    const raw_pst_qty = (18 * remaining_prot_target - remaining_cal_target) / 5.7;
+    let pst_qty = Math.max(0, Math.round(raw_pst_qty));
+    pst_qty = Math.min(pst_qty, 85); // cap à 85g — le FB soir prend le relais
+
+    const pst_cal = pst_qty * 3.3;
+    const pst_prot = pst_qty * 0.5;
+
+    // Les pâtes comblent le reste des calories
+    const remaining_cal_for_pasta = remaining_cal_target - pst_cal;
+    let pasta_grams_day = Math.max(0, remaining_cal_for_pasta / 3.6);
+
+    // Étape 5 : Fromage Blanc 0% — filet de sécurité protéique post-cap PST
+    // Valeurs nutritionnelles : 0.48 kcal/g | 0.08 g prot/g
+    const current_prot_before_fb = fixed_prot_sans_pst + pst_prot + (pasta_grams_day * 0.2);
+    const prot_deficit = Math.round(prot_goal - current_prot_before_fb);
+
+    let fb_qty = 0;
+    if (p.opt_fb_soir && prot_deficit > 0) {
+        fb_qty = Math.round(prot_deficit / 0.08);
+        // On retire les calories du FB au budget pâtes pour rester dans la cible
+        const fb_cal = fb_qty * 0.48;
+        pasta_grams_day = Math.max(0, pasta_grams_day - (fb_cal / 3.6));
+    }
+
     const pasta_midi = pasta_grams_day * 0.55;
     const pasta_soir = pasta_grams_day * 0.45;
 
-    // Objectif protéines libre : prot_ratio g/kg (ex: 1.8)
+    // Totaux réels (avec FB)
     const pasta_prot = (pasta_grams_day / 100) * PASTA_REF.prot;
-    const total_prot = fixed_prot + pasta_prot;
-    const prot_goal = p.weight * p.prot_ratio;
-    const prot_warning = total_prot < prot_goal;
+    const fixed_cal = fixed_cal_sans_pst + pst_cal;
+    const fixed_prot = fixed_prot_sans_pst + pst_prot;
+    const final_total_prot = fixed_prot + pasta_prot + (fb_qty * 0.08);
+    const prot_warning = Math.round(final_total_prot) < Math.round(prot_goal);
 
-    const total_estimated = fixed_cal + (remaining_cal > 0 ? remaining_cal : 0);
+    const remaining_cal = remaining_cal_target;
+    const total_estimated = fixed_cal_sans_pst + pst_cal + (remaining_cal_for_pasta > 0 ? remaining_cal_for_pasta : 0);
 
     // Stats sport pour l'affichage
     const total_sport_min = ACTIVITIES.reduce((sum, act) => sum + (Number(p.activities[act.id]) || 0), 0);
@@ -181,10 +215,11 @@ export const calculatePlan = (key, profiles) => {
         pasta_grams_day,
         pasta_midi,
         pasta_soir,
-        total_prot,
+        total_prot: final_total_prot,
         prot_goal,
         prot_warning,
         pst_qty,
+        fb_qty,
         oeuf_qty_per_meal,
         total_estimated,
         sport_cal_week,
