@@ -6,6 +6,7 @@ Config,Profile,Deficit,500,150,System Config
 Config,Profile,Prot_Ratio,1.8,1.8,System Config
 Config,Profile,Opt_Galettes,false,false,System Config
 Config,Profile,Opt_Fromage,20,20,System Config
+Config,Profile,Opt_Fb_Soir,false,false,System Config
 Config,Sport,hiit,20,40,HIIT - MET 10
 Config,Sport,calisthenics,90,45,Calisthenics - MET 8
 Config,Sport,muscu_pdc,0,0,Muscu / Poids de Corps - MET 5
@@ -28,3 +29,4 @@ Diet,Soir,Œufs,3 (Plat/Mollet),2 (Plat/Mollet),OBLIGATOIRE
 Diet,Soir,Légumes + Crème,Légumes + 30g Crème,Légumes + 30g Crème,
 Diet,Soir,Option Galettes,-,-,"Si activé, pâtes réduites"
 Diet,Soir,Option Fromage,20g,20g,Extra variable
+Diet,Soir,Fromage Blanc 0%,-,-,Compensation prot. soir

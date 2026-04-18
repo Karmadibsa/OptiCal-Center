@@ -86,6 +86,9 @@ const App = () => {
           } else if (param === 'Opt_Fromage') {
             next.axel.opt_fromage = parseFloat(row.Axel);
             next.prisca.opt_fromage = parseFloat(row.Prisca);
+          } else if (param === 'Opt_Fb_Soir') {
+            next.axel.opt_fb_soir = row.Axel === 'true';
+            next.prisca.opt_fb_soir = row.Prisca === 'true';
           } else if (param === 'Prot_Ratio') {
             next.axel.prot_ratio   = parseFloat(row.Axel)   || 1.8;
             next.prisca.prot_ratio = parseFloat(row.Prisca) || 1.2;

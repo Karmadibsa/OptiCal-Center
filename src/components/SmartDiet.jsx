@@ -171,6 +171,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Config', 'Profile', 'Prot_Ratio', profiles.axel.prot_ratio, profiles.prisca.prot_ratio, 'System Config'],
             ['Config', 'Profile', 'Opt_Galettes', profiles.axel.opt_galettes, profiles.prisca.opt_galettes, 'System Config'],
             ['Config', 'Profile', 'Opt_Fromage', profiles.axel.opt_fromage, profiles.prisca.opt_fromage, 'System Config'],
+            ['Config', 'Profile', 'Opt_Fb_Soir', profiles.axel.opt_fb_soir || false, profiles.prisca.opt_fb_soir || false, 'System Config'],
             ...ACTIVITIES.map(act => [
                 'Config', 'Sport', act.id,
                 profiles.axel.activities?.[act.id] || 0,
@@ -196,6 +197,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
             ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
+            ['Diet', 'Soir', 'Fromage Blanc 0%', resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-", resPrisca.fb_qty > 0 ? `${resPrisca.fb_qty}g` : "-", 'Compensation prot. soir'],
         ];
 
         const rows = [header, ...configRows, ...dataRows];
