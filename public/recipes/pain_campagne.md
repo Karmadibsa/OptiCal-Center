@@ -2,7 +2,7 @@
 id: 100
 name: Pain de Campagne Rustique (V2)
 category: complet|boulangerie
-base_unit: 100g
+base_unit: 1500g
 recipe_yield: 1500g
 kcal: 240
 prot: 9

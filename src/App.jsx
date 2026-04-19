@@ -6,7 +6,9 @@ import Navigation from './components/Navigation';
 import Dashboard from './components/Dashboard';
 import Calculator from './components/Calculator';
 import SmartDiet from './components/SmartDiet';
-import BreadRecipe from './components/BreadRecipe';
+import DietSummary from './components/DietSummary';
+import ExternalMeal from './components/ExternalMeal';
+import RecipeIdeas from './components/RecipeIdeas';
 import { DEFAULT_PROFILES, DEFAULT_ACTIVITIES } from './utils/dietAlgo';
 
 const App = () => {
@@ -138,7 +140,9 @@ const App = () => {
         <Route path="/" element={<Dashboard csvData={data} />} />
         <Route path="/calculator" element={<Calculator profiles={profiles} />} />
         <Route path="/smart-diet" element={<SmartDiet profiles={profiles} setProfiles={setProfiles} />} />
-        <Route path="/recette" element={<BreadRecipe />} />
+        <Route path="/diet-summary" element={<DietSummary profiles={profiles} data={data} />} />
+        <Route path="/external-meal" element={<ExternalMeal profiles={profiles} />} />
+        <Route path="/recipes" element={<RecipeIdeas profiles={profiles} />} />
       </Routes>
 
       <footer style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>

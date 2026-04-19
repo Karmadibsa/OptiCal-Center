@@ -1,4 +1,15 @@
 // MET values from the Compendium of Physical Activities (Ainsworth et al.)
+
+// ─── Calcul de l'âge depuis la date de naissance ───────────────────────────
+export const computeAge = (birthdate) => {
+    if (!birthdate) return null;
+    const today = new Date();
+    const birth = new Date(birthdate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const m = today.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
+    return age;
+};
 export const ACTIVITIES = [
     { id: 'hiit',        label: 'HIIT',                  met: 10.0 },
     { id: 'calisthenics',label: 'Calisthenics',           met: 8.0  },
@@ -27,7 +38,7 @@ export const SOCLE_DATA = {
         soir_creme: { kcal: 90, prot: 1 },
         legumes: { kcal: 100, prot: 4 },
         fromage_unit: { kcal: 4, prot: 0.25 },
-        galettes_2x: { kcal: 334, prot: 13.4 }
+        galettes_150g: { kcal: 327, prot: 13.4 }
     },
     axel: {
         pain_matin: { kcal: 400, prot: 16 },
@@ -39,11 +50,40 @@ export const SOCLE_DATA = {
     }
 };
 
+// ─── Estimations lipides / glucides ───────────────
+export const MACRO_EST = {
+    pain_axel_lip: 5,    // 140g pain + 30g cancoillotte
+    pain_axel_glu: 68,
+    pain_prisca_lip: 3,  // 80g pain + 20g cancoillotte
+    pain_prisca_glu: 40,
+    whey_lip_per: 2,     // par scoop
+    whey_glu_per: 3,
+    oeuf_lip: 5,         // par œuf entier
+    creme_lip_per_30g: 9,// 30% crème fraîche
+    // Légumes : ~225g × 2 = 450g/j
+    legumes_kcal_jours: 190,
+    legumes_prot_jour: 12,
+    legumes_glu_jour: 30,
+    creme_glu: 1,
+    banane_kcal: 105,
+    banane_prot: 1,
+    banane_glu: 25,
+    galettes_lip: 16.5,
+    galettes_glu: 30,
+    fromage_unit_lip: 0.33,
+    pasta_lip_per_100g: 2,
+    pasta_glu_per_100g: 62,
+    fb_glu_per_g: 0.04,
+    pst_lip: 0.05,
+    pst_glu: 0.3,
+};
+
+
 export const DEFAULT_PROFILES = {
     axel: {
         weight: 110,
         height: 183,
-        age: 27,
+        birthdate: '1999-07-03', // 3 juillet 1999
         gender: 'male',
         // Objectif protéines libre en g/kg (ex: 1.8, 2.0, 1.6...)
         prot_ratio: 1.8,
@@ -56,7 +96,7 @@ export const DEFAULT_PROFILES = {
     prisca: {
         weight: 62,
         height: 160,
-        age: 25,
+        birthdate: '1999-04-04', // 4 avril 1999
         gender: 'female',
         prot_ratio: 1.2,
         activities: { ...DEFAULT_ACTIVITIES },
@@ -72,11 +112,14 @@ export const calculatePlan = (key, profiles) => {
     const raw = profiles[key];
 
     // FIX #11 : guards NaN — toutes les valeurs numériques sont sécurisées
+    // Calcul âge dynamique depuis la date de naissance si disponible
+    const computedAge = raw.birthdate ? computeAge(raw.birthdate) : Math.max(0, Number(raw.age) || 0);
+
     const p = {
         ...raw,
         weight:      Math.max(0, Number(raw.weight)  || 0),
         height:      Math.max(0, Number(raw.height)  || 0),
-        age:         Math.max(0, Number(raw.age)     || 0),
+        age:         Math.max(0, computedAge || 0),
         deficit:     Math.max(0, Number(raw.deficit) || 0),
         opt_fromage: Math.max(0, Number(raw.opt_fromage) || 0),
         opt_galettes: Boolean(raw.opt_galettes),
@@ -95,9 +138,10 @@ export const calculatePlan = (key, profiles) => {
             fixed_cal: 0, fixed_prot: 0, remaining_cal: 0,
             pasta_grams_day: 0, pasta_midi: 0, pasta_soir: 0,
             total_prot: 0, prot_goal: 0, prot_warning: false,
+            total_lip: 0, total_glu: 0,
             pst_qty: 0, oeuf_qty_per_meal: 0, total_estimated: 0,
             sport_cal_week: 0, sport_day: 0, total_sport_min: 0,
-            fb_qty: 0,
+            fb_qty: 0, computed_age: computedAge,
         };
     }
 
@@ -143,14 +187,33 @@ export const calculatePlan = (key, profiles) => {
         fixed_prot_sans_pst += i.prot;
     });
 
+    const isAxel = key === 'axel';
+    const wheyNb = isAxel ? 2 : 1;
+
+    let fixed_lip_sans_pst =
+        (isAxel ? MACRO_EST.pain_axel_lip : MACRO_EST.pain_prisca_lip) +
+        (wheyNb * MACRO_EST.whey_lip_per) +
+        (total_oeufs_day * MACRO_EST.oeuf_lip) +
+        (MACRO_EST.creme_lip_per_30g * 2) + 1; // Légumes lip = 1
+
+    let fixed_glu_sans_pst =
+        (isAxel ? MACRO_EST.pain_axel_glu : MACRO_EST.pain_prisca_glu) +
+        (wheyNb * MACRO_EST.whey_glu_per) +
+        (2) + // crème glu
+        (MACRO_EST.legumes_glu_jour) +
+        (MACRO_EST.banane_glu);
+
     if (p.opt_galettes) {
-        fixed_cal_sans_pst += SOCLE_DATA.common.galettes_2x.kcal;
-        fixed_prot_sans_pst += SOCLE_DATA.common.galettes_2x.prot;
+        fixed_cal_sans_pst += SOCLE_DATA.common.galettes_150g.kcal;
+        fixed_prot_sans_pst += SOCLE_DATA.common.galettes_150g.prot;
+        fixed_lip_sans_pst += MACRO_EST.galettes_lip;
+        fixed_glu_sans_pst += MACRO_EST.galettes_glu;
     }
 
     if (p.opt_fromage > 0) {
         fixed_cal_sans_pst += p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal;
         fixed_prot_sans_pst += p.opt_fromage * SOCLE_DATA.common.fromage_unit.prot;
+        fixed_lip_sans_pst += p.opt_fromage * MACRO_EST.fromage_unit_lip;
     }
 
     // Étape 4 : Résoudre dynamiquement PST + Pâtes
@@ -202,6 +265,16 @@ export const calculatePlan = (key, profiles) => {
     const remaining_cal = remaining_cal_target;
     const total_estimated = fixed_cal_sans_pst + pst_cal + (remaining_cal_for_pasta > 0 ? remaining_cal_for_pasta : 0);
 
+    // Calcul final des lipides et glucides
+    const total_lip = fixed_lip_sans_pst +
+                      (pst_qty * MACRO_EST.pst_lip) +
+                      (pasta_grams_day * MACRO_EST.pasta_lip_per_100g / 100);
+
+    const total_glu = fixed_glu_sans_pst +
+                      (pst_qty * MACRO_EST.pst_glu) +
+                      (pasta_grams_day * MACRO_EST.pasta_glu_per_100g / 100) +
+                      (fb_qty * MACRO_EST.fb_glu_per_g);
+
     // Stats sport pour l'affichage
     const total_sport_min = ACTIVITIES.reduce((sum, act) => sum + (Number(p.activities[act.id]) || 0), 0);
 
@@ -216,6 +289,8 @@ export const calculatePlan = (key, profiles) => {
         pasta_midi,
         pasta_soir,
         total_prot: final_total_prot,
+        total_lip,
+        total_glu,
         prot_goal,
         prot_warning,
         pst_qty,
@@ -225,5 +300,112 @@ export const calculatePlan = (key, profiles) => {
         sport_cal_week,
         sport_day,
         total_sport_min,
+        computed_age: p.age, // âge calculé dynamiquement depuis birthdate
+    };
+};
+
+// ─── Extracteur Budgets Repas (Midi / Soir) ──────────────────────────────────
+export const getMealBudget = (key, profiles, meal) => {
+    const plan = calculatePlan(key, profiles);
+    const p = profiles[key];
+    const optFromage  = Math.max(0, Number(p.opt_fromage)  || 0);
+    const optGalettes = Boolean(p.opt_galettes);
+    const optFbSoir   = Boolean(p.opt_fb_soir);
+
+    const r = (n, d = 0) => {
+        const f = Math.pow(10, d);
+        return Math.round((n || 0) * f) / f;
+    };
+
+    let total = { kcal: 0, prot: 0, lip: 0, glu: 0 };
+
+    if (meal === 'soir') {
+        const pasta = {
+            kcal: plan.pasta_soir * PASTA_REF.kcal / 100,
+            prot: plan.pasta_soir * PASTA_REF.prot / 100,
+            lip:  plan.pasta_soir * MACRO_EST.pasta_lip_per_100g / 100,
+            glu:  plan.pasta_soir * MACRO_EST.pasta_glu_per_100g / 100,
+        };
+        const oeufs = {
+            kcal: plan.oeuf_qty_per_meal * 80,
+            prot: plan.oeuf_qty_per_meal * 6,
+            lip:  plan.oeuf_qty_per_meal * MACRO_EST.oeuf_lip,
+            glu:  0,
+        };
+        const creme = {
+            kcal: SOCLE_DATA.common.soir_creme.kcal,
+            prot: SOCLE_DATA.common.soir_creme.prot,
+            lip:  MACRO_EST.creme_lip_per_30g,
+            glu:  MACRO_EST.creme_glu,
+        };
+
+        total.kcal += pasta.kcal + oeufs.kcal + creme.kcal;
+        total.prot += pasta.prot + oeufs.prot + creme.prot;
+        total.lip  += pasta.lip  + oeufs.lip  + creme.lip;
+        total.glu  += pasta.glu  + oeufs.glu  + creme.glu;
+
+        if (optFromage > 0) {
+            total.kcal += optFromage * SOCLE_DATA.common.fromage_unit.kcal;
+            total.prot += optFromage * SOCLE_DATA.common.fromage_unit.prot;
+            total.lip  += optFromage * MACRO_EST.fromage_unit_lip;
+        }
+
+        if (optGalettes) {
+            total.kcal += SOCLE_DATA.common.galettes_150g.kcal;
+            total.prot += SOCLE_DATA.common.galettes_150g.prot;
+            total.lip  += MACRO_EST.galettes_lip;
+            total.glu  += MACRO_EST.galettes_glu;
+        }
+
+        if (optFbSoir) {
+            total.kcal += plan.fb_qty * 0.48;
+            total.prot += plan.fb_qty * 0.08;
+            total.glu  += plan.fb_qty * MACRO_EST.fb_glu_per_g;
+        }
+
+    } else if (meal === 'midi') {
+        const pasta = {
+            kcal: plan.pasta_midi * PASTA_REF.kcal / 100,
+            prot: plan.pasta_midi * PASTA_REF.prot / 100,
+            lip:  plan.pasta_midi * MACRO_EST.pasta_lip_per_100g / 100,
+            glu:  plan.pasta_midi * MACRO_EST.pasta_glu_per_100g / 100,
+        };
+        const pst = {
+            kcal: plan.pst_qty * 3.3,
+            prot: plan.pst_qty * 0.5,
+            lip:  plan.pst_qty * MACRO_EST.pst_lip,
+            glu:  plan.pst_qty * MACRO_EST.pst_glu,
+        };
+        const creme = {
+            kcal: SOCLE_DATA.common.midi_creme.kcal,
+            prot: SOCLE_DATA.common.midi_creme.prot,
+            lip:  MACRO_EST.creme_lip_per_30g,
+            glu:  MACRO_EST.creme_glu,
+        };
+        // Legumes midi (moitié jour)
+        const legumes = {
+            kcal: MACRO_EST.legumes_kcal_jours / 2,
+            prot: MACRO_EST.legumes_prot_jour / 2,
+            lip:  0.5,
+            glu:  MACRO_EST.legumes_glu_jour / 2,
+        };
+
+        total.kcal += pasta.kcal + pst.kcal + creme.kcal + legumes.kcal;
+        total.prot += pasta.prot + pst.prot + creme.prot + legumes.prot;
+        total.lip  += pasta.lip  + pst.lip  + creme.lip  + legumes.lip;
+        total.glu  += pasta.glu  + pst.glu  + creme.glu  + legumes.glu;
+
+        if (optFromage > 0) {
+            total.kcal += optFromage * SOCLE_DATA.common.fromage_unit.kcal;
+            total.prot += optFromage * SOCLE_DATA.common.fromage_unit.prot;
+            total.lip  += optFromage * MACRO_EST.fromage_unit_lip;
+        }
+    }
+
+    return {
+        kcal: r(total.kcal),
+        prot: r(total.prot, 1),
+        lip:  r(total.lip, 1),
+        glu:  r(total.glu, 1)
     };
 };
