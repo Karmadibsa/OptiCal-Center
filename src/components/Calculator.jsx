@@ -48,12 +48,11 @@ const Calculator = ({ profiles }) => {
     const resetSchedule = () => setSchedule({});
 
     const calculateTotals = () => {
-        // Calcul temps réel depuis les profils — même source de vérité que SmartDiet
         const resAxel = calculatePlan('axel', profiles);
         const resPrisca = calculatePlan('prisca', profiles);
 
         const PASTA = 'Pâtes Protein+ (Cru)';
-        const PST = 'PST (Cru)';
+        const PST   = 'PST (Cru)';
 
         const newTotals = { [PASTA]: 0, [PST]: 0 };
 
@@ -61,23 +60,16 @@ const Calculator = ({ profiles }) => {
             const [, mealType] = key.split('-');
 
             if (mealType === 'Midi') {
-                if (people.axel) {
-                    newTotals[PASTA] += resAxel.pasta_midi;
-                    newTotals[PST] += resAxel.pst_qty;
-                }
-                if (people.prisca) {
-                    newTotals[PASTA] += resPrisca.pasta_midi;
-                    newTotals[PST] += resPrisca.pst_qty;
-                }
+                if (people.axel)   { newTotals[PASTA] += resAxel.pasta_midi;   newTotals[PST] += resAxel.pst_qty; }
+                if (people.prisca) { newTotals[PASTA] += resPrisca.pasta_midi; newTotals[PST] += resPrisca.pst_qty; }
             } else if (mealType === 'Soir') {
-                if (people.axel) newTotals[PASTA] += resAxel.pasta_soir;
+                if (people.axel)   newTotals[PASTA] += resAxel.pasta_soir;
                 if (people.prisca) newTotals[PASTA] += resPrisca.pasta_soir;
             }
         });
 
-        // Ne pas afficher les ingrédients à zéro
         if (newTotals[PASTA] === 0) delete newTotals[PASTA];
-        if (newTotals[PST] === 0) delete newTotals[PST];
+        if (newTotals[PST]   === 0) delete newTotals[PST];
 
         setTotals(newTotals);
     };
@@ -86,12 +78,14 @@ const Calculator = ({ profiles }) => {
 
     return (
         <div className="section-container animate-fade-in">
-            <h2><CalcIcon className="icon-mr" /> Calculateur de Batch Cooking</h2>
-            <p className="subtitle">Coche les repas prévus pour calculer les quantités totales à cuire.</p>
+            <h2><CalcIcon className="icon-mr" /> Planificateur de Repas (Semaine)</h2>
+            <p style={{ color: '#64748b', marginBottom: '2rem', fontSize: '0.9rem' }}>
+                Coche les repas du Midi et du Soir pour calculer les quantités totales à cuisiner.
+            </p>
 
             <div className="calc-controls">
                 <button onClick={selectAll} className="btn-small">Tout Sélectionner</button>
-                <button onClick={selectMonSat} className="btn-small">Lundi - Samedi</button>
+                <button onClick={selectMonSat} className="btn-small">Lundi – Samedi</button>
                 <button onClick={resetSchedule} className="btn-small btn-outline">Reset</button>
             </div>
 
@@ -101,7 +95,10 @@ const Calculator = ({ profiles }) => {
                         <h3>{day}</h3>
                         {MEALS.map(meal => (
                             <div key={meal} className="meal-row">
-                                <span className="meal-label">{meal}</span>
+                                {/* Badge coloré Midi / Soir */}
+                                <span className={`meal-badge meal-badge-${meal.toLowerCase()}`}>
+                                    {meal}
+                                </span>
                                 <div className="checkbox-group">
                                     <label className={`check-btn ${getDayState(day, meal).axel ? 'active-axel' : ''}`}>
                                         <input
@@ -127,8 +124,8 @@ const Calculator = ({ profiles }) => {
             </div>
 
             <div className="totals-panel">
-                <h3>
-                    <ShoppingCart className="icon-mr" /> Liste de Courses / Cuisson (Totaux)
+                <h3 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                    <ShoppingCart size={20} /> Liste de Courses / Cuisson (Totaux)
                     <button
                         onClick={() => {
                             const text = Object.entries(totals).map(([k, v]) => `${k}: ${Math.round(v)}g`).join('\n');
@@ -136,13 +133,15 @@ const Calculator = ({ profiles }) => {
                             alert('Liste copiée !');
                         }}
                         className="btn-small"
-                        style={{ marginLeft: '1rem', padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
+                        style={{ padding: '0.25rem 0.75rem', fontSize: '0.75rem' }}
                     >
                         Copier
                     </button>
                 </h3>
                 {Object.keys(totals).length === 0 ? (
-                    <p className="empty-state">Sélectionne des repas pour voir les quantités (Pâtes, PST uniquement).</p>
+                    <p style={{ color: '#475569', fontStyle: 'italic' }}>
+                        Sélectionne des repas pour voir les quantités (Pâtes + PST).
+                    </p>
                 ) : (
                     <div className="totals-grid">
                         {Object.entries(totals).map(([item, amount]) => (
@@ -154,6 +153,30 @@ const Calculator = ({ profiles }) => {
                     </div>
                 )}
             </div>
+
+            <style>{`
+                .meal-badge {
+                    display: inline-block;
+                    padding: 0.25rem 0.7rem;
+                    border-radius: 6px;
+                    font-size: 0.78rem;
+                    font-weight: 700;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    min-width: 44px;
+                    text-align: center;
+                }
+                .meal-badge-midi {
+                    background: rgba(56,189,248,0.12);
+                    color: #38bdf8;
+                    border: 1px solid rgba(56,189,248,0.25);
+                }
+                .meal-badge-soir {
+                    background: rgba(167,139,250,0.12);
+                    color: #a78bfa;
+                    border: 1px solid rgba(167,139,250,0.25);
+                }
+            `}</style>
         </div>
     );
 };
