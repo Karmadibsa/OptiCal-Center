@@ -5,8 +5,6 @@ import {
     Utensils,
     AlertTriangle,
     Download,
-    Scale,
-    Flame
 } from 'lucide-react';
 import {
     ACTIVITIES,
@@ -99,12 +97,6 @@ const ActivityGrid = ({ profileKey, profiles, res, handleActivity }) => {
 const SmartDiet = ({ profiles, setProfiles }) => {
 
     const [activeTab, setActiveTab] = useState('axel');
-
-    const [batchConfig, setBatchConfig] = useState({
-        days: 6,
-        potWeight: 1930,
-        totalWeighed: 0
-    });
 
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
@@ -212,12 +204,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             <div className="col-note">{note}</div>
         </div>
     );
-
-    // --- BATCH ---
-    const totalRawDaily = resAxel.pasta_midi + resAxel.pasta_soir + resPrisca.pasta_midi + resPrisca.pasta_soir;
-    const totalRawBatch = totalRawDaily * batchConfig.days;
-    const netCooked = Math.max(0, batchConfig.totalWeighed - batchConfig.potWeight);
-    const cookCoef = (totalRawBatch > 0 && netCooked > 0) ? netCooked / totalRawBatch : 0;
 
     return (
         <div className="animate-fade-in section-container">
@@ -400,69 +386,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     </div>
                 </div>
             )}
-
-            {/* --- BATCH COOKING --- */}
-            <h2 className="section-title" style={{ marginTop: '3rem', color: '#10b981' }}>
-                <Scale className="icon-mr" /> Batch Cooking (Dimanche)
-            </h2>
-            <div className="card" style={{ borderLeft: '4px solid #10b981' }}>
-                <div className="inputs-grid">
-                    <div className="input-group">
-                        <label>Jours de Batch</label>
-                        <input type="number" min="1" max="7"
-                            value={batchConfig.days === 0 ? '' : batchConfig.days}
-                            placeholder="6"
-                            onChange={(e) => setBatchConfig(c => ({ ...c, days: parseFloat(e.target.value) || 0 }))} />
-                    </div>
-                    <div className="input-group">
-                        <label>Poids Casserole (Vide) <span className="unit-badge">g</span></label>
-                        <input type="number"
-                            value={batchConfig.potWeight === 0 ? '' : batchConfig.potWeight}
-                            placeholder="1930"
-                            onChange={(e) => setBatchConfig(c => ({ ...c, potWeight: parseFloat(e.target.value) || 0 }))} />
-                    </div>
-                    <div className="input-group">
-                        <label style={{ color: '#fbbf24', fontWeight: 700 }}>
-                            POIDS TOTAL (Casserole + Pâtes) <span className="unit-badge" style={{ background: 'rgba(251,191,36,0.15)', color: '#fbbf24' }}>g</span>
-                        </label>
-                        <input type="number"
-                            value={batchConfig.totalWeighed === 0 ? '' : batchConfig.totalWeighed}
-                            placeholder="Ex: 5800"
-                            onChange={(e) => setBatchConfig(c => ({ ...c, totalWeighed: parseFloat(e.target.value) || 0 }))}
-                            style={{ borderColor: '#fbbf24', background: 'rgba(251,191,36,0.07)' }} />
-                    </div>
-                </div>
-
-                <div style={{ marginTop: '1.5rem', background: 'rgba(0,0,0,0.2)', padding: '1rem', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '0.95rem' }}>
-                            Total Cru Semaine : <strong style={{ color: '#10b981', fontSize: '1.1rem' }}>{Math.round(totalRawBatch)}g</strong>
-                            <span style={{ color: '#64748b' }}> ({batchConfig.days} jours)</span>
-                        </span>
-                        <span style={{ color: '#10b981', fontFamily: 'monospace', fontWeight: 700 }}>
-                            Coef Cuisson : ×{cookCoef.toFixed(2)}
-                        </span>
-                    </div>
-
-                    <div className="plan-table">
-                        <div className="plan-row header-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                            <div className="col-item">BOÎTES À PRÉPARER</div>
-                            <div className="col-val">POIDS CUIT / BOÎTE</div>
-                        </div>
-                        {[
-                            { label: `Axel MIDI (×${batchConfig.days})`, color: '#38bdf8', val: Math.round(resAxel.pasta_midi * cookCoef) },
-                            { label: `Axel SOIR (×${batchConfig.days})`,  color: '#38bdf8', val: Math.round(resAxel.pasta_soir * cookCoef) },
-                            { label: `Prisca MIDI (×${batchConfig.days})`, color: '#a78bfa', val: Math.round(resPrisca.pasta_midi * cookCoef) },
-                            { label: `Prisca SOIR (×${batchConfig.days})`, color: '#a78bfa', val: Math.round(resPrisca.pasta_soir * cookCoef) },
-                        ].map(({ label, color, val }) => (
-                            <div key={label} className="plan-row" style={{ gridTemplateColumns: '2fr 1fr' }}>
-                                <div className="col-item" style={{ color }}>{label}</div>
-                                <div className="col-val">{cookCoef > 0 ? `${val}g` : '—'}</div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </div>
 
             {/* --- LOGS --- */}
             <div style={{ marginTop: '4rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>

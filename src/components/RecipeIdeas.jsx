@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { BookMarked, ExternalLink, Search, Tag, Scale, X, ChevronDown, ChevronUp, Euro } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookMarked, ExternalLink, Search, Tag, Scale, X, ChevronDown, Euro } from 'lucide-react';
 import { getMealBudget } from '../utils/dietAlgo';
 
 // ─── Badge macros ────────────────────────────────────────────────────────────
@@ -11,8 +11,7 @@ const MacroBadge = ({ val, unit, color, label }) => (
     </div>
 );
 
-// ─── Parseur Markdown simple ─────────────────────────────────────────────────
-// Retourne un tableau de sections { title, items: string[] }
+// ─── Parseur Markdown ─────────────────────────────────────────────────────────
 const parseMarkdownSections = (text) => {
     const body = text.replace(/^---[\s\S]*?---\s*\n/, '');
     const sections = [];
@@ -29,8 +28,8 @@ const parseMarkdownSections = (text) => {
     return sections;
 };
 
-// Extrait les lignes de prix depuis une section "Prix des ingrédients"
-// Format attendu : "- Ingrédient (quantité) : 0.50€"
+// Extrait les lignes de prix → [{ label, price }]
+// Format : "- Ingrédient (quantité) : 0.50€"
 const parsePriceLines = (items) =>
     items
         .filter(l => l.startsWith('- '))
@@ -39,6 +38,33 @@ const parsePriceLines = (items) =>
             return m ? { label: m[1].trim(), price: parseFloat(m[2]) } : null;
         })
         .filter(Boolean);
+
+// Extrait les portions nommées → [{ name, value }]
+// Format : "- **Axel** : 140g de pain…"
+const parsePortionLines = (items) =>
+    items
+        .filter(l => l.startsWith('- '))
+        .map(l => {
+            const m = l.match(/^-\s+\*\*(.+?)\*\*\s*:\s*(.+)/);
+            return m ? { name: m[1].trim(), value: m[2].trim() } : null;
+        })
+        .filter(Boolean);
+
+// Formater une ligne markdown : **bold**, *italic*
+const formatLine = (line) => {
+    const cleaned = line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
+    const parts = [];
+    const regex = /\*\*(.+?)\*\*|\*(.+?)\*/g;
+    let last = 0; let m;
+    while ((m = regex.exec(cleaned)) !== null) {
+        if (m.index > last) parts.push(cleaned.slice(last, m.index));
+        if (m[1]) parts.push(<strong key={m.index} style={{ color: '#e2e8f0' }}>{m[1]}</strong>);
+        else parts.push(<em key={m.index} style={{ color: '#94a3b8' }}>{m[2]}</em>);
+        last = m.index + m[0].length;
+    }
+    if (last < cleaned.length) parts.push(cleaned.slice(last));
+    return parts;
+};
 
 // ─── Modal Détail Recette ────────────────────────────────────────────────────
 const RecipeDetailModal = ({ recipe, onClose }) => {
@@ -49,33 +75,31 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
         if (!recipe.file) { setLoadingMd(false); return; }
         fetch(`/recipes/${recipe.file}`)
             .then(r => r.text())
-            .then(text => {
-                setSections(parseMarkdownSections(text));
-                setLoadingMd(false);
-            })
+            .then(text => { setSections(parseMarkdownSections(text)); setLoadingMd(false); })
             .catch(() => setLoadingMd(false));
     }, [recipe.file]);
 
-    const priceSection = sections.find(s => /prix/i.test(s.title));
-    const priceItems   = priceSection ? parsePriceLines(priceSection.items) : [];
-    const totalCost    = priceItems.reduce((s, p) => s + p.price, 0);
-    const contentSections = sections.filter(s => !/prix/i.test(s.title));
+    const priceSection    = sections.find(s => /prix/i.test(s.title));
+    const portionSection  = sections.find(s => /portions/i.test(s.title));
+    const priceItems      = priceSection  ? parsePriceLines(priceSection.items)   : [];
+    const portionItems    = portionSection ? parsePortionLines(portionSection.items) : [];
+    const totalCost       = priceItems.reduce((s, p) => s + p.price, 0);
 
-    // Formater une ligne markdown basique : **bold**, *italic*, texte libre
-    const formatLine = (line) => {
-        const cleaned = line.replace(/^[-*]\s+/, '').replace(/^\d+\.\s+/, '');
-        const parts = [];
-        const regex = /\*\*(.+?)\*\*|\*(.+?)\*|\*(.+?)\*/g;
-        let last = 0; let m;
-        while ((m = regex.exec(cleaned)) !== null) {
-            if (m.index > last) parts.push(cleaned.slice(last, m.index));
-            if (m[1]) parts.push(<strong key={m.index} style={{ color: '#e2e8f0' }}>{m[1]}</strong>);
-            else parts.push(<em key={m.index} style={{ color: '#94a3b8' }}>{m[2] || m[3]}</em>);
-            last = m.index + m[0].length;
-        }
-        if (last < cleaned.length) parts.push(cleaned.slice(last));
-        return parts;
-    };
+    // Auto-calcul du prix par base_unit depuis le yield total
+    const yieldGrams   = recipe.recipe_yield ? parseFloat(recipe.recipe_yield) : null;
+    const baseGrams    = recipe.base_unit     ? parseFloat(recipe.base_unit)    : null;
+    const autoPrice    = (yieldGrams && baseGrams && totalCost > 0)
+        ? totalCost / (yieldGrams / baseGrams)
+        : null;
+
+    // Sections de contenu (hors Prix et Portions consommées)
+    const contentSections = sections.filter(s =>
+        !/prix/i.test(s.title) && !/portions/i.test(s.title)
+    );
+
+    const PERSON_COLORS = { axel: '#38bdf8', prisca: '#a78bfa' };
+    const getPersonColor = (name) =>
+        PERSON_COLORS[name.toLowerCase()] || '#94a3b8';
 
     return (
         <div
@@ -83,59 +107,110 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
             style={{
                 position: 'fixed', inset: 0, zIndex: 1000,
                 background: 'rgba(3,7,18,0.85)', backdropFilter: 'blur(8px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                padding: '1rem'
+                display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+                padding: '0',
             }}
         >
             <div
                 onClick={e => e.stopPropagation()}
                 style={{
-                    background: 'rgba(15,23,42,0.98)', border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '20px', maxWidth: '760px', width: '100%',
-                    maxHeight: '90vh', overflowY: 'auto', position: 'relative',
-                    boxShadow: '0 30px 80px rgba(0,0,0,0.6)'
+                    background: 'rgba(15,23,42,0.99)', border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '20px 20px 0 0',
+                    width: '100%', maxWidth: '760px',
+                    maxHeight: '92dvh', overflowY: 'auto',
+                    boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
                 }}
             >
-                {/* Header */}
-                <div style={{ padding: '1.75rem 2rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.07)', position: 'sticky', top: 0, background: 'rgba(15,23,42,0.98)', zIndex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                            <span style={{ fontSize: '2.5rem', lineHeight: 1 }}>{recipe.emoji}</span>
+                {/* Poignée mobile */}
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem 0 0.25rem' }}>
+                    <div style={{ width: '40px', height: '4px', borderRadius: '2px', background: 'rgba(255,255,255,0.15)' }} />
+                </div>
+
+                {/* Header sticky */}
+                <div style={{
+                    padding: '0.75rem 1.25rem 0.75rem',
+                    borderBottom: '1px solid rgba(255,255,255,0.07)',
+                    position: 'sticky', top: 0,
+                    background: 'rgba(15,23,42,0.99)', zIndex: 1
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                            <span style={{ fontSize: '2rem', lineHeight: 1 }}>{recipe.emoji}</span>
                             <div>
-                                <h2 style={{ fontSize: '1.3rem', fontWeight: 800, color: '#fff', marginBottom: '0.25rem' }}>{recipe.name}</h2>
-                                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                                    <span style={{ fontSize: '0.78rem', color: '#64748b' }}>⏱ {recipe.prep}</span>
+                                <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: '#fff', marginBottom: '0.2rem', lineHeight: 1.2 }}>{recipe.name}</h2>
+                                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>⏱ {recipe.prep}</span>
                                     {recipe.price && (
-                                        <span style={{ fontSize: '0.78rem', color: '#10b981' }}>
-                                            <Euro size={11} style={{ display: 'inline', verticalAlign: 'middle' }} /> {recipe.price}€ / {recipe.base_unit}
+                                        <span style={{ fontSize: '0.75rem', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                            <Euro size={10} style={{ display: 'inline' }} /> {recipe.price}€ / {recipe.base_unit}
                                         </span>
                                     )}
                                 </div>
                             </div>
                         </div>
-                        <button onClick={onClose} style={{ background: 'rgba(255,255,255,0.07)', border: 'none', color: '#94a3b8', width: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
-                            <X size={18} />
+                        <button onClick={onClose} style={{
+                            background: 'rgba(255,255,255,0.07)', border: 'none', color: '#94a3b8',
+                            width: '34px', height: '34px', borderRadius: '50%',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: 'pointer', flexShrink: 0
+                        }}>
+                            <X size={17} />
                         </button>
                     </div>
                 </div>
 
-                <div style={{ padding: '1.5rem 2rem 2rem' }}>
+                <div style={{ padding: '1.25rem 1.25rem 2rem' }}>
                     {loadingMd ? (
-                        <p style={{ color: '#475569', textAlign: 'center', padding: '2rem' }}>Chargement de la recette...</p>
+                        <p style={{ color: '#475569', textAlign: 'center', padding: '2rem' }}>Chargement...</p>
                     ) : (
                         <>
+                            {/* Portions habituelles (Axel / Prisca) */}
+                            {portionItems.length > 0 && (
+                                <div style={{
+                                    marginBottom: '1.5rem',
+                                    background: 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
+                                    borderRadius: '12px', padding: '1rem'
+                                }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                                        🍽️ Portions habituelles
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {portionItems.map((p, i) => {
+                                            const color = getPersonColor(p.name);
+                                            return (
+                                                <div key={i} style={{
+                                                    display: 'flex', alignItems: 'flex-start', gap: '0.6rem',
+                                                    background: `${color}12`,
+                                                    border: `1px solid ${color}30`,
+                                                    borderRadius: '8px', padding: '0.6rem 0.75rem'
+                                                }}>
+                                                    <span style={{ color, fontWeight: 800, fontSize: '0.85rem', flexShrink: 0, minWidth: '50px' }}>{p.name}</span>
+                                                    <span style={{ color: '#94a3b8', fontSize: '0.84rem', lineHeight: 1.4 }}>{p.value}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Sections de la recette */}
                             {contentSections.map(section => (
                                 <div key={section.title} style={{ marginBottom: '1.5rem' }}>
-                                    <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0ea5e9', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.75rem' }}>
+                                    <h3 style={{
+                                        fontSize: '0.78rem', fontWeight: 800, color: '#0ea5e9',
+                                        letterSpacing: '1px', textTransform: 'uppercase',
+                                        marginBottom: '0.6rem'
+                                    }}>
                                         {section.title}
                                     </h3>
-                                    <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                    <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                                         {section.items.map((item, i) => (
                                             <li key={i} style={{
                                                 display: 'flex', gap: '0.6rem', alignItems: 'flex-start',
-                                                fontSize: '0.88rem', color: '#94a3b8', lineHeight: 1.5,
-                                                padding: '0.35rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)'
+                                                fontSize: '0.85rem', color: '#94a3b8', lineHeight: 1.5,
+                                                padding: '0.3rem 0',
+                                                borderBottom: '1px solid rgba(255,255,255,0.04)'
                                             }}>
                                                 <span style={{ color: '#334155', flexShrink: 0, marginTop: '0.1rem' }}>
                                                     {/^\d+\./.test(item) ? item.match(/^(\d+)\./)?.[1] + '.' : '•'}
@@ -149,29 +224,58 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
 
                             {/* Section Prix */}
                             {priceItems.length > 0 && (
-                                <div style={{ marginTop: '1.5rem', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: '12px', padding: '1.25rem' }}>
-                                    <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#10b981', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                        <Euro size={14} /> Coût des ingrédients
+                                <div style={{
+                                    marginTop: '0.5rem',
+                                    background: 'rgba(16,185,129,0.06)',
+                                    border: '1px solid rgba(16,185,129,0.2)',
+                                    borderRadius: '12px', padding: '1rem'
+                                }}>
+                                    <h3 style={{
+                                        fontSize: '0.78rem', fontWeight: 800, color: '#10b981',
+                                        letterSpacing: '1px', textTransform: 'uppercase',
+                                        marginBottom: '0.75rem',
+                                        display: 'flex', alignItems: 'center', gap: '0.4rem'
+                                    }}>
+                                        <Euro size={13} /> Coût des ingrédients
                                     </h3>
                                     {priceItems.map((item, i) => (
-                                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
+                                        <div key={i} style={{
+                                            display: 'flex', justifyContent: 'space-between',
+                                            padding: '0.35rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                            fontSize: '0.83rem'
+                                        }}>
                                             <span style={{ color: '#94a3b8' }}>{item.label}</span>
                                             <span style={{ color: '#10b981', fontFamily: 'monospace', fontWeight: 700 }}>{item.price.toFixed(2)}€</span>
                                         </div>
                                     ))}
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', marginTop: '0.25rem', borderTop: '2px solid rgba(16,185,129,0.3)', fontWeight: 800, fontSize: '0.95rem' }}>
-                                        <span style={{ color: '#e2e8f0' }}>TOTAL recette</span>
-                                        <span style={{ color: '#10b981' }}>{totalCost.toFixed(2)}€</span>
+
+                                    {/* Total + prix calculé */}
+                                    <div style={{
+                                        paddingTop: '0.65rem', marginTop: '0.25rem',
+                                        borderTop: '2px solid rgba(16,185,129,0.3)',
+                                    }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.4rem' }}>
+                                            <span style={{ color: '#e2e8f0' }}>
+                                                Total recette
+                                                {recipe.recipe_yield ? <span style={{ color: '#64748b', fontWeight: 400, fontSize: '0.78rem' }}> ({recipe.recipe_yield})</span> : ''}
+                                            </span>
+                                            <span style={{ color: '#10b981' }}>{totalCost.toFixed(2)}€</span>
+                                        </div>
+                                        {autoPrice !== null && (
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
+                                                <span style={{ color: '#64748b' }}>
+                                                    Prix / {recipe.base_unit} <span style={{ color: '#334155' }}>(calculé)</span>
+                                                </span>
+                                                <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 700 }}>
+                                                    ~{autoPrice.toFixed(2)}€
+                                                </span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {recipe.price && (
-                                        <p style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '0.5rem', fontStyle: 'italic' }}>
-                                            → {recipe.price}€ / {recipe.base_unit} · Modifiable dans le fichier <code style={{ color: '#94a3b8' }}>{recipe.file}</code>
-                                        </p>
-                                    )}
                                 </div>
                             )}
 
-                            {/* Pas de détail dispo */}
+                            {/* Pas de fiche */}
                             {!recipe.file && (
                                 <p style={{ color: '#475569', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
                                     Pas de fiche détaillée disponible pour cette recette.
@@ -197,36 +301,42 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
 
     return (
         <div className="card ri-card" style={{ borderTop: `3px solid ${recipe.accent}`, display: 'flex', flexDirection: 'column' }}>
-            <div className="ri-card-emoji">{recipe.emoji}</div>
-            <div className="ri-card-header">
-                <h3 className="ri-card-name">{recipe.name}</h3>
-                <div className="ri-card-meta">
-                    <span className="ri-prep-time">⏱ {recipe.prep}</span>
-                    {recipe.price && (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '2px', marginLeft: '0.4rem', background: 'rgba(16,185,129,0.1)', color: '#10b981', padding: '0.1rem 0.5rem', borderRadius: '4px', fontSize: '0.78rem' }}>
-                            <Euro size={11} /> {recipe.price}€/{recipe.base_unit}
-                        </span>
-                    )}
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                <span style={{ fontSize: '2rem', lineHeight: 1, flexShrink: 0 }}>{recipe.emoji}</span>
+                <div style={{ minWidth: 0 }}>
+                    <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1.3 }}>{recipe.name}</h3>
+                    <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.3rem', alignItems: 'center' }}>
+                        <span className="ri-prep-time">⏱ {recipe.prep}</span>
+                        {recipe.price && (
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: '2px',
+                                background: 'rgba(16,185,129,0.1)', color: '#10b981',
+                                padding: '0.1rem 0.45rem', borderRadius: '4px', fontSize: '0.75rem'
+                            }}>
+                                <Euro size={10} /> {recipe.price}€/{recipe.base_unit}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
-            <p className="ri-card-desc" style={{ flexGrow: 1 }}>{recipe.description}</p>
+            <p style={{ fontSize: '0.84rem', color: '#64748b', lineHeight: 1.5, margin: '0 0 0.75rem', flexGrow: 1 }}>{recipe.description}</p>
 
             {/* Portions calculées */}
             {isTarget && (
-                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem' }}>
-                    <div style={{ color: recipe.accent, fontWeight: 700, marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center', fontSize: '0.85rem' }}>
-                        <Scale size={14} /> Portions à préparer :
+                <div style={{ background: 'rgba(0,0,0,0.2)', padding: '0.65rem', borderRadius: '8px', marginBottom: '0.75rem' }}>
+                    <div style={{ color: recipe.accent, fontWeight: 700, marginBottom: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.78rem' }}>
+                        <Scale size={12} /> Portions à préparer
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', textAlign: 'center' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem' }}>
                         {[
-                            { label: 'Axel', color: '#38bdf8', coef: coefAxel, bgColor: 'rgba(56,189,248,0.1)', borderColor: 'rgba(56,189,248,0.3)' },
-                            { label: 'Prisca', color: '#a78bfa', coef: coefPrisca, bgColor: 'rgba(167,139,250,0.1)', borderColor: 'rgba(167,139,250,0.3)' }
-                        ].map(({ label, color, coef, bgColor, borderColor }) => (
-                            <div key={label} style={{ background: bgColor, padding: '0.5rem', borderRadius: '6px', border: `1px solid ${borderColor}` }}>
-                                <div style={{ color, fontSize: '0.78rem', marginBottom: '0.2rem' }}>{label}</div>
-                                <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#fff' }}>{formatPortion(coef)} × {recipe.base_unit}</div>
-                                {recipe.price && <div style={{ fontSize: '0.72rem', color: '#64748b' }}>~{(coef * recipe.price).toFixed(2)}€</div>}
+                            { label: 'Axel',   color: '#38bdf8', coef: coefAxel,   bg: 'rgba(56,189,248,0.08)',   bd: 'rgba(56,189,248,0.25)'   },
+                            { label: 'Prisca', color: '#a78bfa', coef: coefPrisca, bg: 'rgba(167,139,250,0.08)', bd: 'rgba(167,139,250,0.25)' }
+                        ].map(({ label, color, coef, bg, bd }) => (
+                            <div key={label} style={{ background: bg, padding: '0.45rem', borderRadius: '6px', border: `1px solid ${bd}`, textAlign: 'center' }}>
+                                <div style={{ color, fontSize: '0.72rem', marginBottom: '0.15rem' }}>{label}</div>
+                                <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#fff' }}>{formatPortion(coef)} × {recipe.base_unit}</div>
+                                {recipe.price && <div style={{ fontSize: '0.7rem', color: '#64748b' }}>~{(coef * recipe.price).toFixed(2)}€</div>}
                             </div>
                         ))}
                     </div>
@@ -234,8 +344,8 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
             )}
 
             {/* Macros */}
-            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1rem', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: '0.5rem', textAlign: 'center' }}>
+            <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem', marginBottom: '0.75rem' }}>
+                <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: '0.4rem', textAlign: 'center' }}>
                     Pour {recipe.base_unit}
                 </div>
                 <div className="ri-macros">
@@ -247,19 +357,18 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
             </div>
 
             {/* Tags */}
-            <div className="ri-tags" style={{ marginBottom: '0.75rem' }}>
+            <div className="ri-tags" style={{ marginBottom: '0.6rem' }}>
                 {recipe.category.map(cat => <span key={cat} className="ri-tag">{cat}</span>)}
             </div>
 
             {recipe.tips && (
-                <div className="ri-tip" style={{ marginBottom: '1rem' }}>
+                <div className="ri-tip" style={{ marginBottom: '0.75rem' }}>
                     <span>💡</span><span>{recipe.tips}</span>
                 </div>
             )}
 
             {/* Actions */}
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: 'auto' }}>
-                {/* Bouton détail interne */}
                 <button
                     onClick={() => onDetail(recipe)}
                     style={{
@@ -272,10 +381,9 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
                 >
                     <ChevronDown size={15} /> Voir la recette
                 </button>
-                {/* Liens externes */}
                 {links.map((lnk, idx) => (
                     <a key={idx} href={lnk} target="_blank" rel="noopener noreferrer"
-                        className="ri-link-btn" style={{ flex: '1 1 120px', minWidth: '110px' }}>
+                        className="ri-link-btn" style={{ flex: '1 1 120px' }}>
                         <ExternalLink size={15} />
                         {links.length > 1 ? `Lien ${idx + 1}` : 'Lien externe'}
                     </a>
@@ -287,11 +395,11 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
 
 // ─── Composant Principal ─────────────────────────────────────────────────────
 const RecipeIdeas = ({ profiles }) => {
-    const [recipes,     setRecipes]     = useState([]);
-    const [search,      setSearch]      = useState('');
-    const [activeTag,   setActiveTag]   = useState(null);
-    const [loading,     setLoading]     = useState(true);
-    const [targetMeal,  setTargetMeal]  = useState('midi');
+    const [recipes,      setRecipes]      = useState([]);
+    const [search,       setSearch]       = useState('');
+    const [activeTag,    setActiveTag]    = useState(null);
+    const [loading,      setLoading]      = useState(true);
+    const [targetMeal,   setTargetMeal]   = useState('midi');
     const [detailRecipe, setDetailRecipe] = useState(null);
 
     const ACCENTS = ['#38bdf8','#818cf8','#f59e0b','#4ade80','#fb923c','#f87171','#a78bfa','#fbbf24'];
@@ -301,22 +409,23 @@ const RecipeIdeas = ({ profiles }) => {
             .then(r => r.json())
             .then(data => {
                 setRecipes(data.map((row, i) => ({
-                    id:          row.id || i,
-                    file:        row.file || null,
-                    name:        row.name || 'Recette sans nom',
-                    category:    row.category ? row.category.split('|').map(s => s.trim()) : [],
-                    base_unit:   row.base_unit || '1 portion',
+                    id:           row.id || i,
+                    file:         row.file || null,
+                    name:         row.name || 'Recette sans nom',
+                    category:     row.category ? row.category.split('|').map(s => s.trim()) : [],
+                    base_unit:    row.base_unit || '1 portion',
+                    recipe_yield: row.recipe_yield || null,
                     kcal:  Number(row.kcal)  || 0,
                     prot:  Number(row.prot)  || 0,
                     lip:   Number(row.lip)   || 0,
                     glu:   Number(row.glu)   || 0,
                     price: row.price ? Number(row.price) : null,
-                    prep:        row.prep || '',
-                    description: row.description || '',
-                    tips:        row.tips || '',
-                    link:        row.link || '',
-                    emoji:       row.emoji || '🍽️',
-                    accent:      ACCENTS[i % ACCENTS.length]
+                    prep:         row.prep || '',
+                    description:  row.description || '',
+                    tips:         row.tips || '',
+                    link:         row.link || '',
+                    emoji:        row.emoji || '🍽️',
+                    accent:       ACCENTS[i % ACCENTS.length]
                 })));
                 setLoading(false);
             })
@@ -329,6 +438,12 @@ const RecipeIdeas = ({ profiles }) => {
         const handler = e => { if (e.key === 'Escape') setDetailRecipe(null); };
         document.addEventListener('keydown', handler);
         return () => document.removeEventListener('keydown', handler);
+    }, [detailRecipe]);
+
+    // Bloquer le scroll body quand le modal est ouvert
+    useEffect(() => {
+        document.body.style.overflow = detailRecipe ? 'hidden' : '';
+        return () => { document.body.style.overflow = ''; };
     }, [detailRecipe]);
 
     const allCategories = [...new Set(recipes.flatMap(r => r.category))].sort();
@@ -355,44 +470,43 @@ const RecipeIdeas = ({ profiles }) => {
                 <RecipeDetailModal recipe={detailRecipe} onClose={() => setDetailRecipe(null)} />
             )}
 
-            <div className="ds-header" style={{ marginBottom: '1.5rem' }}>
-                <div>
-                    <h2><BookMarked size={26} /> Idées Recettes & Portions Cibles</h2>
-                    <p className="ds-subtitle">
-                        Sélectionne le repas concerné pour voir combien de portions préparer à la place du plan habituel.
-                    </p>
-                </div>
+            <div style={{ marginBottom: '1rem' }}>
+                <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                    <BookMarked size={22} /> Idées Recettes
+                </h2>
+                <p style={{ color: '#64748b', fontSize: '0.85rem', marginTop: '0.4rem' }}>
+                    Choisis le repas pour voir les portions à préparer à la place du plan habituel.
+                </p>
             </div>
 
             {/* Sélecteur Repas Midi / Soir */}
-            <div style={{ marginBottom: '2rem', display: 'flex', justifyContent: 'center' }}>
-                <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '0.4rem' }}>
-                    <button
-                        onClick={() => setTargetMeal('midi')}
-                        style={{
-                            padding: '0.6rem 1.4rem', borderRadius: '8px', cursor: 'pointer',
-                            background: targetMeal === 'midi' ? 'var(--bg-deep)' : 'transparent',
-                            border: targetMeal === 'midi' ? '1px solid rgba(14,165,233,0.3)' : '1px solid transparent',
-                            color: targetMeal === 'midi' ? '#38bdf8' : '#64748b',
-                            fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9rem',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
-                        }}
-                    >
-                        ☀️ Repas Midi
-                    </button>
-                    <button
-                        onClick={() => setTargetMeal('soir')}
-                        style={{
-                            padding: '0.6rem 1.4rem', borderRadius: '8px', cursor: 'pointer',
-                            background: targetMeal === 'soir' ? 'var(--bg-deep)' : 'transparent',
-                            border: targetMeal === 'soir' ? '1px solid rgba(139,92,246,0.3)' : '1px solid transparent',
-                            color: targetMeal === 'soir' ? '#a78bfa' : '#64748b',
-                            fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9rem',
-                            display: 'flex', alignItems: 'center', gap: '0.5rem', transition: 'all 0.2s'
-                        }}
-                    >
-                        🌙 Repas Soir
-                    </button>
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+                <div style={{
+                    display: 'flex', gap: '0.4rem',
+                    background: 'rgba(255,255,255,0.03)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '12px', padding: '0.35rem'
+                }}>
+                    {[
+                        { key: 'midi', label: '☀️ Repas Midi',  activeColor: '#38bdf8', activeBorder: 'rgba(14,165,233,0.3)' },
+                        { key: 'soir', label: '🌙 Repas Soir',  activeColor: '#a78bfa', activeBorder: 'rgba(139,92,246,0.3)'  },
+                    ].map(({ key, label, activeColor, activeBorder }) => (
+                        <button
+                            key={key}
+                            onClick={() => setTargetMeal(key)}
+                            style={{
+                                padding: '0.55rem 1.2rem', borderRadius: '8px', cursor: 'pointer',
+                                background: targetMeal === key ? 'var(--bg-deep, #0a0f1a)' : 'transparent',
+                                border: targetMeal === key ? `1px solid ${activeBorder}` : '1px solid transparent',
+                                color: targetMeal === key ? activeColor : '#64748b',
+                                fontFamily: 'inherit', fontWeight: 700, fontSize: '0.88rem',
+                                display: 'flex', alignItems: 'center', gap: '0.4rem', transition: 'all 0.2s',
+                                whiteSpace: 'nowrap'
+                            }}
+                        >
+                            {label}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -409,7 +523,7 @@ const RecipeIdeas = ({ profiles }) => {
                     />
                 </div>
                 <div className="ri-tags-filter">
-                    <Tag size={14} style={{ color: '#64748b', flexShrink: 0 }} />
+                    <Tag size={13} style={{ color: '#64748b', flexShrink: 0 }} />
                     <button className={`ri-tag-btn ${!activeTag ? 'ri-tag-active' : ''}`} onClick={() => setActiveTag(null)}>Toutes</button>
                     {allCategories.map(cat => (
                         <button key={cat} className={`ri-tag-btn ${activeTag === cat ? 'ri-tag-active' : ''}`}
