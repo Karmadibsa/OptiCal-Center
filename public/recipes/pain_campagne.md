@@ -1,6 +1,6 @@
 ---
 id: 100
-name: Pain de Campagne Rustique (V2)
+name: Pain de Campagne Rustique
 category: complet|boulangerie
 base_unit: 1500g
 recipe_yield: 1500g
@@ -11,13 +11,12 @@ glu: 45
 price: 0.13
 prep: 3 min (Machine)
 description: Un pain nutritif maison avec une mie élastique et une croûte typée.
-tips: Le jus de citron remplace avantageusement un levain maison — il améliore la texture de la mie.
+tips: Bien séparer sel et levure dans la cuve — le sel tue la levure au contact direct.
 emoji: 🥖
 ---
 
 ### Phase Liquide (en premier)
 - **Eau tiède** : 650 ml *(Favorise l'hydratation des fibres)*
-- **Jus de citron** (ou vinaigre) : 1 c. à soupe *(Abaisse le pH → mie moins friable)*
 - **Huile végétale** : 1 c. à soupe *(Souplesse + conservation)*
 - **Miel** : 1 c. à café rase *(Activateur de fermentation)*
 
@@ -46,5 +45,4 @@ emoji: 🥖
 - Levure déshydratée (2 sachets) : 0.35€
 - Huile végétale (1 c. à soupe) : 0.05€
 - Miel (1 c. à café) : 0.10€
-- Jus de citron : 0.08€
 - Graines (portion) : 0.15€

@@ -293,11 +293,14 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
     const formatPortion = coef =>
         Math.abs(coef - Math.round(coef)) < 0.1 ? Math.round(coef) : coef.toFixed(1);
 
-    // Prix par base_unit (pour les portions calorie-based)
-    const yieldGrams    = recipe.recipe_yield ? parseFloat(recipe.recipe_yield) : null;
-    const baseGrams     = recipe.base_unit    ? parseFloat(recipe.base_unit)    : null;
-    const pricePerBase  = (yieldGrams && baseGrams && baseGrams > 0 && recipe.totalCost)
-        ? recipe.totalCost / (yieldGrams / baseGrams)
+    // Prix par gramme (pour portions fixes et portions calorie-based)
+    const yieldGrams   = recipe.recipe_yield ? parseFloat(recipe.recipe_yield) : null;
+    const baseGrams    = recipe.base_unit    ? parseFloat(recipe.base_unit)    : null;
+    const pricePerGram = (yieldGrams && yieldGrams > 0 && recipe.totalCost)
+        ? recipe.totalCost / yieldGrams
+        : null;
+    const pricePerBase = (pricePerGram && baseGrams)
+        ? pricePerGram * baseGrams
         : null;
 
     return (
@@ -332,8 +335,12 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
                     </div>
                     <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                         {recipe.portionData.map(p => {
-                            const color = getPersonColor(p.name);
-                            const qty   = extractQty(p.value);
+                            const color    = getPersonColor(p.name);
+                            const qty      = extractQty(p.value);
+                            const qtyNum   = parseFloat(qty);
+                            const portionPrice = (pricePerGram && !isNaN(qtyNum))
+                                ? qtyNum * pricePerGram
+                                : null;
                             return (
                                 <div key={p.name} style={{
                                     background: `${color}12`, border: `1px solid ${color}30`,
@@ -342,6 +349,11 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
                                 }}>
                                     <div style={{ color, fontSize: '0.72rem', marginBottom: '0.15rem' }}>{p.name}</div>
                                     <div style={{ fontSize: '1rem', fontWeight: 800, color: '#fff' }}>{qty}</div>
+                                    {portionPrice !== null && (
+                                        <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '0.1rem' }}>
+                                            ~{portionPrice.toFixed(2)}€
+                                        </div>
+                                    )}
                                 </div>
                             );
                         })}

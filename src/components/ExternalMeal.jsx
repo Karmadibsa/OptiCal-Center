@@ -2,7 +2,8 @@ import React from 'react';
 import { calculatePlan, SOCLE_DATA, PASTA_REF } from '../utils/dietAlgo';
 import {
     Utensils, ChefHat, CheckCircle, Info,
-    TrendingDown, ShieldCheck, Salad, Sun, Moon
+    TrendingDown, ShieldCheck, Salad, Sun, Moon,
+    Copy, ClipboardCheck
 } from 'lucide-react';
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
@@ -303,7 +304,8 @@ const EXAMPLES_MIDI = [
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 const ExternalMeal = ({ profiles }) => {
-    const [meal, setMeal] = React.useState('soir');
+    const [meal,   setMeal]   = React.useState('soir');
+    const [copied, setCopied] = React.useState(false);
 
     const budgetFn = meal === 'soir' ? calcEveningBudget : calcLunchBudget;
 
@@ -311,6 +313,39 @@ const ExternalMeal = ({ profiles }) => {
     const budgetPrisca = budgetFn('prisca', profiles);
 
     const examples = meal === 'soir' ? EXAMPLES_SOIR : EXAMPLES_MIDI;
+
+    // ── Génère le prompt IA ────────────────────────────────────────────────────
+    const generateAIPrompt = () => {
+        const mealLabel = meal === 'midi' ? 'du midi' : 'du soir';
+        const ba = budgetAxel.total;
+        const bp = budgetPrisca.total;
+        return [
+            `Je cherche des idées de repas ${mealLabel} adaptés aux besoins nutritionnels de deux personnes.`,
+            ``,
+            `👤 Axel :`,
+            `• Calories cibles : ${ba.kcal} kcal`,
+            `• Protéines : ≥ ${ba.prot}g`,
+            `• Lipides : ≤ ${r(ba.lip + 10, 0)}g`,
+            `• Glucides : ~${ba.glu}g`,
+            ``,
+            `👤 Prisca :`,
+            `• Calories cibles : ${bp.kcal} kcal`,
+            `• Protéines : ≥ ${bp.prot}g`,
+            `• Lipides : ≤ ${r(bp.lip + 10, 0)}g`,
+            `• Glucides : ~${bp.glu}g`,
+            ``,
+            `Propose 3 à 5 idées de repas (restaurant, fast food sain, cuisine maison) adaptés à ces macros.`,
+            `Pour chaque idée, donne : le nom du plat, une estimation des macros (kcal, prot, lip, glu) et un conseil pratique pour commander ou le préparer.`,
+            `Contexte : régime de prise de masse / rééquilibrage avec déficit calorique modéré.`,
+        ].join('\n');
+    };
+
+    const handleCopyPrompt = () => {
+        navigator.clipboard.writeText(generateAIPrompt()).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 3000);
+        });
+    };
 
     return (
         <div className="section-container animate-fade-in">
@@ -338,6 +373,26 @@ const ExternalMeal = ({ profiles }) => {
                     <Moon size={16} /> Repas du Soir
                 </button>
             </div>
+
+            {/* ── Bouton Copier prompt IA ── */}
+            <button
+                onClick={handleCopyPrompt}
+                style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                    width: '100%', padding: '0.9rem 1rem', marginBottom: '1.5rem',
+                    borderRadius: '12px', cursor: 'pointer',
+                    background: copied ? 'rgba(74,222,128,0.1)' : 'rgba(129,140,248,0.08)',
+                    border: `1px solid ${copied ? 'rgba(74,222,128,0.4)' : 'rgba(129,140,248,0.3)'}`,
+                    color: copied ? '#4ade80' : '#a78bfa',
+                    fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9rem',
+                    transition: 'all 0.3s', touchAction: 'manipulation',
+                }}
+            >
+                {copied
+                    ? <><ClipboardCheck size={17} /> Prompt copié ! Colle-le dans ton IA 🤖</>
+                    : <><Copy size={17} /> Copier ma demande {meal === 'midi' ? 'Midi' : 'Soir'} pour une IA</>
+                }
+            </button>
 
             {/* ── Bannière info ── */}
             <div className="em-info-banner">
