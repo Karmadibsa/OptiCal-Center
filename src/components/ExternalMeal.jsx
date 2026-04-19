@@ -334,8 +334,8 @@ const ExternalMeal = ({ profiles }) => {
             `• Lipides : ≤ ${r(bp.lip + 10, 0)}g`,
             `• Glucides : ~${bp.glu}g`,
             ``,
-            `Propose 3 à 5 idées de repas (restaurant, fast food sain, cuisine maison) adaptés à ces macros.`,
-            `Pour chaque idée, donne : le nom du plat, une estimation des macros (kcal, prot, lip, glu) et un conseil pratique pour commander ou le préparer.`,
+            `Propose 3 à 5 idées de repas (cuisine maison, un peu porn food) adaptés à ces macros.`,
+            `Pour chaque idée, donne : le nom du plat, une estimation des macros (kcal, prot, lip, glu) et une estimation du prix.`,
             `Contexte : régime de prise de masse / rééquilibrage avec déficit calorique modéré.`,
         ].join('\n');
     };
