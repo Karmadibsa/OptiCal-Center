@@ -1,0 +1,18 @@
+[
+  {
+    "file": "pain_campagne.md",
+    "id": "100",
+    "name": "Pain de Campagne Rustique (V2)",
+    "category": "complet|boulangerie",
+    "base_unit": "100g",
+    "kcal": "240",
+    "prot": "9",
+    "lip": "2",
+    "glu": "45",
+    "price": "0.15",
+    "prep": "3 min (Machine)",
+    "description": "Un pain nutritif maison avec une mie élastique et une croûte typée.",
+    "tips": "Le jus de citron remplace avantageusement un levain maison — il améliore la texture de la mie.",
+    "emoji": "🥖"
+  }
+]

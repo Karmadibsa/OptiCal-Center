@@ -106,8 +106,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
         totalWeighed: 0
     });
 
-    const [showRecipe, setShowRecipe] = useState(false);
-
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
 
@@ -402,95 +400,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     </div>
                 </div>
             )}
-
-            {/* --- RECETTE DU PAIN --- */}
-            <div style={{ marginTop: '1.5rem' }}>
-                <button
-                    onClick={() => setShowRecipe(r => !r)}
-                    style={{
-                        width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                        background: 'rgba(245,158,11,0.07)', border: '1px solid rgba(245,158,11,0.25)',
-                        color: '#fbbf24', padding: '0.85rem 1.25rem', borderRadius: '10px',
-                        cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.95rem', fontWeight: 700, transition: 'all 0.2s'
-                    }}
-                >
-                    <span>🍞 Recette du Pain de Campagne Rustique (V2)</span>
-                    <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 400 }}>
-                        {showRecipe ? '▲ Réduire' : '▼ Voir la recette'}
-                    </span>
-                </button>
-
-                {showRecipe && (
-                    <div className="card" style={{ marginTop: '0.5rem', borderLeft: '3px solid #f59e0b' }}>
-                        {/* Badges */}
-                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-                            {[{ l: '1,5 kg', c: '#10b981' }, { l: 'Pain Complet', c: '#0ea5e9' }, { l: 'Mie élastique', c: '#8b5cf6' }].map(b => (
-                                <span key={b.l} style={{ padding: '0.25rem 0.8rem', borderRadius: '99px', fontSize: '0.78rem', fontWeight: 700, border: `1px solid ${b.c}`, color: b.c, background: `${b.c}18` }}>{b.l}</span>
-                            ))}
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
-                            {/* Ingrédients */}
-                            <div>
-                                <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0ea5e9', letterSpacing: '1px', marginBottom: '1rem', textTransform: 'uppercase' }}>Ingrédients</p>
-                                {[
-                                    { phase: 'LIQUIDES (en premier)', items: [
-                                        ['Eau tiède', '650 ml'],
-                                        ['Jus de citron (ou vinaigre)', '1 c. à soupe'],
-                                        ['Huile végétale', '1 c. à soupe'],
-                                        ['Miel', '1 c. à café rase'],
-                                    ]},
-                                    { phase: 'SECS', items: [
-                                        ['Farine T65 (blanche)', '500 g'],
-                                        ['Farine T110 ou T150 (complète)', '500 g'],
-                                        ['Sel fin', '3 c. à café'],
-                                        ['Mélange de graines', 'À convenance'],
-                                    ]},
-                                    { phase: 'LEVURE', items: [
-                                        ['Levure déshydratée', '2 sachets'],
-                                    ]},
-                                ].map(({ phase, items }) => (
-                                    <div key={phase} style={{ marginBottom: '1.25rem' }}>
-                                        <p style={{ fontSize: '0.7rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.5px', marginBottom: '0.5rem' }}>{phase}</p>
-                                        {items.map(([label, amount]) => (
-                                            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)', fontSize: '0.85rem' }}>
-                                                <span style={{ color: '#94a3b8' }}>{label}</span>
-                                                <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontWeight: 700 }}>{amount}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Protocole */}
-                            <div>
-                                <p style={{ fontSize: '0.78rem', fontWeight: 800, color: '#0ea5e9', letterSpacing: '1px', marginBottom: '1rem', textTransform: 'uppercase' }}>Protocole</p>
-                                {[
-                                    ['1', 'Liquides en premier', 'Versez eau, citron, huile, miel dans la cuve. Le citron abaisse le pH → mie moins friable, proche d\'un pain au levain.'],
-                                    ['2', 'Farines par-dessus', 'Recouvrez les liquides avec les deux farines mélangées + graines.'],
-                                    ['3', 'Sel dans un coin', 'Ajoutez le sel dans un coin de la farine — loin de la levure.'],
-                                    ['4', 'Puits pour la levure', 'Creusez un puits au centre, déposez la levure. Elle doit rester au sec jusqu\'au démarrage.'],
-                                    ['5', 'Réglages machine', '"Pain Complet" (prog. 3 ou 4) • 1,5 kg • Dorure Moyenne ou Foncée'],
-                                ].map(([num, title, desc]) => (
-                                    <div key={num} style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-                                        <div style={{ flexShrink: 0, width: '26px', height: '26px', borderRadius: '50%', background: 'rgba(14,165,233,0.15)', border: '1px solid #0ea5e9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8', fontWeight: 800, fontSize: '0.8rem' }}>{num}</div>
-                                        <div>
-                                            <p style={{ fontWeight: 700, color: '#e2e8f0', fontSize: '0.88rem', marginBottom: '0.2rem' }}>{title}</p>
-                                            <p style={{ color: '#64748b', fontSize: '0.82rem', lineHeight: 1.5 }}>{desc}</p>
-                                        </div>
-                                    </div>
-                                ))}
-
-                                {/* Note portions */}
-                                <div style={{ marginTop: '1rem', background: 'rgba(56,189,248,0.07)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.82rem', color: '#7dd3fc' }}>
-                                    <strong>Portions consommées :</strong><br />
-                                    Axel : <strong>140g</strong> / Prisca : <strong>80g</strong> de pain par jour (+ 30g / 20g Cancoillotte)
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-            </div>
 
             {/* --- BATCH COOKING --- */}
             <h2 className="section-title" style={{ marginTop: '3rem', color: '#10b981' }}>
