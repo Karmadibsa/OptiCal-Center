@@ -305,7 +305,7 @@ const EXAMPLES_MIDI = [
 // ─── Composant principal ──────────────────────────────────────────────────────
 const ExternalMeal = ({ profiles }) => {
     const [meal,   setMeal]   = React.useState('soir');
-    const [copied, setCopied] = React.useState(false);
+    const [copied, setCopied] = React.useState(null);
 
     const budgetFn = meal === 'soir' ? calcEveningBudget : calcLunchBudget;
 
@@ -314,8 +314,8 @@ const ExternalMeal = ({ profiles }) => {
 
     const examples = meal === 'soir' ? EXAMPLES_SOIR : EXAMPLES_MIDI;
 
-    // ── Génère le prompt IA ────────────────────────────────────────────────────
-    const generateAIPrompt = () => {
+    // ── Génère les prompts IA ──────────────────────────────────────────────────
+    const generateRestaurantPrompt = () => {
         const mealLabel = meal === 'midi' ? 'du midi' : 'du soir';
         const ba = budgetAxel.total;
         const bp = budgetPrisca.total;
@@ -350,10 +350,72 @@ const ExternalMeal = ({ profiles }) => {
         ].join('\n');
     };
 
-    const handleCopyPrompt = () => {
-        navigator.clipboard.writeText(generateAIPrompt()).then(() => {
-            setCopied(true);
-            setTimeout(() => setCopied(false), 3000);
+    const generateRecipePrompt = () => {
+        const mealLabel = meal === 'midi' ? 'MIDI' : 'SOIR';
+        const ba = budgetAxel.total;
+        const bp = budgetPrisca.total;
+        const totalKcal = Math.round(ba.kcal + bp.kcal);
+        
+        return `Agis en tant que nutritionniste et chef culinaire spécialisé dans les macros (diète sportive et rééquilibrage). 
+Je souhaite créer une bibliothèque de recettes saines, savoureuses (un peu "porn food" mais healthy) pour les ajouter directement sur mon site web.
+
+Je cherche 3 idées de recettes pour le ${mealLabel}.
+
+### CONTEXTE ET OBJECTIF GLOBAL
+L'application calculera dynamiquement les quantités pour Axel (qui a gros appétit) et Prisca (petit appétit).
+Tu dois donc imaginer **UN SEUL PLAT GLOBAL** dont le but calorique cumulé (la poêle pleine) approche les **${totalKcal} kcal au total** (soit environ ${ba.kcal}kcal pour Axel + ${bp.kcal}kcal pour Prisca).
+- Ratio du plat attendu : Riche en protéines (viande, tofu, poisson), lipides contrôlés, féculents sains.
+
+### CONTRAINTES DE LA RECETTE
+1. Simple et sans prise de tête (max 30 min de préparation active).
+2. Invoquer de bonnes sources de protéines maigres, et ne pas exploser le compteur de lipides.
+3. Données réalistes : inclure une estimation du coût global et du temps.
+
+### FORMAT DE SORTIE ATTENDU
+Pour chaque recette, tu dois me livrer le code EXHAUSTIF au format "Markdown avec Frontmatter YAML", copiable directement.
+Utilise ce template strict avec le Frontmatter suivant :
+
+---
+id: [un nombre aléatoire entre 200 et 900]
+name: [Nom sexy de la recette]
+category: plats|viande (ou plats|vege, plats|poisson)
+kcal: [kcal total de la base de la recette] 
+prot: [prot total]
+lip: [lip total]
+glu: [glu total]
+price: [prix total estimé de la base de la recette, ex: 8.50]
+prep_active: [temps actif aux fourneaux, ex: 15 min]
+prep_inactive: [temps de repos/cuisson seul, ex: 20 min (laisser vide si <5m)]
+description: [Courte description donnant envie]
+tips: [Une petite astuce de cuisson ou de conservation]
+emoji: [Un emoji représentant le plat]
+---
+
+### 📊 Matrice des Ingrédients (Obligatoire, respecte ce format de tableau !)
+*(Ajoute les macros pour chaque ligne pour LA PORTION BASE que tu as définie)*
+| Ingrédient | Qty Base | Unité | Kcal | Prot | Lip | Glu | Divisible | Vol. Cuit | Prix estimé (€) |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Poulet | 200 | g | 220 | 44 | 4 | 0 | oui | non | 2.50 |
+| Riz cru | 100 | g | 350 | 8 | 1 | 78 | oui | oui | 0.35 |
+| Galette Blé | 2 | u | 160 | 10 | 4 | 20 | non (0.5 minimum) | non | 0.80 |
+
+### Protocole
+1. **Étape 1** — ...
+2. **Étape 2** — ...
+3. **Étape 3** — ...`;
+    };
+
+    const handleCopyRestaurant = () => {
+        navigator.clipboard.writeText(generateRestaurantPrompt()).then(() => {
+            setCopied('restaurant');
+            setTimeout(() => setCopied(null), 3000);
+        });
+    };
+
+    const handleCopyRecipe = () => {
+        navigator.clipboard.writeText(generateRecipePrompt()).then(() => {
+            setCopied('recipe');
+            setTimeout(() => setCopied(null), 3000);
         });
     };
 
@@ -384,25 +446,45 @@ const ExternalMeal = ({ profiles }) => {
                 </button>
             </div>
 
-            {/* ── Bouton Copier prompt IA ── */}
-            <button
-                onClick={handleCopyPrompt}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
-                    width: '100%', padding: '0.9rem 1rem', marginBottom: '1.5rem',
-                    borderRadius: '12px', cursor: 'pointer',
-                    background: copied ? 'rgba(74,222,128,0.1)' : 'rgba(129,140,248,0.08)',
-                    border: `1px solid ${copied ? 'rgba(74,222,128,0.4)' : 'rgba(129,140,248,0.3)'}`,
-                    color: copied ? '#4ade80' : '#a78bfa',
-                    fontFamily: 'inherit', fontWeight: 700, fontSize: '0.9rem',
-                    transition: 'all 0.3s', touchAction: 'manipulation',
-                }}
-            >
-                {copied
-                    ? <><ClipboardCheck size={17} /> Prompt copié ! Colle-le dans ton IA 🤖</>
-                    : <><Copy size={17} /> Copier ma demande {meal === 'midi' ? 'Midi' : 'Soir'} pour une IA</>
-                }
-            </button>
+            {/* ── Boutons Copier prompts IA ── */}
+            <div className="em-prompt-buttons" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+                <button
+                    onClick={handleCopyRestaurant}
+                    style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                        width: '100%', padding: '0.9rem',
+                        borderRadius: '12px', cursor: 'pointer',
+                        background: copied === 'restaurant' ? 'rgba(74,222,128,0.1)' : 'rgba(129,140,248,0.08)',
+                        border: `1px solid ${copied === 'restaurant' ? 'rgba(74,222,128,0.4)' : 'rgba(129,140,248,0.3)'}`,
+                        color: copied === 'restaurant' ? '#4ade80' : '#a78bfa',
+                        fontFamily: 'inherit', fontWeight: 600, fontSize: '0.9rem',
+                        transition: 'all 0.3s', touchAction: 'manipulation',
+                    }}
+                >
+                    {copied === 'restaurant'
+                        ? <><ClipboardCheck size={18} /> Demande d'idées copiée !</>
+                        : <><Copy size={18} /> Copier demande d'idées (Resto)</>
+                    }
+                </button>
+                <button
+                    onClick={handleCopyRecipe}
+                    style={{
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.6rem',
+                        width: '100%', padding: '0.9rem',
+                        borderRadius: '12px', cursor: 'pointer',
+                        background: copied === 'recipe' ? 'rgba(74,222,128,0.1)' : 'rgba(234,179,8,0.08)',
+                        border: `1px solid ${copied === 'recipe' ? 'rgba(74,222,128,0.4)' : 'rgba(234,179,8,0.3)'}`,
+                        color: copied === 'recipe' ? '#4ade80' : '#eab308',
+                        fontFamily: 'inherit', fontWeight: 600, fontSize: '0.9rem',
+                        transition: 'all 0.3s', touchAction: 'manipulation',
+                    }}
+                >
+                    {copied === 'recipe'
+                        ? <><ClipboardCheck size={18} /> Format Markdown copié !</>
+                        : <><ChefHat size={18} /> Générer de nouvelles recettes</>
+                    }
+                </button>
+            </div>
 
             {/* ── Bannière info ── */}
             <div className="em-info-banner">

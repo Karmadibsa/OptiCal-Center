@@ -28,6 +28,32 @@ const parseMarkdownSections = (text) => {
     return sections;
 };
 
+const parseMarkdownTable = (items) => {
+    const tableLines = items.filter(l => l.trim().startsWith('|') && !l.includes(':---'));
+    if (tableLines.length < 2) return null; // data lines minus separator
+    const header = items.find(l => l.trim().startsWith('|')).split('|').map(s => s.trim()).filter(Boolean);
+    const dataObj = [];
+    for (const line of items) {
+        if (!line.trim().startsWith('|') || line.includes(':---')) continue;
+        const row = line.split('|').map(s => s.trim()).filter(Boolean);
+        if (row.length === header.length && row[0].toLowerCase() !== 'ingrédient') {
+            dataObj.push({
+                ingredient: row[0],
+                qty: parseFloat(row[1]) || 0,
+                unit: row[2],
+                kcal: parseFloat(row[3]) || 0,
+                prot: parseFloat(row[4]) || 0,
+                lip: parseFloat(row[5]) || 0,
+                glu: parseFloat(row[6]) || 0,
+                divisible: row[7] || 'oui',
+                volCooked: (row[8] || 'non').toLowerCase().includes('oui'),
+                itemPrice: parseFloat(row[9]) || null
+            });
+        }
+    }
+    return dataObj.length > 0 ? dataObj : null;
+};
+
 // Prix : "- Farine T65 (500g) : 0.55€" → [{ label, price }]
 const parsePriceLines = (items) =>
     items
@@ -71,9 +97,324 @@ const PERSON_COLORS = { axel: '#38bdf8', prisca: '#a78bfa' };
 const getPersonColor = (name) => PERSON_COLORS[name.toLowerCase()] || '#94a3b8';
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
-const RecipeDetailModal = ({ recipe, onClose }) => {
+const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange }) => {
+    const totalKcalBase = ingredientsConfig.reduce((acc, i) => acc + i.kcal, 0) || 1;
+    
+    // Coef de reference (auto)
+    const targetAxel = budgetAxel ? budgetAxel.kcal / totalKcalBase : 1;
+    const targetPrisca = budgetPrisca ? budgetPrisca.kcal / totalKcalBase : 1;
+    
+    const [coefAxel, setCoefAxel] = useState(targetAxel);
+    const [coefPrisca, setCoefPrisca] = useState(targetPrisca);
+
+    const [overridesAxel, setOverridesAxel] = useState({});
+    const [overridesPrisca, setOverridesPrisca] = useState({});
+    const [cookedWeights, setCookedWeights] = useState({});
+    const [globalWeight, setGlobalWeight] = useState('');
+    const [calcCru, setCalcCru] = useState('');
+    const [calcCuit, setCalcCuit] = useState('');
+    const [calcPart, setCalcPart] = useState('');
+
+    useEffect(() => {
+        setCoefAxel(targetAxel);
+        setCoefPrisca(targetPrisca);
+        setOverridesAxel({});
+        setOverridesPrisca({});
+    }, [targetAxel, targetPrisca]);
+
+    useEffect(() => {
+        if (onTotalCoefChange) onTotalCoefChange(coefAxel + coefPrisca);
+    }, [coefAxel, coefPrisca, onTotalCoefChange]);
+
+    const calculateValues = (coef, overrides) => {
+        return ingredientsConfig.map((ing, idx) => {
+            const isDivisible = ing.divisible.toLowerCase().includes('oui') || ing.divisible.toLowerCase().includes('yes');
+            let baseStep = 1;
+            if (!isDivisible) {
+                const matchStep = ing.divisible.match(/([\d.]+)/);
+                if (matchStep) baseStep = parseFloat(matchStep[1]);
+            }
+
+            let finalQty = ing.qty * coef;
+            if (overrides[idx] !== undefined) {
+                finalQty = overrides[idx];
+            } else {
+                if (!isDivisible) {
+                    finalQty = Math.round(finalQty / baseStep) * baseStep;
+                } else {
+                    finalQty = Math.round(finalQty); 
+                }
+            }
+
+            const ratio = ing.qty > 0 ? finalQty / ing.qty : 0;
+            return {
+                ...ing,
+                scaledQty: finalQty,
+                scaledKcal: ratio * ing.kcal,
+                scaledProt: ratio * ing.prot,
+                scaledLip: ratio * ing.lip,
+                scaledGlu: ratio * ing.glu
+            };
+        });
+    };
+
+    const scaledAxel = calculateValues(coefAxel, overridesAxel);
+    const scaledPrisca = calculateValues(coefPrisca, overridesPrisca);
+
+    const handleOverride = (personKey, idx, val) => {
+        const num = parseFloat(val);
+        if (isNaN(num) || num < 0) return;
+        if (personKey === 'axel') {
+            setOverridesAxel(prev => ({ ...prev, [idx]: num }));
+        } else {
+            setOverridesPrisca(prev => ({ ...prev, [idx]: num }));
+        }
+    };
+    
+    const renderTable = (personName, scaledData, color, setCoef, currentCoef, baseCoef, overrides, setOverrides, budgetStr, totalCostRaw) => {
+        const tKcal = scaledData.reduce((s, i) => s + i.scaledKcal, 0);
+        const tProt = scaledData.reduce((s, i) => s + i.scaledProt, 0);
+        const tLip = scaledData.reduce((s, i) => s + i.scaledLip, 0);
+        const tGlu = scaledData.reduce((s, i) => s + i.scaledGlu, 0);
+        
+        const renderDiff = (act, trg, isProt) => {
+            if (!trg) return null;
+            const diff = act - trg;
+            const pct = (diff / trg) * 100;
+            if (Math.abs(diff) < 2) return null;
+            
+            let c = '#94a3b8';
+            if (isProt) {
+                if (pct >= -10 && diff < 0) c = '#fb923c'; 
+                else if (pct < -10) c = '#f87171'; 
+                else c = '#4ade80';
+            } else {
+                if (pct <= 10 && diff > 0) c = '#fb923c'; 
+                else if (pct > 10) c = '#f87171';
+                else c = '#4ade80'; 
+            }
+            return <span style={{ fontSize: '0.65rem', background: `${c}20`, color: c, border: `1px solid ${c}50`, borderRadius: '4px', padding: '1px 4px', marginLeft: '0.3rem', fontWeight: 700 }}>{diff > 0 ? '+' : ''}{Math.round(diff)}</span>;
+        };
+        
+        return (
+            <div style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${color}30`, borderRadius: '12px', padding: '1rem', marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    <div style={{ color, fontWeight: 800, fontSize: '1.2rem' }}>{personName}</div>
+                    
+                    {/* Bloc Ajuster Portions avec boutons + / - */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(0,0,0,0.2)', padding: '0.3rem 0.6rem', borderRadius: '8px' }}>
+                        <span style={{ fontSize: '0.7rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 800 }}>Coeff :</span>
+                        <button onClick={() => { setCoef(c => Math.max(0.1, c - 0.1)); setOverrides({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>-</button>
+                        <input type="number" step="0.1" min="0.1" 
+                            className="ri-hide-spin"
+                            value={Number(currentCoef).toFixed(1)} 
+                            onChange={e => { const v = parseFloat(e.target.value); if(!isNaN(v)) { setCoef(v); setOverrides({}); } }}
+                            style={{ width: '35px', outline: 'none', textAlign: 'center', background: 'transparent', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '0.9rem' }} />
+                        <button onClick={() => { setCoef(c => c + 0.1); setOverrides({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
+                        
+                        {(Math.abs(currentCoef - baseCoef) > 0.01 || Object.keys(overrides).length > 0) && (
+                            <button onClick={() => { setCoef(baseCoef); setOverrides({}); }} style={{ background: `${color}20`, border: `1px solid ${color}40`, color: color, borderRadius: '4px', cursor: 'pointer', fontSize: '0.65rem', padding: '0.2rem 0.4rem', marginLeft: '0.3rem' }}>Reset</button>
+                        )}
+                    </div>
+                </div>
+                
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+                    <tbody>
+                        {scaledData.map((ing, idx) => {
+                            const displayQty = parseFloat(ing.scaledQty.toFixed(1));
+                            
+                            return (
+                                <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
+                                    <td style={{ padding: '0.6rem 0', color: '#e2e8f0', lineHeight: 1.4 }}>
+                                        <div style={{ fontWeight: 600 }}>{ing.ingredient}</div>
+                                    </td>
+                                    <td style={{ padding: '0.6rem 0', textAlign: 'right', verticalAlign: 'top' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem' }}>
+                                            <input 
+                                                className="ri-hide-spin"
+                                                type="number" 
+                                                value={displayQty}
+                                                onChange={e => handleOverride(personName.toLowerCase(), idx, e.target.value)}
+                                                style={{ width: '60px', outline: 'none', textAlign: 'right', background: 'rgba(0,0,0,0.3)', border: `1px solid ${overrides[idx] !== undefined ? color : 'rgba(255,255,255,0.1)'}`, borderRadius: '4px', color: overrides[idx] !== undefined ? color : '#fff', fontWeight: 'bold', padding: '0.2rem', fontSize: '0.85rem' }} 
+                                            />
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', minWidth: '15px' }}>{ing.unit}</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
+                
+                    <div style={{ display: 'flex', gap: '1.2rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.05)', flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{color: '#64748b', fontSize: '0.65rem', fontWeight: 800}}>⚡ KCAL {renderDiff(tKcal, budgetStr?.kcal)}</span>
+                            <span style={{color: color, fontWeight: 900, fontSize: '0.9rem'}}>{Math.round(tKcal)}</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{color: '#64748b', fontSize: '0.65rem', fontWeight: 800}}>🥩 PROT {renderDiff(tProt, budgetStr?.prot, true)}</span>
+                            <span style={{color: '#4ade80', fontWeight: 900, fontSize: '0.9rem'}}>{Math.round(tProt)}g</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{color: '#64748b', fontSize: '0.65rem', fontWeight: 800}}>🥑 LIP {renderDiff(tLip, budgetStr?.lip)}</span>
+                            <span style={{color: '#fb923c', fontWeight: 900, fontSize: '0.9rem'}}>{Math.round(tLip)}g</span>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{color: '#64748b', fontSize: '0.65rem', fontWeight: 800}}>🍞 GLU {renderDiff(tGlu, budgetStr?.glu)}</span>
+                            <span style={{color: '#facc15', fontWeight: 900, fontSize: '0.9rem'}}>{Math.round(tGlu)}g</span>
+                        </div>
+                    </div>
+            </div>
+        );
+    };
+
+    const totalData = scaledAxel.map((ing, i) => ({
+        ...ing,
+        totalQty: parseFloat((ing.scaledQty + scaledPrisca[i].scaledQty).toFixed(1))
+    }));
+    const tKcalAxel = scaledAxel.reduce((s, i) => s + i.scaledKcal, 0);
+    const tKcalPrisca = scaledPrisca.reduce((s, i) => s + i.scaledKcal, 0);
+    const ratioKcalAxel = tKcalAxel / (tKcalAxel + tKcalPrisca) || 0.5;
+
+    return (
+        <div style={{ marginBottom: '1.5rem', background: 'rgba(0,0,0,0.15)', padding: '1rem', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)' }}>
+            <style dangerouslySetInnerHTML={{__html: `
+                .ri-hide-spin::-webkit-outer-spin-button, 
+                .ri-hide-spin::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+                .ri-hide-spin { -moz-appearance: textfield; }
+            `}} />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '1rem' }}>
+                <h3 style={{ fontSize: '0.85rem', fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '1px', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
+                    ⚖️ Balance Magique 
+                </h3>
+            </div>
+            
+            {/* PANNEAU TOTAL CUISINE */}
+            <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', padding: '0.75rem', marginBottom: '1.5rem', position: 'relative' }}>
+                <button onClick={(e) => {
+                        let txt = `🔥 REPAS CUISINE:\n${totalData.map(i => `- ${i.totalQty}${i.unit} ${i.ingredient}`).join('\n')}\n\n`;
+                        txt += `⚖️ ASSIETTE AXEL:\n${scaledAxel.map(i => `- ${i.scaledQty}${i.unit} ${i.ingredient}`).join('\n')}\n\n`;
+                        txt += `⚖️ ASSIETTE PRISCA:\n${scaledPrisca.map(i => `- ${i.scaledQty}${i.unit} ${i.ingredient}`).join('\n')}\n`;
+                        navigator.clipboard.writeText(txt);
+                        const btn = e.currentTarget;
+                        const old = btn.innerText; btn.innerText = "✓ Copié"; setTimeout(()=>btn.innerText=old, 2000);
+                    }} 
+                    style={{ position: 'absolute', top: '0.5rem', right: '0.5rem', background: '#f59e0b22', color: '#f59e0b', border: '1px solid #f59e0b40', borderRadius: '4px', cursor: 'pointer', fontSize: '0.65rem', padding: '0.25rem 0.5rem', fontWeight: 'bold' }}>
+                    📝 Copier Grammages
+                </button>
+                
+                <div style={{ fontSize: '0.75rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 800, marginBottom: '0.5rem' }}>🔥 Total pour la Cuisine :</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                    {totalData.map((ing, i) => {
+                        const isVolCooked = ing.volCooked;
+                        const ratioAxelIng = ing.totalQty > 0 ? scaledAxel[i].scaledQty / ing.totalQty : 0.5;
+                        return (
+                            <div key={i} style={{ background: 'rgba(0,0,0,0.3)', padding: '0.4rem 0.6rem', borderRadius: '4px', fontSize: '0.8rem', border: '1px solid rgba(255,255,255,0.03)', display: 'flex', flexDirection: 'column' }}>
+                                <div>
+                                    <span style={{ color: '#fff', fontWeight: 'bold' }}>{ing.totalQty} {ing.unit}</span> <span style={{ color: '#94a3b8' }}>{ing.ingredient}</span>
+                                    {ing.itemPrice && (
+                                        <span style={{ color: '#10b981', fontSize: '0.7rem', marginLeft: '0.4rem' }}>{((ing.totalQty / ing.qty) * ing.itemPrice).toFixed(2)}€</span>
+                                    )}
+                                </div>
+                                {isVolCooked && (
+                                    <div style={{display: 'flex', alignItems: 'center', gap: '0.4rem', marginTop: '0.3rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.3rem'}}>
+                                        <input type="number" 
+                                            className="ri-hide-spin"
+                                            placeholder="Poids Cuit (g)" 
+                                            value={cookedWeights[i] || ''}
+                                            onChange={e => setCookedWeights({...cookedWeights, [i]: e.target.value})}
+                                            style={{ width: '80px', outline: 'none', background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '4px', color: '#f59e0b', fontSize: '0.75rem', padding: '0.2rem' }}
+                                        />
+                                        {cookedWeights[i] && !isNaN(parseFloat(cookedWeights[i])) && (
+                                            <span style={{fontSize: '0.7rem', color: '#94a3b8'}}>
+                                                ➔ <span style={{color: '#38bdf8'}}>{Math.round(parseFloat(cookedWeights[i]) * ratioAxelIng)}g</span> · <span style={{color: '#a78bfa'}}>{Math.round(parseFloat(cookedWeights[i]) * (1 - ratioAxelIng))}g</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* Calculateur de poele complet */}
+                <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                    <div style={{fontSize: '0.75rem', color: '#fcd34d', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
+                        🥘 PLAT UNIQUE ? (TOUT MÉLANGÉ)
+                    </div>
+                    <div style={{color: '#64748b', fontSize: '0.65rem', fontStyle: 'italic', marginBottom: '0.4rem', marginTop: '0.2rem'}}>Répartition calculée selon les besoins caloriques de chacun.</div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                        <input type="number" 
+                            className="ri-hide-spin"
+                            placeholder="Poids total (g)" 
+                            value={globalWeight} 
+                            onChange={e => setGlobalWeight(e.target.value)} 
+                            style={{ width: '130px', outline: 'none', background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: '4px', color: '#fff', fontSize: '0.8rem', padding: '0.4rem 0.5rem', fontWeight: 'bold' }}
+                        />
+                        {globalWeight && !isNaN(parseFloat(globalWeight)) && parseFloat(globalWeight) > 0 && (
+                            <span style={{fontSize: '0.8rem', color: '#94a3b8'}}>
+                                ➔ Axel: <b style={{color: '#38bdf8'}}>{Math.round(parseFloat(globalWeight) * ratioKcalAxel)}g</b> | Prisca: <b style={{color: '#a78bfa'}}>{Math.round(parseFloat(globalWeight) * (1 - ratioKcalAxel))}g</b>
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {/* Calculateur Cru/Cuit Type PST */}
+                <div style={{ marginTop: '1rem', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '0.75rem' }}>
+                    <div style={{fontSize: '0.75rem', color: '#38bdf8', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '0.4rem'}}>
+                        ⚖️ RATIO CRU ➔ CUIT MANUEL (Ex: PST, Pâtes)
+                    </div>
+                    <div style={{color: '#64748b', fontSize: '0.65rem', fontStyle: 'italic', marginBottom: '0.4rem', marginTop: '0.2rem'}}>Idéal pour les produits dont le volume change selon cuisson.</div>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', alignItems: 'center', marginTop: '0.4rem' }}>
+                        <input type="number" className="ri-hide-spin" placeholder="Poids Cru total (g)" value={calcCru} onChange={e => setCalcCru(e.target.value)} style={{ width: '120px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(56,189,248,0.3)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }} />
+                        <span style={{color: '#64748b', fontSize: '0.75rem'}}>donne</span>
+                        <input type="number" className="ri-hide-spin" placeholder="Poids Cuit pesé (g)" value={calcCuit} onChange={e => setCalcCuit(e.target.value)} style={{ width: '130px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(56,189,248,0.3)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }} />
+                        {calcCru && calcCuit && !isNaN(parseFloat(calcCuit)/parseFloat(calcCru)) && parseFloat(calcCru) !== 0 && (
+                            <span style={{fontSize: '0.75rem', color: '#38bdf8', fontWeight: 'bold'}}>
+                                (Ratio: {(parseFloat(calcCuit)/parseFloat(calcCru)).toFixed(2)}x)
+                            </span>
+                        )}
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.4rem' }}>
+                        <input type="number" className="ri-hide-spin" placeholder="Part crue requise (g)" value={calcPart} onChange={e => setCalcPart(e.target.value)} style={{ width: '140px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem' }} />
+                        {calcCru && calcCuit && calcPart && parseFloat(calcCru) !== 0 && (
+                            <span style={{fontSize: '0.8rem', color: '#e2e8f0'}}>
+                                ➔ Sert <b style={{color: '#38bdf8'}}>{Math.round(parseFloat(calcPart) * (parseFloat(calcCuit)/parseFloat(calcCru)))}g</b> dans l'assiette.
+                            </span>
+                        )}
+                    </div>
+                </div>
+
+                {totalData.some(ing => ing.itemPrice > 0) && (
+                    <div style={{ marginTop: '1.25rem', borderTop: '1px dotted rgba(255,255,255,0.05)', paddingTop: '0.75rem' }}>
+                        <h4 style={{fontSize: '0.75rem', color: '#10b981', margin: '0 0 0.5rem 0'}}>💶 DÉTAIL DES COURSES (POUR CE REPAS)</h4>
+                        {totalData.map((ing, i) => ing.itemPrice > 0 ? (
+                            <div key={i} style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: '#94a3b8', borderBottom: '1px solid rgba(255,255,255,0.02)', padding: '0.25rem 0'}}>
+                                <span>{ing.totalQty}{ing.unit} {ing.ingredient}</span>
+                                <span style={{color: '#10b981'}}>{((ing.totalQty / ing.qty) * ing.itemPrice).toFixed(2)}€</span>
+                            </div>
+                        ) : null)}
+                        <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem', color: '#fff', fontWeight: 'bold', paddingTop: '0.5rem', borderTop: '1px solid rgba(16,185,129,0.3)', marginTop: '0.3rem'}}>
+                            <span>COÛT TOTAL :</span>
+                            <span style={{color: '#10b981', fontSize: '0.9rem'}}>{(totalCostRaw * (coefAxel + coefPrisca)).toFixed(2)}€</span>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+                {renderTable('Axel', scaledAxel, '#38bdf8', setCoefAxel, coefAxel, targetAxel, overridesAxel, setOverridesAxel, budgetAxel, totalCostRaw)}
+                {renderTable('Prisca', scaledPrisca, '#a78bfa', setCoefPrisca, coefPrisca, targetPrisca, overridesPrisca, setOverridesPrisca, budgetPrisca, totalCostRaw)}
+            </div>
+        </div>
+    );
+};
+
+// ─── Modal ─────────────────────────────────────────────────────────────────────
+const RecipeDetailModal = ({ recipe, budgetAxel, budgetPrisca, onClose }) => {
     const [sections, setSections] = useState([]);
     const [loadingMd, setLoadingMd] = useState(true);
+    const [totalCoef, setTotalCoef] = useState(0);
 
     useEffect(() => {
         if (!recipe.file) { setLoadingMd(false); return; }
@@ -89,9 +430,13 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
     // Utilise totalCost pré-calculé à l'init (ou recalcule si nécessaire)
     const totalCost    = recipe.totalCost ?? priceItems.reduce((s, p) => s + p.price, 0);
 
-    // Sections contenu (hors prix et portions)
+    // Parsing de la Matrice Intelligente
+    const matrixSection = sections.find(s => /matrice|ingrédient/i.test(s.title) && s.items.some(l => l.includes('| Kcal |') || l.includes('| Divisible |')));
+    const ingredientsMatrix = matrixSection ? parseMarkdownTable(matrixSection.items) : null;
+
+    // Sections contenu (hors prix, portions et matrice)
     const contentSections = sections.filter(s =>
-        !/prix/i.test(s.title) && !/portions/i.test(s.title)
+        !/prix/i.test(s.title) && !/portions/i.test(s.title) && s !== matrixSection
     );
 
     // Portions depuis l'objet recipe (pré-chargées à l'init)
@@ -111,15 +456,16 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
         <div onClick={onClose} style={{
             position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(3,7,18,0.85)', backdropFilter: 'blur(8px)',
-            display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '1rem'
         }}>
             <div onClick={e => e.stopPropagation()} style={{
                 background: 'rgba(15,23,42,0.99)',
                 border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '20px 20px 0 0',
-                width: '100%', maxWidth: '760px',
-                maxHeight: '92dvh', overflowY: 'auto',
-                boxShadow: '0 -20px 60px rgba(0,0,0,0.6)',
+                borderRadius: '20px',
+                width: '100%', maxWidth: '780px',
+                maxHeight: '85vh', overflowY: 'auto',
+                boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
             }}>
                 {/* Poignée */}
                 <div style={{ display: 'flex', justifyContent: 'center', padding: '0.75rem 0 0.25rem' }}>
@@ -141,10 +487,14 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
                                     {recipe.name}
                                 </h2>
                                 <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
-                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>⏱ {recipe.prep}</span>
-                                    {totalCost > 0 && (
+                                    {recipe.prep_active ? (
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>🧑‍🍳 {recipe.prep_active} <span style={{opacity: 0.5}}>(actif)</span> {recipe.prep_inactive && ` · ⏳ ${recipe.prep_inactive} (repos)`}</span>
+                                    ) : (
+                                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>⏱ {recipe.prep}</span>
+                                    )}
+                                    {totalCost > 0 && totalCoef > 0 && (
                                         <span style={{ fontSize: '0.75rem', color: '#10b981', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                                            <Euro size={10} /> {totalCost.toFixed(2)}€ recette
+                                            <Euro size={10} /> {(totalCost * totalCoef).toFixed(2)}€ pour ce repas
                                         </span>
                                     )}
                                 </div>
@@ -166,6 +516,16 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
                         <p style={{ color: '#475569', textAlign: 'center', padding: '2rem' }}>Chargement...</p>
                     ) : (
                         <>
+                            {/* Scaler Intelligent dynamique */}
+                            {ingredientsMatrix && budgetAxel && budgetPrisca && (
+                                <InteractiveRecipeScaler 
+                                    ingredientsConfig={ingredientsMatrix} 
+                                    budgetAxel={budgetAxel} 
+                                    budgetPrisca={budgetPrisca} 
+                                    totalCostRaw={totalCost}
+                                    onTotalCoefChange={setTotalCoef}
+                                />
+                            )}
                             {/* Portions habituelles */}
                             {portionItems.length > 0 && (
                                 <div style={{
@@ -221,56 +581,33 @@ const RecipeDetailModal = ({ recipe, onClose }) => {
                                 </div>
                             ))}
 
-                            {/* Section Prix */}
-                            {priceItems.length > 0 && (
-                                <div style={{
-                                    marginTop: '0.5rem',
-                                    background: 'rgba(16,185,129,0.06)',
-                                    border: '1px solid rgba(16,185,129,0.2)',
-                                    borderRadius: '12px', padding: '1rem'
-                                }}>
-                                    <h3 style={{
-                                        fontSize: '0.78rem', fontWeight: 800, color: '#10b981',
-                                        letterSpacing: '1px', textTransform: 'uppercase',
-                                        marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem'
-                                    }}>
-                                        <Euro size={13} /> Coût des ingrédients
-                                    </h3>
-                                    {priceItems.map((item, i) => (
-                                        <div key={i} style={{
-                                            display: 'flex', justifyContent: 'space-between',
-                                            padding: '0.35rem 0', borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                            fontSize: '0.83rem'
-                                        }}>
-                                            <span style={{ color: '#94a3b8' }}>{item.label}</span>
-                                            <span style={{ color: '#10b981', fontFamily: 'monospace', fontWeight: 700 }}>{item.price.toFixed(2)}€</span>
-                                        </div>
-                                    ))}
-                                    <div style={{ paddingTop: '0.65rem', marginTop: '0.25rem', borderTop: '2px solid rgba(16,185,129,0.3)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 800, fontSize: '0.9rem', marginBottom: '0.4rem' }}>
-                                            <span style={{ color: '#e2e8f0' }}>
-                                                Total recette
-                                                {recipe.recipe_yield && (
-                                                    <span style={{ color: '#64748b', fontWeight: 400, fontSize: '0.78rem' }}> · {recipe.recipe_yield}</span>
-                                                )}
-                                            </span>
-                                            <span style={{ color: '#10b981' }}>{totalCost.toFixed(2)}€</span>
-                                        </div>
-                                        {autoPrice !== null && (
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem' }}>
-                                                <span style={{ color: '#64748b' }}>Prix / {recipe.base_unit} (calculé)</span>
-                                                <span style={{ color: '#34d399', fontFamily: 'monospace', fontWeight: 700 }}>~{autoPrice.toFixed(2)}€</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            )}
+
 
                             {!recipe.file && (
                                 <p style={{ color: '#475569', fontStyle: 'italic', textAlign: 'center', padding: '2rem' }}>
                                     Pas de fiche détaillée disponible pour cette recette.
                                 </p>
                             )}
+
+                            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '2rem' }}>
+                                <button
+                                    onClick={() => {
+                                        const textD = `Recette: ${recipe.name}\n${recipe.link || ''}\n${recipe.description}`;
+                                        if (navigator.share) navigator.share({ title: recipe.name, text: textD, url: recipe.link || window.location.href }).catch(()=>{});
+                                        else navigator.clipboard.writeText(textD);
+                                        const btn = document.activeElement;
+                                        if (btn) { const old = btn.innerText; btn.innerText = "✓ Partagé !"; setTimeout(()=>btn.innerText=old, 2000); }
+                                    }}
+                                    style={{ flex: 1, padding: '0.75rem', background: '#38bdf820', color: '#38bdf8', border: '1px solid #38bdf840', borderRadius: '8px', cursor: 'pointer', fontWeight: 700, transition: 'all 0.2s', touchAction: 'manipulation' }}
+                                >
+                                    📤 Partager la recette
+                                </button>
+                                {recipe.link && recipe.link.split(' ').map((lnk, idx) => (
+                                    <a key={idx} href={lnk} target="_blank" rel="noopener noreferrer" style={{ flex: 1, padding: '0.75rem', background: 'rgba(255,255,255,0.05)', color: '#fff', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', textDecoration: 'none', fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
+                                        <ExternalLink size={15} /> Voir l'original
+                                    </a>
+                                ))}
+                            </div>
                         </>
                     )}
                 </div>
@@ -311,7 +648,11 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
                 <div style={{ minWidth: 0 }}>
                     <h3 style={{ fontSize: '1rem', fontWeight: 700, color: '#e2e8f0', margin: 0, lineHeight: 1.3 }}>{recipe.name}</h3>
                     <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.3rem', alignItems: 'center' }}>
-                        <span className="ri-prep-time">⏱ {recipe.prep}</span>
+                        {recipe.prep_active ? (
+                            <span className="ri-prep-time">🧑‍🍳 {recipe.prep_active} {recipe.prep_inactive && `· ⏳ ${recipe.prep_inactive}`}</span>
+                        ) : (
+                            <span className="ri-prep-time">⏱ {recipe.prep}</span>
+                        )}
                         {recipe.totalCost !== null && (
                             <span style={{
                                 display: 'inline-flex', alignItems: 'center', gap: '2px',
@@ -438,7 +779,7 @@ const RecipeCard = ({ recipe, budgetAxel, budgetPrisca, onDetail }) => {
 const RecipeIdeas = ({ profiles }) => {
     const [recipes,      setRecipes]      = useState([]);
     const [search,       setSearch]       = useState('');
-    const [activeTag,    setActiveTag]    = useState(null);
+    const [activeTags,   setActiveTags]   = useState([]);
     const [loading,      setLoading]      = useState(true);
     const [targetMeal,   setTargetMeal]   = useState('midi');
     const [detailRecipe, setDetailRecipe] = useState(null);
@@ -460,13 +801,18 @@ const RecipeIdeas = ({ profiles }) => {
                     )
                 );
 
-                setRecipes(data.map((row, i) => {
+                const loadedRecipes = data.map((row, i) => {
                     const sections = mdTexts[i] ? parseMarkdownSections(mdTexts[i]) : [];
 
                     // Prix auto depuis "### Prix des ingrédients"
                     const priceSection = sections.find(s => /prix/i.test(s.title));
                     const priceItems   = priceSection ? parsePriceLines(priceSection.items) : [];
-                    const totalCost    = priceItems.reduce((sum, p) => sum + p.price, 0);
+                    let totalCost      = priceItems.reduce((sum, p) => sum + p.price, 0);
+
+                    // Si pas de section de prix (nouveau format), on prend le row.price global
+                    if (totalCost === 0 && row.price) {
+                        totalCost = parseFloat(row.price);
+                    }
 
                     // Portions fixes depuis "### Portions consommées"
                     const portionSection = sections.find(s => /portions/i.test(s.title));
@@ -486,13 +832,21 @@ const RecipeIdeas = ({ profiles }) => {
                         totalCost:  totalCost > 0 ? totalCost : null,
                         portionData,
                         prep:         row.prep || '',
+                        prep_active:  row.prep_active || '',
+                        prep_inactive:row.prep_inactive || '',
                         description:  row.description || '',
                         tips:         row.tips || '',
                         link:         row.link || '',
                         emoji:        row.emoji || '🍽️',
                         accent:       ACCENTS[i % ACCENTS.length]
                     };
-                }));
+                });
+                setRecipes(loadedRecipes);
+                const hashMatch = window.location.hash.match(/#recipe-(.+)/);
+                if (hashMatch) {
+                    const r = loadedRecipes.find(x => String(x.id) === hashMatch[1]);
+                    if (r) setDetailRecipe(r);
+                }
             } catch {
                 setRecipes([]);
             } finally {
@@ -516,19 +870,41 @@ const RecipeIdeas = ({ profiles }) => {
         return () => { document.body.style.overflow = ''; };
     }, [detailRecipe]);
 
+    const handleDetail = (recipe) => {
+        window.history.replaceState(null, null, `#recipe-${recipe.id}`);
+        setDetailRecipe(recipe);
+    };
+
+    const handleCloseModal = () => {
+        window.history.replaceState(null, null, ' ');
+        setDetailRecipe(null);
+    };
+
+    // Filtres
+    const addFilter = (tag) => {
+        if (activeTags.includes(tag)) setActiveTags(activeTags.filter(t => t !== tag));
+        else setActiveTags([...activeTags, tag]);
+    };
+
+    const isFast = r => /10\s*min|15\s*min/i.test(r.prep_active || r.prep);
+    const isProtéiné  = r => r.prot >= 90; // Pour la recette de base
+    const isCheap = r => r.totalCost !== null && r.totalCost <= 6;
+
     const allCategories = [...new Set(recipes.flatMap(r => r.category))].sort();
 
     const filtered = recipes.filter(r => {
         const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
                             r.description.toLowerCase().includes(search.toLowerCase());
-        return matchSearch && (!activeTag || r.category.includes(activeTag));
+        const matchTags = activeTags.length === 0 || activeTags.every(t => {
+            if (t === 'Rapide') return isFast(r);
+            if (t === 'Protéiné') return isProtéiné(r);
+            if (t === 'Pas cher') return isCheap(r);
+            return r.category.includes(t);
+        });
+        return matchSearch && matchTags;
     });
 
-    if (loading) return (
-        <div className="section-container" style={{ textAlign: 'center', padding: '4rem', color: '#64748b' }}>
-            Chargement des recettes...
-        </div>
-    );
+    if (loading) return null;
 
     const budgetAxel   = profiles?.axel   ? getMealBudget('axel',   profiles, targetMeal) : null;
     const budgetPrisca = profiles?.prisca ? getMealBudget('prisca', profiles, targetMeal) : null;
@@ -536,7 +912,12 @@ const RecipeIdeas = ({ profiles }) => {
     return (
         <div className="section-container animate-fade-in">
             {detailRecipe && (
-                <RecipeDetailModal recipe={detailRecipe} onClose={() => setDetailRecipe(null)} />
+                <RecipeDetailModal 
+                    recipe={detailRecipe} 
+                    budgetAxel={budgetAxel} 
+                    budgetPrisca={budgetPrisca} 
+                    onClose={handleCloseModal} 
+                />
             )}
 
             <div style={{ marginBottom: '1rem' }}>
@@ -589,10 +970,10 @@ const RecipeIdeas = ({ profiles }) => {
                 </div>
                 <div className="ri-tags-filter">
                     <Tag size={13} style={{ color: '#64748b', flexShrink: 0 }} />
-                    <button className={`ri-tag-btn ${!activeTag ? 'ri-tag-active' : ''}`} onClick={() => setActiveTag(null)}>Toutes</button>
-                    {allCategories.map(cat => (
-                        <button key={cat} className={`ri-tag-btn ${activeTag === cat ? 'ri-tag-active' : ''}`}
-                            onClick={() => setActiveTag(activeTag === cat ? null : cat)}>
+                    <button className={`ri-tag-btn ${activeTags.length === 0 ? 'ri-tag-active' : ''}`} onClick={() => setActiveTags([])}>Toutes</button>
+                    {['Rapide', 'Protéiné', 'Pas cher', ...allCategories].map(cat => (
+                        <button key={cat} className={`ri-tag-btn ${activeTags.includes(cat) ? 'ri-tag-active' : ''}`}
+                            onClick={() => addFilter(cat)}>
                             {cat}
                         </button>
                     ))}
@@ -601,7 +982,7 @@ const RecipeIdeas = ({ profiles }) => {
 
             <p className="ri-count">
                 {filtered.length} recette{filtered.length > 1 ? 's' : ''}
-                {activeTag ? ` · ${activeTag}` : ''}{search ? ` · "${search}"` : ''}
+                {activeTags.length > 0 ? ` · ${activeTags.join(', ')}` : ''}{search ? ` · "${search}"` : ''}
             </p>
 
             {filtered.length > 0 ? (
@@ -612,7 +993,7 @@ const RecipeIdeas = ({ profiles }) => {
                             recipe={recipe}
                             budgetAxel={budgetAxel}
                             budgetPrisca={budgetPrisca}
-                            onDetail={setDetailRecipe}
+                            onDetail={handleDetail}
                         />
                     ))}
                 </div>
