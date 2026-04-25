@@ -1,253 +1,416 @@
 [
   {
-    "name": "Pois chiches (égouttés)",
-    "aliases": ["pois chiches"],
-    "buy_unit": "kg", "price_per_unit": 2.92,
-    "achat": "Boîte 400g · ~0.70€ · ~240g égouttés",
-    "magasin": ""
+    "name": "Pois chiches (sec)",
+    "aliases": [
+      "pois chiches"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.29,
+    "achat": "Boîte 1kg · ~3.29€ · ",
+    "magasin": "Carrefour"
   },
   {
-    "name": "Haricots rouges (égouttés)",
-    "aliases": ["haricots rouges"],
-    "buy_unit": "kg", "price_per_unit": 2.80,
-    "achat": "Boîte 400g · ~0.70€ · ~250g égouttés",
-    "magasin": ""
+    "name": "Haricots rouges (egouttés)",
+    "aliases": [
+      "haricots rouges"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.70,
+    "achat": "Boîte 800g · ~1.35€ · ~500g égouttés",
+    "magasin": "Carrefour"
   },
   {
-    "name": "Haricots blancs (égouttés)",
-    "aliases": ["haricots blancs"],
-    "buy_unit": "kg", "price_per_unit": 2.80,
-    "achat": "Boîte 400g · ~0.70€ · ~250g égouttés",
-    "magasin": ""
+    "name": "Haricots blancs (sec)",
+    "aliases": [
+      "haricots blancs"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.19,
+    "achat": "Boîte 1kg · ~3.19€ · ",
+    "magasin": "Carrefour"
   },
   {
     "name": "Haricots noirs (égouttés)",
-    "aliases": ["haricots noirs"],
-    "buy_unit": "kg", "price_per_unit": 3.00,
-    "achat": "Boîte 400g · ~0.75€ · ~250g égouttés",
-    "magasin": ""
+    "aliases": [
+      "haricots noirs"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.99,
+    "achat": "Boîte 1kg · ~2.99€ · ",
+    "magasin": "Carrefour"
   },
   {
     "name": "Lentilles vertes (sèches)",
-    "aliases": ["lentilles vertes"],
-    "buy_unit": "kg", "price_per_unit": 2.50,
-    "achat": "Sachet 500g · ~1.25€",
-    "magasin": ""
+    "aliases": [
+      "lentilles vertes"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.02,
+    "achat": "Sachet 500g · ~1.51€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Lentilles corail (sèches)",
-    "aliases": ["lentilles corail", "lentilles rouges"],
-    "buy_unit": "kg", "price_per_unit": 3.00,
-    "achat": "Sachet 500g · ~1.50€",
-    "magasin": ""
+    "aliases": [
+      "lentilles corail",
+      "lentilles rouges"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.50,
+    "achat": "Sachet 500g · ~1.75€",
+    "magasin": "Carrefour"
   },
   {
     "name": "PST hachées (sèches)",
-    "aliases": ["pst hachees", "proteines de soja texturee hachees", "pst"],
-    "buy_unit": "kg", "price_per_unit": 18.00,
-    "achat": "Sachet 500g · ~9.00€",
-    "magasin": ""
+    "aliases": [
+      "pst hachees",
+      "proteines de soja texturee hachees",
+      "pst"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 8.00,
+    "achat": "Sachet 1kg · ~8.00€",
+    "magasin": "Official VeganShop"
   },
   {
     "name": "PST grosses (sèches)",
-    "aliases": ["pst grosses", "proteines de soja texturee grosses"],
-    "buy_unit": "kg", "price_per_unit": 18.00,
-    "achat": "Sachet 500g · ~9.00€",
-    "magasin": ""
+    "aliases": [
+      "pst grosses",
+      "proteines de soja texturee grosses"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 8.00,
+    "achat": "Sachet 1kg · ~8.00€",
+    "magasin": "Official VeganShop"
   },
   {
     "name": "Pâtes sèches",
-    "aliases": ["pates seches", "pates"],
-    "buy_unit": "kg", "price_per_unit": 1.40,
-    "achat": "Paquet 500g · ~0.70€",
-    "magasin": ""
+    "aliases": [
+      "pates seches",
+      "pates"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.10,
+    "achat": "Paquet 500g · ~1.05€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Pâtes Barilla Protein+",
-    "aliases": ["barilla protein", "pates protein", "pates barilla"],
-    "buy_unit": "kg", "price_per_unit": 5.00,
-    "achat": "Paquet 500g · ~2.50€",
-    "magasin": ""
+    "aliases": [
+      "barilla protein",
+      "pates protein",
+      "pates barilla"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 5.48,
+    "achat": "Paquet 400g · ~2.19€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Pâtes complètes (sèches)",
-    "aliases": ["pates completes", "pates integrales"],
-    "buy_unit": "kg", "price_per_unit": 2.00,
-    "achat": "Paquet 500g · ~1.00€",
-    "magasin": ""
+    "aliases": [
+      "pates completes",
+      "pates integrales"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.78,
+    "achat": "Paquet 500g · ~1.89€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Riz (cru)",
-    "aliases": ["riz", "riz basmati", "riz complet"],
-    "buy_unit": "kg", "price_per_unit": 1.80,
-    "achat": "Sachet 1kg · ~1.80€",
-    "magasin": ""
+    "aliases": [
+      "riz",
+      "riz basmati",
+      "riz complet"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.55,
+    "achat": "Sachet 1kg · ~2.55€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Ebly (sec)",
-    "aliases": ["ebly", "ble precuit", "ebly ble precuit"],
-    "buy_unit": "kg", "price_per_unit": 4.40,
-    "achat": "Sachet 500g · ~2.20€",
-    "magasin": ""
+    "aliases": [
+      "ebly",
+      "ble precuit",
+      "ebly ble precuit"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.98,
+    "achat": "Sachet 500g · ~1.99€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Coulis de tomate",
-    "aliases": ["coulis tomate"],
-    "buy_unit": "kg", "price_per_unit": 1.60,
-    "achat": "Brique 500g · ~0.80€",
-    "magasin": ""
+    "aliases": [
+      "coulis tomate"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.41,
+    "achat": "Brique 500g · ~1.69€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Pulpe de tomate",
-    "aliases": ["pulpe tomate", "tomates concassees", "tomates pelees"],
-    "buy_unit": "kg", "price_per_unit": 1.63,
-    "achat": "Boîte 400g · ~0.65€",
-    "magasin": ""
+    "aliases": [
+      "pulpe tomate",
+      "tomates concassees",
+      "tomates pelees"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.82,
+    "achat": "Boîte 3x400g · ~2.19€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Concentré de tomate",
-    "aliases": ["concentre de tomate", "concentre tomate"],
-    "buy_unit": "kg", "price_per_unit": 4.00,
-    "achat": "Tube 200g · ~0.80€",
-    "magasin": ""
+    "aliases": [
+      "concentre de tomate",
+      "concentre tomate"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 6.75,
+    "achat": "Tube 200g · ~1.35€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Lait de coco light",
-    "aliases": ["lait de coco", "coconut milk"],
-    "buy_unit": "L", "price_per_unit": 3.00, "density": 1.0,
-    "achat": "Boîte 400ml · ~1.20€ → 3.00€/L",
-    "magasin": ""
+    "aliases": [
+      "lait de coco",
+      "coconut milk"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 3.45,
+    "density": 1.0,
+    "achat": "Boîte 200ml · 0.69€ → 3.45€/L",
+    "magasin": "Carrefour"
   },
   {
     "name": "Huile d'olive",
-    "aliases": ["huile olive"],
-    "buy_unit": "L", "price_per_unit": 8.00, "density": 0.916,
-    "achat": "Bouteille 75cl · ~6.00€ → 8.00€/L",
-    "magasin": ""
+    "aliases": [
+      "huile olive"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 10.00,
+    "density": 0.916,
+    "achat": "Bouteille 75cl · ~7.50€ → 10.00€/L",
+    "magasin": "Carrefour"
   },
   {
     "name": "Beurre de cacahuète",
-    "aliases": ["beurre cacahuete", "peanut butter", "cacahuete"],
-    "buy_unit": "kg", "price_per_unit": 6.00,
-    "achat": "Pot 350g · ~2.10€",
-    "magasin": ""
+    "aliases": [
+      "beurre cacahuete",
+      "peanut butter",
+      "cacahuete"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 9.00,
+    "achat": "Pot 1kg · ~9.00€",
+    "magasin": "Amazon"
   },
   {
     "name": "Sauce soja",
-    "aliases": ["soja", "tamari", "sauce soja"],
-    "buy_unit": "L", "price_per_unit": 4.00, "density": 1.1,
-    "achat": "Bouteille 250ml · ~1.00€ → 4.00€/L",
-    "magasin": ""
+    "aliases": [
+      "soja",
+      "tamari",
+      "sauce soja"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 7.96,
+    "density": 1.1,
+    "achat": "Bouteille 250ml · ~1.99€ → 7.96€/L",
+    "magasin": "Carrefour"
   },
   {
     "name": "Parmesan râpé",
-    "aliases": ["parmesan", "parmesan rape"],
-    "buy_unit": "kg", "price_per_unit": 12.00,
-    "achat": "Sachet 100g · ~1.20€",
-    "magasin": ""
+    "aliases": [
+      "parmesan",
+      "parmesan rape"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 21.50,
+    "achat": "Sachet 100g · ~2.15€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Crème fraîche 15%",
-    "aliases": ["creme fraiche", "creme 15"],
-    "buy_unit": "kg", "price_per_unit": 3.50,
-    "achat": "Pot 20cl/200g · ~0.70€",
-    "magasin": ""
+    "aliases": [
+      "creme fraiche",
+      "creme 15"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.10,
+    "achat": "Pot 50cl/500g · ~1.55€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Oignon",
-    "aliases": ["oignons", "oignons a carameliser"],
-    "buy_unit": "pc", "price_per_unit": 0.15, "g_per_unit": 80,
-    "achat": "Filet 1kg ~1.20€ · ~1 oignon = 80g = 0.10-0.15€",
-    "magasin": ""
+    "aliases": [
+      "oignons",
+      "oignons a carameliser"
+    ],
+    "buy_unit": "pc",
+    "price_per_unit": 0.15,
+    "g_per_unit": 80,
+    "achat": "Filet 500g ~0.99€ · ~1 oignon = 80g = 0.15€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Ail",
-    "aliases": ["ail", "gousses ail", "gousse ail"],
-    "buy_unit": "gousse", "price_per_unit": 0.08, "g_per_unit": 5,
+    "aliases": [
+      "ail",
+      "gousses ail",
+      "gousse ail"
+    ],
+    "buy_unit": "gousse",
+    "price_per_unit": 0.08,
+    "g_per_unit": 5,
     "achat": "1 tête ~0.40€ · ~8-10 gousses · ~0.08€/gousse (5g)",
     "magasin": ""
   },
   {
     "name": "Carottes",
-    "aliases": ["carottes rapees", "carotte", "carottes en des"],
-    "buy_unit": "kg", "price_per_unit": 1.50,
-    "achat": "Sachet 400g ou vrac · ~0.60€",
-    "magasin": ""
+    "aliases": [
+      "carottes rapees",
+      "carotte",
+      "carottes en des"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.99,
+    "achat": "vrac · ~2.99€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Courgettes",
-    "aliases": ["courgette"],
-    "buy_unit": "kg", "price_per_unit": 2.00,
-    "achat": "Vrac · ~2.00€/kg",
-    "magasin": ""
+    "aliases": [
+      "courgette"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.72,
+    "achat": "Sachet surgelé 900g · 2.45€ ~2.72€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Patate douce (crue)",
-    "aliases": ["patate douce", "patates douces", "sweet potato"],
-    "buy_unit": "kg", "price_per_unit": 2.50,
-    "achat": "Vrac · ~2.50€/kg",
-    "magasin": ""
+    "aliases": [
+      "patate douce",
+      "patates douces",
+      "sweet potato"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.79,
+    "achat": "Vrac · ~3.79€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Brocolis (fleurettes)",
-    "aliases": ["brocolis", "brocoli"],
-    "buy_unit": "kg", "price_per_unit": 3.00,
-    "achat": "Surgelés 600g · ~1.80€ ou frais ~3.00€/kg",
-    "magasin": ""
+    "aliases": [
+      "brocolis",
+      "brocoli"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.32,
+    "achat": "Surgelés 900g · 2.09€ ~2.32€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Chou blanc (émincé)",
-    "aliases": ["chou blanc", "chou"],
-    "buy_unit": "kg", "price_per_unit": 1.50,
-    "achat": "Demi-chou ~600g · ~0.90€",
-    "magasin": ""
-  },
-  {
-    "name": "Aubergines (en dés)",
-    "aliases": ["aubergines", "aubergine"],
-    "buy_unit": "kg", "price_per_unit": 2.50,
-    "achat": "Vrac · ~2.50€/kg",
-    "magasin": ""
+    "aliases": [
+      "chou blanc",
+      "chou"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 6.76,
+    "achat": "Barquette 250g · ~1.69€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Poireau",
-    "aliases": ["poireaux"],
-    "buy_unit": "kg", "price_per_unit": 2.20,
-    "achat": "Vrac · ~2.20€/kg",
-    "magasin": ""
+    "aliases": [
+      "poireaux"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.39,
+    "achat": "Vrac · ~1.39€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Épinards surgelés",
-    "aliases": ["epinards", "epinards surgeles"],
-    "buy_unit": "kg", "price_per_unit": 2.50,
-    "achat": "Sachet 600g · ~1.50€",
-    "magasin": ""
+    "aliases": [
+      "epinards",
+      "epinards surgeles"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.55,
+    "achat": "Sachet 1kg · ~1.55€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Légumes variés (courgettes…)",
-    "aliases": ["legumes varies", "legumes surgeles", "melange legumes"],
-    "buy_unit": "kg", "price_per_unit": 2.50,
-    "achat": "Sachet surgelé 1kg · ~2.50€",
-    "magasin": ""
+    "aliases": [
+      "legumes varies",
+      "legumes surgeles",
+      "melange legumes"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.50,
+    "achat": "Sachet surgelé 1kg · ~3.50€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Maïs en conserve",
-    "aliases": ["mais", "mais conserve"],
-    "buy_unit": "kg", "price_per_unit": 2.00,
-    "achat": "Boîte 285g égoutté · ~0.57€",
-    "magasin": ""
+    "aliases": [
+      "mais",
+      "mais conserve"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.12,
+    "achat": "Boîte 285g égoutté · ~0.89€",
+    "magasin": "Carrefour"
   },
   {
     "name": "Champignons de Paris (frais)",
-    "aliases": ["champignons", "champignons paris", "champignons melange"],
-    "buy_unit": "kg", "price_per_unit": 5.00,
-    "achat": "Barquette 500g · ~2.50€",
-    "magasin": ""
+    "aliases": [
+      "champignons",
+      "champignons paris",
+      "champignons melange"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.99,
+    "achat": "Vrac · ~3.99€/kg",
+    "magasin": "Carrefour"
   },
   {
     "name": "Épices",
-    "aliases": ["epices", "epices cumin", "epices piment", "epices mafe", "curcuma", "cumin", "paprika", "paprika fume", "gingembre", "cannelle", "piment", "muscade", "levure maltee", "thym", "laurier", "persil", "curry", "herbes", "herbes provence", "poivre", "sel poivre", "bouquet garni", "vinaigre cidre", "celeri"],
-    "buy_unit": "kg", "price_per_unit": 12.50,
+    "aliases": [
+      "epices",
+      "epices cumin",
+      "epices piment",
+      "epices mafe",
+      "curcuma",
+      "cumin",
+      "paprika",
+      "paprika fume",
+      "gingembre",
+      "cannelle",
+      "piment",
+      "muscade",
+      "levure maltee",
+      "thym",
+      "laurier",
+      "persil",
+      "curry",
+      "herbes",
+      "herbes provence",
+      "poivre",
+      "sel poivre",
+      "bouquet garni",
+      "vinaigre cidre",
+      "celeri"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 12.50,
     "achat": "Estimation uniforme toutes épices · ~0.10€ pour 8g",
     "magasin": ""
   }
