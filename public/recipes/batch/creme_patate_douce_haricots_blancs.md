@@ -26,7 +26,8 @@ emoji: 🥦
 | Brocolis (fleurettes) | 150 | g | 34 | 2.82 | 0.37 | 6.64 | Légumes |
 | Huile d'olive | 10 | g | 884 | 0 | 100 | 0 | Lipides |
 | Oignon | 50 | g | 40 | 1 | 0.1 | 9 | Aromates |
-| Ail / épices (muscade, levure maltée, sel) | 5 | g | 200 | 8 | 2 | 20 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (muscade, levure maltée, sel) | 5 | g | 200 | 8 | 2 | 20 | Aromates |
 
 ### Prix des ingrédients
 - Haricots blancs (égouttés) : 0.55€
@@ -35,7 +36,8 @@ emoji: 🥦
 - Brocolis (fleurettes) : 0.80€
 - Huile d'olive : 0.15€
 - Oignon : 0.10€
-- Ail / épices (muscade, levure maltée, sel) : 0.15€
+- Ail : 0.16€
+- Épices (muscade, levure maltée, sel) : 0.06€
 
 ### Protocole
 1. **Sauce crémeuse** — Faites cuire les dés de patate douce dans de l'eau salée 15 min. Égouttez. Mixez avec les haricots blancs égouttés + 100 ml d'eau de cuisson + noix de muscade + levure maltée jusqu'à sauce parfaitement lisse.

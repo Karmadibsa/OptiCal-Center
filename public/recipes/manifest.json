@@ -394,7 +394,20 @@
         "cook_group": "sauce_ebly"
       },
       {
-        "name": "Épices (ail, herbes de Provence, sel)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_ebly"
+      },
+      {
+        "name": "Épices (herbes de Provence, sel)",
         "qty_g": 5,
         "kcal_100": 250,
         "prot_100": 10,
@@ -694,7 +707,20 @@
         "cook_group": "sauce_creme"
       },
       {
-        "name": "Ail / épices (muscade, levure maltée, sel)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_creme"
+      },
+      {
+        "name": "Épices (muscade, levure maltée, sel)",
         "qty_g": 5,
         "kcal_100": 200,
         "prot_100": 8,
@@ -788,7 +814,20 @@
         "cook_group": "sauce_curry"
       },
       {
-        "name": "Ail / épices (curry, curcuma, cumin)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_curry"
+      },
+      {
+        "name": "Épices (curry, curcuma, cumin)",
         "qty_g": 8,
         "kcal_100": 280,
         "prot_100": 12,
@@ -882,7 +921,20 @@
         "cook_group": "sauce_dahl"
       },
       {
-        "name": "Ail / épices (curcuma, cumin, gingembre)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_dahl"
+      },
+      {
+        "name": "Épices (curcuma, cumin, gingembre)",
         "qty_g": 8,
         "kcal_100": 280,
         "prot_100": 12,
@@ -976,7 +1028,20 @@
         "cook_group": "sauce_cham"
       },
       {
-        "name": "Ail / épices (persil, thym, sel)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_cham"
+      },
+      {
+        "name": "Épices (persil, thym, sel)",
         "qty_g": 8,
         "kcal_100": 280,
         "prot_100": 12,
@@ -1404,7 +1469,20 @@
         "cook_group": "sauce_pdb"
       },
       {
-        "name": "Épices (cumin, ail, sel)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_pdb"
+      },
+      {
+        "name": "Épices (cumin, sel)",
         "qty_g": 8,
         "kcal_100": 280,
         "prot_100": 12,
@@ -1498,7 +1576,20 @@
         "cook_group": "sauce_puree"
       },
       {
-        "name": "Ail / épices (curcuma, gingembre, cumin)",
+        "name": "Ail",
+        "qty_g": 10,
+        "kcal_100": 149,
+        "prot_100": 6.4,
+        "lip_100": 0.5,
+        "glu_100": 33,
+        "role": "aromatique",
+        "unit": "gousse",
+        "g_per_pc": 5,
+        "fixed_qty": true,
+        "cook_group": "sauce_puree"
+      },
+      {
+        "name": "Épices (curcuma, gingembre, cumin)",
         "qty_g": 8,
         "kcal_100": 280,
         "prot_100": 12,

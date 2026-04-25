@@ -25,7 +25,9 @@ emoji: 🫘
 | Courgettes | 200 | g | 17 | 1.2 | 0.2 | 3 | Légumes |
 | Crème fraîche 15% | 30 | g | 168 | 3 | 15 | 3.7 | Lipides |
 | Huile d'olive | 10 | g | 884 | 0 | 100 | 0 | Lipides |
-| Oignon / épices | 30 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Oignon | 50 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (cumin, paprika, sel) | 5 | g | 280 | 12 | 4 | 38 | Aromates |
 
 ### Prix des ingrédients
 - Pois chiches : 0.70€
@@ -33,7 +35,9 @@ emoji: 🫘
 - Courgettes : 0.60€
 - Crème fraîche 15% : 0.35€
 - Huile d'olive : 0.15€
-- Oignon / épices : 0.15€
+- Oignon : 0.08€
+- Ail : 0.16€
+- Épices (cumin, paprika, sel) : 0.06€
 
 ### Protocole
 1. **Pois chiches croustillants** — Séchez bien les pois chiches. Air fryer 180°C / 15 min (ou poêle à sec à feu très vif, 8-10 min). Assaisonnez sel + épices (cumin, paprika).

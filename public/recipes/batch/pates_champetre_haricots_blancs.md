@@ -24,7 +24,9 @@ emoji: 🍄
 | Pâtes sèches | 80 | g | 360 | 13 | 1.5 | 72 | Féculent |
 | Champignons (mélange) | 150 | g | 22 | 3 | 0.3 | 3 | Légumes |
 | Poireau | 80 | g | 31 | 1.8 | 0.3 | 5.5 | Légumes |
-| Oignon / épices | 60 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Oignon | 50 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (thym, herbes de Provence, sel) | 5 | g | 280 | 12 | 4 | 38 | Aromates |
 | Huile d'olive | 12 | g | 884 | 0 | 100 | 0 | Lipides |
 
 ### Prix des ingrédients
@@ -32,7 +34,9 @@ emoji: 🍄
 - Pâtes sèches : 0.40€
 - Champignons : 1.20€
 - Poireau : 0.35€
-- Oignon / épices : 0.15€
+- Oignon : 0.08€
+- Ail : 0.16€
+- Épices (thym, herbes de Provence, sel) : 0.06€
 - Huile d'olive : 0.18€
 
 ### Protocole

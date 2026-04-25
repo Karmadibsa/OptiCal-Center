@@ -26,7 +26,8 @@ emoji: 🍲
 | Crème fraîche 15% | 30 | g | 168 | 3 | 15 | 3.7 | Lipides |
 | Huile d'olive | 10 | g | 884 | 0 | 100 | 0 | Lipides |
 | Oignon | 80 | g | 40 | 1 | 0.1 | 9 | Aromates |
-| Ail / épices (persil, thym, sel) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (persil, thym, sel) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
 
 ### Prix des ingrédients
 - Ebly (sec) : 0.70€
@@ -35,7 +36,8 @@ emoji: 🍲
 - Crème fraîche 15% : 0.35€
 - Huile d'olive : 0.15€
 - Oignon : 0.10€
-- Ail / épices (persil, thym, sel) : 0.20€
+- Ail : 0.16€
+- Épices (persil, thym, sel) : 0.10€
 
 ### Protocole
 1. **Lentilles** — Cuisez les lentilles vertes 20 min dans de l'eau salée. Égouttez et réservez.

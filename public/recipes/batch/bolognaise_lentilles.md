@@ -26,7 +26,9 @@ emoji: 🍝
 | Carottes râpées | 80 | g | 41 | 0.9 | 0.2 | 9.6 | Légumes |
 | Huile d'olive | 10 | g | 884 | 0 | 100 | 0 | Lipides |
 | Parmesan râpé | 15 | g | 392 | 36 | 26 | 0 | Lipides |
-| Oignon / épices | 30 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Oignon | 80 | g | 40 | 1 | 0.1 | 9 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (herbes de Provence, sel, poivre) | 5 | g | 280 | 12 | 4 | 38 | Aromates |
 
 ### Prix des ingrédients
 - Lentilles vertes : 0.40€
@@ -35,7 +37,9 @@ emoji: 🍝
 - Carottes râpées : 0.20€
 - Huile d'olive : 0.15€
 - Parmesan râpé : 0.80€
-- Oignon / épices : 0.15€
+- Oignon : 0.15€
+- Ail : 0.16€
+- Épices (herbes de Provence, sel, poivre) : 0.06€
 
 ### Protocole
 1. **Pré-cuire les lentilles** — Rincez les lentilles. Cuisez-les 20 min dans de l'eau salée. Égouttez et réservez.

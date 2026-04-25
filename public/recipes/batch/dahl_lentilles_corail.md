@@ -26,7 +26,8 @@ emoji: 🫕
 | Huile d'olive | 8 | g | 884 | 0 | 100 | 0 | Lipides |
 | Épinards surgelés | 100 | g | 25 | 3 | 0.3 | 2 | Légumes |
 | Oignon | 80 | g | 40 | 1 | 0.1 | 9 | Aromates |
-| Ail / épices (curcuma, cumin, gingembre) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (curcuma, cumin, gingembre) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
 
 ### Prix des ingrédients
 - Lentilles corail (sèches) : 0.40€
@@ -35,7 +36,8 @@ emoji: 🫕
 - Huile d'olive : 0.10€
 - Épinards surgelés : 0.60€
 - Oignon : 0.10€
-- Ail / épices (curcuma, cumin, gingembre) : 0.20€
+- Ail : 0.16€
+- Épices (curcuma, cumin, gingembre) : 0.10€
 
 ### Protocole
 1. **Oignon + épices** — Faites revenir l'oignon émincé dans l'huile 3 min. Ajoutez ail, curcuma, cumin, gingembre. Toastez 1 min à feu vif.

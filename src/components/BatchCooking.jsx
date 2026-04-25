@@ -24,8 +24,9 @@ const saveState = (selectedIds, weekPlan, measuredCooked, disabledSlots) => {
 // ─── Formatte l'affichage d'un ingrédient selon son type ─────────────────────
 // Oignon (unit='pc') → pièces · Huile → c.à.s (1=13.5g) · Épices (fixed_qty) → c.à.c (1≈3g) · reste → g
 const fmtIng = (name, raw_g, unit, g_per_pc, fixed_qty) => {
-    if (unit === 'pc' && g_per_pc)
-        return `${Math.max(1, Math.round(raw_g / g_per_pc))} pc`;
+    // Unit générique : si unit défini et non 'g', on affiche en unités (gousses, L, pc...)
+    if (unit && unit !== 'g' && g_per_pc)
+        return `${Math.max(1, Math.round(raw_g / g_per_pc))} ${unit}`;
     const nl = (name || '').toLowerCase();
     if (nl.includes('huile'))
         return `${(raw_g / 13.5).toFixed(1)} c.à.s`;
@@ -230,8 +231,8 @@ const BatchCooking = ({ profiles }) => {
             const g = ROLE_TO_GROUP[role] || 'aromatique';
             if (!groups[g]) groups[g] = [];
             const raw_g   = Math.round(total_g);
-            const display = (unit === 'pc' && g_per_pc)
-                ? `${Math.ceil(total_g / g_per_pc)} pièce${Math.ceil(total_g / g_per_pc) > 1 ? 's' : ''}`
+            const display = (unit && unit !== 'g' && g_per_pc)
+                ? `${Math.ceil(total_g / g_per_pc)} ${unit}${Math.ceil(total_g / g_per_pc) > 1 && unit === 'pc' ? 's' : ''}`
                 : `${raw_g}g`;
             groups[g].push({ name: display_name, raw_g, display });
         });
@@ -484,7 +485,7 @@ const BatchCooking = ({ profiles }) => {
         .trim();
 
     // Cherche le prix dans la DB et retourne le coût en € pour qty_g grammes (ou null si absent)
-    const lookupIngPrice = (name, qty_g, db) => {
+    const lookupIngPrice = (name, qty_g, db, ing_unit, ing_g_per_pc) => {
         if (!db || db.length === 0 || !qty_g) return null;
         const norm = normIngName(name);
         const entry = db.find(e => {
@@ -495,8 +496,22 @@ const BatchCooking = ({ profiles }) => {
                 return na === norm || na.includes(norm) || norm.includes(na);
             });
         });
-        if (!entry || !entry.price_per_kg) return null;
-        return qty_g * entry.price_per_kg / 1000;
+        if (!entry) return null;
+        const price = entry.price_per_unit ?? entry.price_per_kg;
+        if (price == null) return null;
+        const buyUnit = entry.buy_unit || 'kg';
+        if (buyUnit === 'L') {
+            // Liquide : qty_g / densité (g/mL) / 1000 = volume en L
+            const density = entry.density || 1.0;
+            return (qty_g / density / 1000) * price;
+        }
+        if (buyUnit === 'gousse' || buyUnit === 'pc') {
+            // Achat à la pièce : qty_g / g_par_piece
+            const gPerUnit = entry.g_per_unit || ing_g_per_pc || 5;
+            return (qty_g / gPerUnit) * price;
+        }
+        // Default : achat au kg
+        return qty_g * price / 1000;
     };
 
     // ── Extraction du protocole depuis le markdown ───────────────────────────
@@ -884,7 +899,7 @@ const BatchCooking = ({ profiles }) => {
                                                 if (!scaled) return;
                                                 scaled.ingredients.forEach(ing => {
                                                     dayTotal++;
-                                                    const cost = lookupIngPrice(ing.name, ing.raw_g, priceDb);
+                                                    const cost = lookupIngPrice(ing.name, ing.raw_g, priceDb, ing.unit, ing.g_per_pc);
                                                     if (cost !== null) {
                                                         dayCost += cost;
                                                         dayMatched++;

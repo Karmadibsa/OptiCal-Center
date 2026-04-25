@@ -26,7 +26,8 @@ emoji: 🥕
 | Lait de coco light | 80 | g | 85 | 1 | 7 | 4 | Lipides |
 | Huile d'olive | 8 | g | 884 | 0 | 100 | 0 | Lipides |
 | Oignon | 80 | g | 40 | 1 | 0.1 | 9 | Aromates |
-| Ail / épices (curcuma, gingembre, cumin) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
+| Ail | 10 | gousse | 149 | 6.4 | 0.5 | 33 | Aromates |
+| Épices (curcuma, gingembre, cumin) | 8 | g | 280 | 12 | 4 | 38 | Aromates |
 
 ### Prix des ingrédients
 - Lentilles corail (sèches) : 0.40€
@@ -35,7 +36,8 @@ emoji: 🥕
 - Lait de coco light : 0.90€
 - Huile d'olive : 0.10€
 - Oignon : 0.10€
-- Ail / épices (curcuma, gingembre, cumin) : 0.15€
+- Ail : 0.16€
+- Épices (curcuma, gingembre, cumin) : 0.10€
 
 ### Protocole
 1. **Oignon + épices** — Faites revenir l'oignon dans l'huile 3 min. Ajoutez ail, curcuma, gingembre, cumin. Toastez 1 min.
