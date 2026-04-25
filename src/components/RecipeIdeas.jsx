@@ -783,6 +783,7 @@ const RecipeIdeas = ({ profiles }) => {
     const [loading,      setLoading]      = useState(true);
     const [targetMeal,   setTargetMeal]   = useState('midi');
     const [detailRecipe, setDetailRecipe] = useState(null);
+    const [showBatch,    setShowBatch]    = useState(false); // recettes batch masquées par défaut
 
     const ACCENTS = ['#38bdf8','#818cf8','#f59e0b','#4ade80','#fb923c','#f87171','#a78bfa','#fbbf24'];
 
@@ -838,6 +839,7 @@ const RecipeIdeas = ({ profiles }) => {
                         tips:         row.tips || '',
                         link:         row.link || '',
                         emoji:        row.emoji || '🍽️',
+                        isBatch:      row.scalable === true || row.scalable === 'true',
                         accent:       ACCENTS[i % ACCENTS.length]
                     };
                 });
@@ -893,6 +895,7 @@ const RecipeIdeas = ({ profiles }) => {
     const allCategories = [...new Set(recipes.flatMap(r => r.category))].sort();
 
     const filtered = recipes.filter(r => {
+        if (r.isBatch && !showBatch) return false;        // masquer batch par défaut
         const matchSearch = r.name.toLowerCase().includes(search.toLowerCase()) ||
                             r.description.toLowerCase().includes(search.toLowerCase());
         const matchTags = activeTags.length === 0 || activeTags.every(t => {
@@ -903,6 +906,7 @@ const RecipeIdeas = ({ profiles }) => {
         });
         return matchSearch && matchTags;
     });
+    const batchCount = recipes.filter(r => r.isBatch).length;
 
     if (loading) return null;
 
@@ -977,12 +981,33 @@ const RecipeIdeas = ({ profiles }) => {
                             {cat}
                         </button>
                     ))}
+                    {/* Toggle recettes Batch */}
+                    {batchCount > 0 && (
+                        <button
+                            onClick={() => setShowBatch(s => !s)}
+                            style={{
+                                padding: '0.22rem 0.65rem', borderRadius: '20px', fontSize: '0.73rem',
+                                fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap',
+                                border: `1px solid ${showBatch ? '#38bdf8' : '#334155'}`,
+                                background: showBatch ? 'rgba(56,189,248,0.15)' : 'rgba(255,255,255,0.03)',
+                                color: showBatch ? '#38bdf8' : '#475569',
+                                transition: 'all 0.15s',
+                            }}
+                        >
+                            🧑‍🍳 Batch{showBatch ? ` (${batchCount})` : ` +${batchCount}`}
+                        </button>
+                    )}
                 </div>
             </div>
 
             <p className="ri-count">
                 {filtered.length} recette{filtered.length > 1 ? 's' : ''}
                 {activeTags.length > 0 ? ` · ${activeTags.join(', ')}` : ''}{search ? ` · "${search}"` : ''}
+                {!showBatch && batchCount > 0 && (
+                    <span style={{ color: '#334155', marginLeft: '0.5rem', fontSize: '0.82em' }}>
+                        · {batchCount} batch masquée{batchCount > 1 ? 's' : ''}
+                    </span>
+                )}
             </p>
 
             {filtered.length > 0 ? (

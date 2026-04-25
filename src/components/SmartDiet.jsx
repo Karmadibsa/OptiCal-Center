@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Settings,
     Activity,
@@ -7,96 +8,107 @@ import {
     Download,
 } from 'lucide-react';
 import {
-    ACTIVITIES,
-    calculatePlan
+    PAL_OPTIONS,
+    calculatePlan,
+    LIP_MIN_RATIO,
+    OMEGA3_ZENEMENT,
 } from '../utils/dietAlgo';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// FIX #8 / #4 : ActivityGrid est déclaré HORS de SmartDiet pour éviter que
-// React le recrée à chaque re-render (perte de focus sur les inputs).
+// InfoTooltip : icône ⓘ avec tooltip au survol (recommandations OMS / ACSM)
+// Déclaré hors du composant principal pour éviter les re-créations.
 // ─────────────────────────────────────────────────────────────────────────────
-const ActivityGrid = ({ profileKey, profiles, res, handleActivity }) => {
-    const acts = profiles[profileKey].activities || {};
-    const color = profileKey === 'axel' ? '#38bdf8' : '#a78bfa';
+// ─────────────────────────────────────────────────────────────────────────────
+// InfoTooltip — positionnement adaptatif (gauche / centre / droite) pour
+// rester visible sur mobile sans déborder de l'écran.
+// ─────────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// InfoTooltip — position: fixed calculée via getBoundingClientRect()
+// Échappe les overflow:hidden et stacking contexts de la config-card.
+// ─────────────────────────────────────────────────────────────────────────────
+const InfoTooltip = ({ text }) => {
+    const [show,  setShow]  = useState(false);
+    const [rect,  setRect]  = useState(null);
+    const btnRef   = useRef(null);
+    const timerRef = useRef(null);
+
+    const computeRect = () => {
+        if (!btnRef.current) return;
+        setRect(btnRef.current.getBoundingClientRect());
+    };
+
+    const open  = () => { clearTimeout(timerRef.current); computeRect(); setShow(true);  };
+    const close = () => { timerRef.current = setTimeout(() => setShow(false), 150); };
+
+    // Calcul de la position fixed du tooltip à partir du rect du bouton
+    const getStyle = () => {
+        if (!rect) return { display: 'none' };
+        const width  = Math.min(240, window.innerWidth * 0.82);
+        const top    = rect.top - 10;   // juste au-dessus du bouton
+        const vw     = window.innerWidth;
+
+        // Alignement horizontal : centre, gauche ou droite selon la position du bouton
+        let left;
+        const center = rect.left + rect.width / 2;
+        if (center - width / 2 < 8)            left = 8;
+        else if (center + width / 2 > vw - 8)  left = vw - width - 8;
+        else                                    left = center - width / 2;
+
+        // Position de la flèche (relative au bord gauche du tooltip)
+        const arrowLeft = Math.max(8, Math.min(center - left - 6, width - 20));
+
+        return { bubbleStyle: { left, top, width }, arrowLeft };
+    };
+
+    const { bubbleStyle, arrowLeft } = getStyle() || {};
 
     return (
-        <div style={{ marginTop: '1.5rem' }}>
-            <div style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', marginBottom: '0.75rem' }}>
-                ACTIVITÉS HEBDOMADAIRES
-            </div>
-            {/* FIX #5 : grid resserré, gap réduit pour meilleur alignement label/input */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 70px', gap: '0.35rem 0.75rem', alignItems: 'center' }}>
-                {/* Header */}
-                <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Activité (MET)</span>
-                {/* FIX #10 : ajout de l'unité "min" */}
-                <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>min/sem</span>
-                <span style={{ fontSize: '0.72rem', color: '#64748b', textAlign: 'right' }}>kcal/sem</span>
-
-                {ACTIVITIES.map(act => {
-                    const mins = acts[act.id] || 0;
-                    const kcal = Math.round(profiles[profileKey].weight * (mins / 60) * act.met);
-                    const inputId = `act-${profileKey}-${act.id}`;
-                    return (
-                        <React.Fragment key={act.id}>
-                            {/* FIX #10 : htmlFor lié à l'id de l'input */}
-                            <label
-                                htmlFor={inputId}
-                                style={{
-                                    fontSize: '0.85rem',
-                                    color: mins > 0 ? '#e2e8f0' : '#475569',
-                                    cursor: 'pointer',
-                                    lineHeight: 1.3
-                                }}
-                            >
-                                {act.label} <span style={{ color: '#64748b', fontSize: '0.75rem' }}>× {act.met}</span>
-                            </label>
-                            <input
-                                id={inputId}
-                                type="number"
-                                min="0"
-                                // FIX #11 : affiche '' si 0 pour ne pas bloquer la saisie
-                                value={mins === 0 ? '' : mins}
-                                placeholder="0"
-                                onChange={(e) => handleActivity(profileKey, act.id, e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    background: 'rgba(0,0,0,0.25)',
-                                    border: `1px solid ${mins > 0 ? color : '#334155'}`,
-                                    padding: '0.3rem 0.4rem',
-                                    borderRadius: '5px',
-                                    color: mins > 0 ? color : '#94a3b8',
-                                    textAlign: 'right',
-                                    fontSize: '0.9rem'
-                                }}
-                            />
-                            <span style={{ fontSize: '0.82rem', color: mins > 0 ? '#fbbf24' : '#334155', textAlign: 'right', fontFamily: 'monospace' }}>
-                                {mins > 0 ? `+${kcal}` : '—'}
-                            </span>
-                        </React.Fragment>
-                    );
-                })}
-
-                {/* Totaux */}
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', color: '#94a3b8', fontSize: '0.85rem', fontWeight: 700 }}>
-                    TOTAL
-                </div>
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color, fontFamily: 'monospace', fontWeight: 700 }}>
-                    {res.total_sport_min} min
-                </div>
-                <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '0.5rem', textAlign: 'right', color: '#fbbf24', fontFamily: 'monospace', fontWeight: 700 }}>
-                    +{Math.round(res.sport_cal_week)} kcal
-                </div>
-            </div>
-        </div>
+        <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', verticalAlign: 'middle', marginLeft: '0.2rem' }}>
+            <button
+                ref={btnRef}
+                onMouseEnter={open}
+                onMouseLeave={close}
+                onFocus={open}
+                onBlur={close}
+                onClick={e => { e.preventDefault(); computeRect(); setShow(s => !s); }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0.1rem', color: '#4f6374', fontSize: '0.8rem', lineHeight: 1 }}
+                aria-label="Recommandations"
+                tabIndex={-1}
+            >ⓘ</button>
+            {show && bubbleStyle && createPortal(
+                <div style={{
+                    position: 'fixed',
+                    top:  bubbleStyle.top,
+                    left: bubbleStyle.left,
+                    width: bubbleStyle.width,
+                    transform: 'translateY(-100%)',
+                    background: '#1e293b', border: '1px solid #334155', borderRadius: '8px',
+                    padding: '0.65rem 0.8rem',
+                    fontSize: '0.74rem', color: '#cbd5e1', lineHeight: 1.6,
+                    zIndex: 9999, boxShadow: '0 8px 28px rgba(0,0,0,0.75)',
+                    whiteSpace: 'normal', pointerEvents: 'none',
+                }}>
+                    {text}
+                    <span style={{
+                        position: 'absolute', top: '100%', left: arrowLeft,
+                        borderLeft: '6px solid transparent', borderRight: '6px solid transparent',
+                        borderTop: '6px solid #334155',
+                    }} />
+                </div>,
+                document.body
+            )}
+        </span>
     );
 };
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // COMPOSANT PRINCIPAL
 // ─────────────────────────────────────────────────────────────────────────────
 const SmartDiet = ({ profiles, setProfiles }) => {
 
-    const [activeTab, setActiveTab] = useState('axel');
+    const [activeTab,       setActiveTab]       = useState('axel');
+    const [showLegacyPlan,  setShowLegacyPlan]  = useState(false);
 
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
@@ -104,8 +116,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     // --- HANDLERS ---
     // Champs numériques : weight, height, age, deficit, opt_fromage, prot_ratio
     // Champs string : gender
-    // Champs boolean : opt_galettes
-    const NUMERIC_FIELDS = new Set(['weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio']);
+    const NUMERIC_FIELDS = new Set(['weight', 'form_weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio', 'lip_ratio', 'glu_target']);
 
     const handleInput = (key, field, val) => {
         setProfiles(prev => ({
@@ -113,7 +124,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             [key]: {
                 ...prev[key],
                 // Pour les champs numériques : accepter '' (saisie en cours) ou parser
-                // Pour les autres (goal, opt_galettes…) : stocker la valeur brute directement
+                // Pour les autres (goal, booléens…) : stocker la valeur brute directement
                 [field]: NUMERIC_FIELDS.has(field)
                     ? (val === '' ? '' : (parseFloat(val) || 0))
                     : val
@@ -122,19 +133,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     };
 
 
-    const handleActivity = (key, actId, mins) => {
-        setProfiles(prev => ({
-            ...prev,
-            [key]: {
-                ...prev[key],
-                activities: {
-                    ...prev[key].activities,
-                    // FIX #11 : éviter NaN si le champ est vidé
-                    [actId]: mins === '' ? 0 : (parseFloat(mins) || 0)
-                }
-            }
-        }));
-    };
 
     // --- CSV EXPORT ---
     const escapeCSV = (val) => {
@@ -154,15 +152,13 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Config', 'Profile', 'Age', profiles.axel.age, profiles.prisca.age, 'System Config'],
             ['Config', 'Profile', 'Deficit', profiles.axel.deficit, profiles.prisca.deficit, 'System Config'],
             ['Config', 'Profile', 'Prot_Ratio', profiles.axel.prot_ratio, profiles.prisca.prot_ratio, 'System Config'],
-            ['Config', 'Profile', 'Opt_Galettes', profiles.axel.opt_galettes, profiles.prisca.opt_galettes, 'System Config'],
             ['Config', 'Profile', 'Opt_Fromage', profiles.axel.opt_fromage, profiles.prisca.opt_fromage, 'System Config'],
             ['Config', 'Profile', 'Opt_Fb_Soir', profiles.axel.opt_fb_soir || false, profiles.prisca.opt_fb_soir || false, 'System Config'],
-            ...ACTIVITIES.map(act => [
-                'Config', 'Sport', act.id,
-                profiles.axel.activities?.[act.id] || 0,
-                profiles.prisca.activities?.[act.id] || 0,
-                `${act.label} - MET ${act.met}`
-            ])
+            ['Config', 'Sport', 'PAL',
+                profiles.axel.pal || 1.375,
+                profiles.prisca.pal || 1.375,
+                'Niveau d\'activité (Physical Activity Level)'
+            ]
         ];
 
         const dataRows = [
@@ -180,7 +176,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
             ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`, `${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`, 'OBLIGATOIRE'],
             ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
-            ['Diet', 'Soir', 'Option Galettes', profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-", profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-", 'Si activé, pâtes réduites'],
             ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
             ['Diet', 'Soir', 'Fromage Blanc 0%', resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-", resPrisca.fb_qty > 0 ? `${resPrisca.fb_qty}g` : "-", 'Compensation prot. soir'],
         ];
@@ -205,6 +200,13 @@ const SmartDiet = ({ profiles, setProfiles }) => {
         </div>
     );
 
+    // Styles pour la liste verticale de checkboxes
+    const S_cb = {
+        row:   { display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.3rem 0', userSelect: 'none' },
+        input: { flexShrink: 0, transform: 'scale(1.15)', accentColor: activeTab === 'axel' ? '#38bdf8' : '#a78bfa' },
+        label: { fontSize: '0.88rem', color: '#cbd5e1' },
+    };
+
     return (
         <div className="animate-fade-in section-container">
 
@@ -220,22 +222,35 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     const res = key === 'axel' ? resAxel : resPrisca;
                     const weightId = `profile-${key}-weight`;
                     const deficitId = `profile-${key}-deficit`;
-                    const galettesId = `profile-${key}-galettes`;
                     const fromageId = `profile-${key}-fromage`;
 
                     return (
                         <div key={key} style={{ display: activeTab === key ? 'block' : 'none' }}>
                             <div className="inputs-grid">
                                 <div className="input-group">
-                                    {/* FIX #10 : unités dans le label + htmlFor */}
-                                    <label htmlFor={weightId}>Poids <span className="unit-badge">kg</span></label>
+                                    <label htmlFor={weightId}>
+                                        Poids actuel <span className="unit-badge">kg</span>
+                                        <InfoTooltip text="Poids réel utilisé pour le calcul BMR/TDEE et les calories sport." />
+                                    </label>
                                     <input
                                         id={weightId}
                                         type="number"
-                                        // FIX #11 : affiche '' si 0 pour permettre la saisie naturelle
                                         value={profiles[key].weight === 0 ? '' : profiles[key].weight}
                                         placeholder="0"
                                         onChange={(e) => handleInput(key, 'weight', e.target.value)}
+                                    />
+                                </div>
+                                <div className="input-group">
+                                    <label htmlFor={`profile-${key}-fw`}>
+                                        Poids de forme <span className="unit-badge">kg</span>
+                                        <InfoTooltip text="Poids cible (masse musculaire visée) utilisé pour calculer les objectifs protéines et lipides. Recommandation diéto : Axel 95 kg, Prisca 62 kg." />
+                                    </label>
+                                    <input
+                                        id={`profile-${key}-fw`}
+                                        type="number"
+                                        value={(profiles[key].form_weight || 0) === 0 ? '' : profiles[key].form_weight}
+                                        placeholder={profiles[key].weight}
+                                        onChange={(e) => handleInput(key, 'form_weight', e.target.value)}
                                     />
                                 </div>
                                 <div className="input-group">
@@ -248,11 +263,12 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         onChange={(e) => handleInput(key, 'deficit', e.target.value)}
                                     />
                                 </div>
-                                {/* Objectif protéines : input numérique libre */}
+                                {/* Protéines cible */}
                                 <div className="input-group">
                                     <label htmlFor={`profile-${key}-prot`}>
                                         Protéines cible
                                         <span className="unit-badge">g/kg</span>
+                                        <InfoTooltip text="ACSM : 1.2–2.0 g/kg pour sportifs actifs. Optimum prise de masse : 1.6–2.2 g/kg (méta-analyses 2017). OMS minimum : 0.8 g/kg pour sédentaires. Au-delà de 2.2 g/kg, bénéfice marginal." />
                                     </label>
                                     <input
                                         id={`profile-${key}-prot`}
@@ -261,80 +277,287 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         max="3"
                                         step="0.1"
                                         value={profiles[key].prot_ratio === 0 ? '' : profiles[key].prot_ratio}
-                                        placeholder="1.8"
+                                        placeholder="1.6"
                                         onChange={(e) => handleInput(key, 'prot_ratio', e.target.value)}
                                     />
                                 </div>
-                                <div className="input-group checkbox">
-                                    <label htmlFor={galettesId}>
-                                        <input
-                                            id={galettesId}
-                                            type="checkbox"
-                                            checked={profiles[key].opt_galettes}
-                                            onChange={(e) => handleInput(key, 'opt_galettes', e.target.checked)}
-                                        />
-                                        Option Galettes Soir
-                                    </label>
-                                </div>
-                                <div className="input-group checkbox">
-                                    <label htmlFor={`profile-${key}-fb`}>
-                                        <input
-                                            id={`profile-${key}-fb`}
-                                            type="checkbox"
-                                            checked={profiles[key].opt_fb_soir || false}
-                                            onChange={(e) => handleInput(key, 'opt_fb_soir', e.target.checked)}
-                                        />
-                                        Option Fromage Blanc Soir
-                                    </label>
-                                </div>
+                                {/* Lipides cible */}
                                 <div className="input-group">
-                                    <label htmlFor={fromageId}>Option Fromage <span className="unit-badge">g</span></label>
+                                    <label htmlFor={`profile-${key}-lip`}>
+                                        Lipides cible
+                                        <span className="unit-badge">g/kg</span>
+                                        <InfoTooltip text="OMS : 20–35% des kcal. Minimum santé hormonale : ~0.8 g/kg. Cible sportif : 0.9–1.0 g/kg. ⚠️ < 0.8 g/kg = risque hormonal. Qualité : privilégier huile de colza, noix, maquereau / sardine / hareng (Oméga-3 DHA/EPA)." />
+                                    </label>
+                                    <input
+                                        id={`profile-${key}-lip`}
+                                        type="number"
+                                        min="0.3"
+                                        max="2"
+                                        step="0.05"
+                                        value={profiles[key].lip_ratio === 0 ? '' : (profiles[key].lip_ratio ?? 0.9)}
+                                        placeholder="0.9"
+                                        onChange={(e) => handleInput(key, 'lip_ratio', e.target.value)}
+                                    />
+                                </div>
+                                {/* Glucides cible — éditable + bouton Ajuster selon Kcal */}
+                                <div className="input-group">
+                                    <label htmlFor={`profile-${key}-glu`}>
+                                        Glucides cible
+                                        <span className="unit-badge">g/j</span>
+                                        <InfoTooltip text="OMS : 45–65% des kcal. Par défaut : résiduel calorique (kcal − P×4 − L×9) ÷ 4. Vous pouvez fixer une valeur manuelle ou cliquer 'Ajuster' pour recalculer depuis la cible kcal. ⚠️ Orange si < 65%. 🚨 Rouge si < 80%." />
+                                    </label>
+                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'stretch' }}>
+                                        <input
+                                            id={`profile-${key}-glu`}
+                                            type="number"
+                                            min="0"
+                                            step="5"
+                                            value={(profiles[key].glu_target || 0) === 0 ? '' : profiles[key].glu_target}
+                                            placeholder={String(res.glu_formula)}
+                                            onChange={(e) => handleInput(key, 'glu_target', e.target.value)}
+                                            style={{
+                                                flex: 1,
+                                                border: `1px solid ${res.glu_critical ? 'rgba(248,113,113,0.5)' : res.glu_warning ? 'rgba(251,191,36,0.4)' : '#334155'}`,
+                                                color: res.glu_critical ? '#f87171' : res.glu_warning ? '#fbbf24' : '#a78bfa',
+                                                fontFamily: 'monospace', fontWeight: 700,
+                                            }}
+                                        />
+                                        <button
+                                            onClick={() => handleInput(key, 'glu_target', res.glu_formula)}
+                                            title="Calcule les glucides pour atteindre exactement la cible calorique (kcal − Prot×4 − Lip×9) ÷ 4"
+                                            style={{
+                                                flexShrink: 0, padding: '0 0.65rem',
+                                                background: 'rgba(167,139,250,0.1)',
+                                                border: '1px solid rgba(167,139,250,0.35)',
+                                                borderRadius: '6px', color: '#a78bfa',
+                                                cursor: 'pointer', fontSize: '0.73rem', fontWeight: 700,
+                                                whiteSpace: 'nowrap', lineHeight: 1.2,
+                                            }}
+                                        >
+                                            Ajuster<br/>selon Kcal
+                                        </button>
+                                    </div>
+                                    {/* Feedback valeur active */}
+                                    <div style={{ marginTop: '0.25rem', fontSize: '0.71rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                        {profiles[key].glu_target > 0
+                                            ? <span style={{ color: '#a78bfa' }}>Manuel : {profiles[key].glu_target}g · Auto serait {res.glu_formula}g</span>
+                                            : <span style={{ color: '#475569' }}>Auto : {res.glu_formula}g (résiduel kcal)</span>
+                                        }
+                                        {res.glu_critical && <span style={{ color: '#f87171', fontWeight: 700 }}>🚨 −20%</span>}
+                                        {!res.glu_critical && res.glu_warning && <span style={{ color: '#fbbf24' }}>⚠️ Faible</span>}
+                                    </div>
+                                </div>
+                                {/* Dernière pesée */}
+                                <div className="input-group">
+                                    <label htmlFor={`profile-${key}-weighed`}>
+                                        Dernière pesée
+                                        <InfoTooltip text="La diéto conseille de recalculer le plan tous les 1–3 mois. Un rappel orange s'affiche après 30 jours sans mise à jour." />
+                                    </label>
+                                    <input
+                                        id={`profile-${key}-weighed`}
+                                        type="date"
+                                        value={profiles[key].last_weighed || ''}
+                                        onChange={(e) => handleInput(key, 'last_weighed', e.target.value)}
+                                        style={{ colorScheme: 'dark' }}
+                                    />
+                                    {profiles[key].last_weighed && (() => {
+                                        const days = Math.floor((Date.now() - new Date(profiles[key].last_weighed).getTime()) / 86_400_000);
+                                        return (
+                                            <div style={{ marginTop: '0.3rem', fontSize: '0.72rem', color: days > 30 ? '#fb923c' : '#64748b' }}>
+                                                {days === 0 ? "Aujourd'hui" : `Il y a ${days} jour${days > 1 ? 's' : ''}`}
+                                                {days > 30 && ' ⚠️'}
+                                            </div>
+                                        );
+                                    })()}
+                                </div>
+                            </div>
+
+                            {/* ── Options (liste verticale) ── */}
+                            <div style={{ marginTop: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
+                                <div style={{ fontSize: '0.68rem', color: '#64748b', fontWeight: 700, letterSpacing: '1px', marginBottom: '0.2rem' }}>OPTIONS</div>
+
+                                {/* Whey */}
+                                <label style={S_cb.row}>
+                                    <input type="checkbox"
+                                        id={`profile-${key}-whey16h`}
+                                        checked={profiles[key].opt_whey_collation !== false}
+                                        onChange={(e) => handleInput(key, 'opt_whey_collation', e.target.checked)}
+                                        style={S_cb.input}
+                                    />
+                                    <span style={S_cb.label}>Whey 16h (Collation)</span>
+                                    <InfoTooltip text="Shaker de récupération à 16h. Décochez si les recettes Batch couvrent déjà l'objectif protéines — les calories économisées agrandissent les repas." />
+                                </label>
+
+                                {key === 'axel' && (
+                                    <label style={S_cb.row}>
+                                        <input type="checkbox"
+                                            id="profile-axel-whey-matin"
+                                            checked={profiles[key].opt_whey_matin !== false}
+                                            onChange={(e) => handleInput(key, 'opt_whey_matin', e.target.checked)}
+                                            style={S_cb.input}
+                                        />
+                                        <span style={S_cb.label}>Whey Matin (Axel)</span>
+                                        <InfoTooltip text="Shaker du matin. À désactiver si les repas + Whey 16h couvrent déjà l'objectif protéines." />
+                                    </label>
+                                )}
+
+                                <label style={S_cb.row}>
+                                    <input type="checkbox"
+                                        id={`profile-${key}-fb`}
+                                        checked={profiles[key].opt_fb_soir || false}
+                                        onChange={(e) => handleInput(key, 'opt_fb_soir', e.target.checked)}
+                                        style={S_cb.input}
+                                    />
+                                    <span style={S_cb.label}>Fromage Blanc 0% le soir</span>
+                                </label>
+
+                                {/* Oméga-3 Zenement — toggle inline par personne */}
+                                <label style={S_cb.row}>
+                                    <input type="checkbox"
+                                        id={`profile-${key}-omega3`}
+                                        checked={profiles[key].opt_omega3 !== false}
+                                        onChange={(e) => handleInput(key, 'opt_omega3', e.target.checked)}
+                                        style={S_cb.input}
+                                    />
+                                    <span style={S_cb.label}>🐟 Oméga-3 Zenement</span>
+                                    <InfoTooltip text={`${OMEGA3_ZENEMENT.brand} — ${OMEGA3_ZENEMENT.gel_per_dose} gélules/soir pendant le dîner. ${OMEGA3_ZENEMENT.epa_mg} mg EPA + ${OMEGA3_ZENEMENT.dha_mg} mg DHA = ${OMEGA3_ZENEMENT.total_omega3_mg} mg Oméga-3/j. Impact : +${OMEGA3_ZENEMENT.lip_per_dose} g lipides (${OMEGA3_ZENEMENT.kcal_per_dose} kcal) déjà comptabilisés — la cible lipides cuisine est réduite d'autant.`} />
+                                    {profiles[key].opt_omega3 !== false && (
+                                        <span style={{ fontSize: '0.72rem', color: '#64748b', marginLeft: 'auto', fontFamily: 'monospace' }}>
+                                            −{OMEGA3_ZENEMENT.lip_per_dose}g lip
+                                        </span>
+                                    )}
+                                </label>
+
+                                {/* Option fromage + quantité inline */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                                    <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>Fromage</span>
                                     <input
                                         id={fromageId}
                                         type="number"
                                         value={profiles[key].opt_fromage === 0 ? '' : profiles[key].opt_fromage}
                                         placeholder="0"
                                         onChange={(e) => handleInput(key, 'opt_fromage', e.target.value)}
+                                        style={{ width: '70px', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.3rem 0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '0.9rem' }}
                                     />
+                                    <span style={{ fontSize: '0.75rem', color: '#64748b' }}>g</span>
                                 </div>
                             </div>
 
-                            {/* ActivityGrid extrait HORS du composant (fix #8/#4) — passé par props */}
-                            <ActivityGrid
-                                profileKey={key}
-                                profiles={profiles}
-                                res={res}
-                                handleActivity={handleActivity}
-                            />
+                            {/* ── Niveau d'activité PAL ── */}
+                            <div style={{ marginTop: '1.5rem' }}>
+                                <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', display: 'block', marginBottom: '0.6rem' }}>
+                                    NIVEAU D'ACTIVITÉ
+                                    <InfoTooltip text="Budget calorique stable 7j/7 (recommandation diététicienne). Le multiplicateur PAL reflète ton niveau général d'activité sur la semaine." />
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.4rem' }}>
+                                    {PAL_OPTIONS.map(opt => {
+                                        const active = (profiles[key].pal || 1.375) === opt.value;
+                                        const color  = key === 'axel' ? '#38bdf8' : '#a78bfa';
+                                        return (
+                                            <button key={opt.value}
+                                                onClick={() => handleInput(key, 'pal', opt.value)}
+                                                style={{
+                                                    padding: '0.55rem 0.6rem', borderRadius: '8px', cursor: 'pointer',
+                                                    textAlign: 'left', fontFamily: 'inherit',
+                                                    background: active ? `${color}18` : 'rgba(0,0,0,0.2)',
+                                                    border: `1px solid ${active ? color : '#334155'}`,
+                                                    transition: 'all 0.15s',
+                                                }}
+                                            >
+                                                <div style={{ fontWeight: 700, fontSize: '0.82rem', color: active ? color : '#94a3b8' }}>
+                                                    {opt.label}
+                                                    <span style={{ fontFamily: 'monospace', marginLeft: '0.35rem', color: active ? color : '#475569', fontSize: '0.78rem' }}>×{opt.value}</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: '0.15rem' }}>{opt.desc}</div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <div style={{ marginTop: '0.5rem', fontSize: '0.75rem', color: '#475569', fontFamily: 'monospace' }}>
+                                    TDEE : {Math.round(res.bmr)} × {profiles[key].pal || 1.375} = <strong style={{ color: '#94a3b8' }}>{Math.round(res.tdee_final)} kcal/j</strong>
+                                </div>
+                            </div>
 
                             <div className="stats-mini">
                                 <span>TDEE: {Math.round(res.tdee_final)} kcal</span>
                                 <span> | </span>
                                 <span>Cible: {Math.round(res.target_daily)} kcal</span>
                                 <span> | </span>
-                                <span style={{ color: '#fbbf24' }}>Estimé: {Math.round(res.total_estimated)} kcal</span>
+                                <span style={{ color: '#38bdf8' }}>
+                                    Batch Midi: {res.batch_midi_budget} kcal · Soir: {res.batch_soir_budget} kcal
+                                </span>
                                 <br />
-                                {/* FIX #12 : afficher l'objectif protéines dynamique */}
+                                {/* Protéines */}
                                 <span style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>
                                     Protéines: {Math.round(res.total_prot)}g / {Math.round(res.prot_goal)}g
-                                    {' → '}{profiles[key].prot_ratio}g/kg × {profiles[key].weight}kg
-                                    {res.prot_warning && " (⚠️ Trop bas !)"}
+                                    {' → '}{profiles[key].prot_ratio}g/kg × {res.goal_weight ?? profiles[key].weight}kg
+                                    <span style={{ color: '#475569', fontSize: '0.8em' }}> (forme)</span>
+                                    {res.prot_warning && ' ⚠️'}
+                                </span>
+                                <br />
+                                {/* Lipides */}
+                                <span style={{ color: res.lip_critical ? '#f87171' : res.lip_warning ? '#fbbf24' : '#fb923c' }}>
+                                    Lipides: {res.total_lip.toFixed(1)}g / {Math.round(res.lip_goal)}g
+                                    {' → '}{(profiles[key].lip_ratio ?? 0.9)}g/kg × {res.goal_weight ?? profiles[key].weight}kg
+                                    {res.use_omega3 && <span style={{ color: '#64748b' }}> (dont {res.omega3_lip}g Ω3)</span>}
+                                    {res.lip_critical && <span style={{ color: '#f87171' }}> 🚨 &lt;{LIP_MIN_RATIO}g/kg (plancher !)</span>}
+                                    {res.lip_warning  && <span style={{ color: '#fbbf24' }}> ⚠️ sous cible</span>}
+                                </span>
+                                <br />
+                                {/* Glucides */}
+                                <span style={{ color: res.glu_critical ? '#f87171' : res.glu_warning ? '#fbbf24' : '#a78bfa' }}>
+                                    Glucides: {Math.round(res.total_glu)}g / {res.glu_goal}g
+                                    {' → '}ajustement calorique
+                                    {res.glu_critical && ' 🚨 −20%'}
+                                    {!res.glu_critical && res.glu_warning && ' ⚠️ Faible'}
                                 </span>
                             </div>
+
+                            {/* Rappel pesée > 30 jours (banner) */}
+                            {(() => {
+                                const lw = profiles[key].last_weighed;
+                                if (!lw) return null;
+                                const days = Math.floor((Date.now() - new Date(lw).getTime()) / 86_400_000);
+                                if (days <= 30) return null;
+                                return (
+                                    <div style={{ marginTop: '0.75rem', padding: '0.55rem 0.8rem', background: 'rgba(251,146,60,0.08)', border: '1px solid rgba(251,146,60,0.25)', borderRadius: '7px', fontSize: '0.8rem', color: '#fb923c' }}>
+                                        ⚖️ Dernière pesée il y a <strong>{days} jours</strong> — pensez à recalculer votre plan (tous les 1–3 mois selon la diéto).
+                                    </div>
+                                );
+                            })()}
                         </div>
                     );
                 })}
             </div>
 
             <button onClick={handleCopyCSV} className="action-btn"
-                style={{ marginTop: '1rem', width: '100%', background: 'rgba(255,255,255,0.1)', border: '1px dashed #94a3b8' }}>
+                style={{ marginTop: '1.5rem', width: '100%', background: 'rgba(255,255,255,0.1)', border: '1px dashed #94a3b8' }}>
                 <Download size={18} /> Copier Configuration CSV
             </button>
 
-            {/* --- TABLEAU FINAL --- */}
-            <h2 className="section-title" style={{ marginTop: '3rem' }}>
-                <Utensils className="icon-mr" /> Plan Alimentaire (Lissé)
-            </h2>
+            {/* --- TABLEAU DE RÉFÉRENCE LEGACY (collapsible) --- */}
+            <div style={{ marginTop: '3rem' }}>
+                <button
+                    onClick={() => setShowLegacyPlan(s => !s)}
+                    style={{
+                        display: 'flex', alignItems: 'center', gap: '0.5rem',
+                        background: 'none', border: '1px solid #1e293b', borderRadius: '8px',
+                        padding: '0.5rem 1rem', color: '#475569', cursor: 'pointer',
+                        fontSize: '0.83rem', fontWeight: 600, width: '100%',
+                    }}
+                >
+                    <Utensils size={14} />
+                    Plan Alimentaire — Référence Pâtes/PST (ancien système)
+                    <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#334155' }}>
+                        {showLegacyPlan ? '▲ Masquer' : '▼ Afficher'}
+                    </span>
+                </button>
+
+                {showLegacyPlan && (
+                    <>
+                        <div style={{ marginTop: '0.5rem', padding: '0.6rem 0.9rem', background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.2)', borderRadius: '7px', fontSize: '0.78rem', color: '#fb923c' }}>
+                            ⚠️ Ce tableau utilise l'<strong>ancien système Pâtes+PST</strong>. Pour la variété recommandée par la diéto, utilisez l'onglet <strong>Batch Cooking</strong> qui calcule automatiquement les bonnes quantités.
+                        </div>
 
             <div className="plan-table">
                 <PlanRow isHeader label="ITEM" axelVal="AXEL" priscaVal="PRISCA" note="NOTE" />
@@ -357,8 +580,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 <PlanRow label="Pâtes Protein+ (Cru)" axelVal={`${Math.round(resAxel.pasta_soir)}g`} priscaVal={`${Math.round(resPrisca.pasta_soir)}g`} note="Ajustement (45%)" />
                 <PlanRow label="Œufs" axelVal={`${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`} priscaVal={`${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`} note="OBLIGATOIRE" />
                 <PlanRow label="Légumes + Crème" axelVal="Légumes + 30g Crème" priscaVal="Légumes + 30g Crème" note="" />
-                <PlanRow label="Option Galettes" axelVal={profiles.axel.opt_galettes ? "2 Galettes Iglo" : "-"} priscaVal={profiles.prisca.opt_galettes ? "2 Galettes Iglo" : "-"} note="Si activé, pâtes réduites" />
-                <PlanRow label="Option Fromage" axelVal={profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-"} priscaVal={profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-"} note="Extra variable" />
+                <PlanRow label="Fromage" axelVal={profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-"} priscaVal={profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-"} note="Extra variable" />
                 <PlanRow
                     label="Fromage Blanc 0%"
                     axelVal={resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-"}
@@ -366,6 +588,9 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     note="Compensation prot. soir"
                 />
             </div>
+                    </>
+                )}
+            </div>{/* fin bloc legacy */}
 
             {(resAxel.prot_warning || resPrisca.prot_warning) && (
                 <div className="alert-box">
@@ -400,15 +625,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                             <p>Poids: {profiles[key].weight}kg | Taille: {profiles[key].height}cm | Age: {profiles[key].age}</p>
                             <p>Protéines cible: <strong style={{ color }}>{profiles[key].prot_ratio}g/kg → {Math.round(res.prot_goal)}g/jour</strong></p>
                             <p>BMR (Mifflin): {Math.round(res.bmr)} kcal</p>
-                            <p>Facteur Sédentaire (×1.2): {Math.round(res.bmr * 1.2)} kcal</p>
-                            <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
-                            <p style={{ color: '#fbbf24' }}>Sport ({res.total_sport_min} min/sem) :</p>
-                            {ACTIVITIES.filter(act => (profiles[key].activities?.[act.id] || 0) > 0).map(act => {
-                                const mins = profiles[key].activities?.[act.id] || 0;
-                                const kcal = Math.round(profiles[key].weight * (mins / 60) * act.met);
-                                return <p key={act.id} style={{ paddingLeft: '0.75rem', color: '#94a3b8' }}>↳ {act.label}: {mins}min × {act.met} MET = +{kcal} kcal/sem</p>;
-                            })}
-                            <p>Sport Moyen/Jour: +{Math.round(res.sport_day)} kcal</p>
+                            <p style={{ color: '#fbbf24' }}>PAL ×{profiles[key].pal} → TDEE {Math.round(res.tdee_final)} kcal</p>
+                            <p style={{ color: '#94a3b8', paddingLeft: '0.75rem' }}>↳ {PAL_OPTIONS.find(o => o.value === profiles[key].pal)?.label || '?'} — {PAL_OPTIONS.find(o => o.value === profiles[key].pal)?.desc || ''}</p>
                             <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
                             <p><strong>TDEE Final: {Math.round(res.tdee_final)} kcal</strong></p>
                             <p>Cible (-{profiles[key].deficit}): {Math.round(res.target_daily)} kcal</p>
@@ -429,6 +647,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
 
             <style>{`
                 .section-title { font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; color: #fff; }
+
                 .tabs { display: flex; gap: 1rem; margin-bottom: 1rem; }
                 .tab-btn { padding: 0.5rem 2rem; border: 1px solid #334155; background: transparent; color: #64748b; border-radius: 8px; cursor: pointer; font-weight: 600; }
                 .tab-btn.active.axel { background: rgba(14,165,233,0.2); border-color: #0ea5e9; color: #38bdf8; }

@@ -17,7 +17,6 @@ const calcEveningBudget = (key, profiles) => {
     const plan        = calculatePlan(key, profiles);
     const p           = profiles[key];
     const optFromage  = Math.max(0, Number(p.opt_fromage)  || 0);
-    const optGalettes = Boolean(p.opt_galettes);
     const optFbSoir   = Boolean(p.opt_fb_soir);
 
     const items = [
@@ -55,17 +54,6 @@ const calcEveningBudget = (key, profiles) => {
             prot: r(optFromage * 0.25, 1),
             lip:  r(optFromage * 0.33, 1),
             glu:  0,
-        });
-    }
-
-    if (optGalettes) {
-        items.push({
-            name: 'Galettes Sarrasin ×2',
-            detail: 'remplace pâtes soir',
-            kcal: SOCLE_DATA.common.galettes_2x.kcal,
-            prot: r(SOCLE_DATA.common.galettes_2x.prot, 1),
-            lip:  7,
-            glu:  50,
         });
     }
 

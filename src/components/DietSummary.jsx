@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculatePlan, ACTIVITIES, SOCLE_DATA, PASTA_REF, MACRO_EST as EST } from '../utils/dietAlgo';
+import { calculatePlan, PAL_OPTIONS, SOCLE_DATA, PASTA_REF, MACRO_EST as EST } from '../utils/dietAlgo';
 import {
     Printer, FlaskConical, Target, BookOpen,
     Pill, Dumbbell, Info
@@ -18,7 +18,6 @@ const SocleTable = ({ planKey, plan, profiles }) => {
     const socle    = { ...SOCLE_DATA.common, ...SOCLE_DATA[planKey] };
     const accent   = isAxel ? '#38bdf8' : '#818cf8';
     const optFromage  = Math.max(0, Number(p.opt_fromage) || 0);
-    const optGalettes = Boolean(p.opt_galettes);
     const optFbSoir   = Boolean(p.opt_fb_soir);
 
     const wheyKcal = socle.matin_whey.kcal + socle.collation_whey.kcal;
@@ -105,16 +104,11 @@ const SocleTable = ({ planKey, plan, profiles }) => {
     const fromageProt = optFromage > 0 ? r(optFromage * 0.25, 1) : 0;
     const fromageLip  = optFromage > 0 ? r(optFromage * EST.fromage_unit_lip, 1) : 0;
 
-    const galettesKcal = optGalettes ? SOCLE_DATA.common.galettes_150g.kcal : 0;
-    const galettesProt = optGalettes ? SOCLE_DATA.common.galettes_150g.prot : 0;
-    const galettesLip  = optGalettes ? EST.galettes_lip : 0;
-    const galettesGlu  = optGalettes ? EST.galettes_glu : 0;
-
     const grandTotal = {
-        kcal: r(sub.kcal + pstKcal + pastaKcal + fbKcal + fromageKcal + galettesKcal),
-        prot: r(sub.prot + pstProt + pastaProt + fbProt + fromageProt + galettesProt, 1),
-        lip:  r(sub.lip  + pstLip  + pastaLip + fromageLip + galettesLip, 1),
-        glu:  r(sub.glu  + pstGlu  + pastaGlu + fbGlu + galettesGlu, 1),
+        kcal: r(sub.kcal + pstKcal + pastaKcal + fbKcal + fromageKcal),
+        prot: r(sub.prot + pstProt + pastaProt + fbProt + fromageProt, 1),
+        lip:  r(sub.lip  + pstLip  + pastaLip + fromageLip, 1),
+        glu:  r(sub.glu  + pstGlu  + pastaGlu + fbGlu, 1),
     };
 
     const pct = {
@@ -185,13 +179,6 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                             <td className="ds-lip">0</td>
                             <td className="ds-glu">{optFbSoir ? fbGlu : '—'}</td>
                         </tr>
-                        <tr className={`ds-tfoot-var ${!optGalettes ? 'ds-row-inactive' : ''}`}>
-                            <td colSpan="2">+ Galettes de Légumes (150g le soir)</td>
-                            <td>{optGalettes ? galettesKcal : '—'}</td>
-                            <td className="ds-prot">{optGalettes ? galettesProt : '—'}</td>
-                            <td className="ds-lip">{optGalettes ? galettesLip : '—'}</td>
-                            <td className="ds-glu">{optGalettes ? galettesGlu : '—'}</td>
-                        </tr>
                         <tr className={`ds-tfoot-var ${optFromage === 0 ? 'ds-row-inactive' : ''}`}>
                             <td colSpan="2">+ Option Fromage ({optFromage}g)</td>
                             <td>{optFromage > 0 ? fromageKcal : '—'}</td>
@@ -261,7 +248,7 @@ const DietSummary = ({ profiles, data = [] }) => {
                                 { label: 'Taille',          val: `${profiles[key].height} cm` },
                                 { label: 'Âge (calculé)',   val: `${plan.computed_age} ans`, accent: color },
                                 { label: 'BMR (repos)',      val: `${r(plan.bmr)} kcal`, accent: color },
-                                { label: 'Sport / jour',    val: `+${r(plan.sport_day)} kcal`, accent: color },
+                                { label: 'PAL (activité)',  val: `×${profiles[key].pal}`, accent: color },
                                 { label: 'TDEE Final',      val: `${r(plan.tdee_final)} kcal`, accent: color },
                                 { label: 'Déficit',         val: `−${profiles[key].deficit} kcal`, accent: '#f59e0b' },
                                 { label: 'Objectif / jour', val: `${r(plan.target_daily)} kcal`, accent: color, bold: true },
@@ -275,34 +262,30 @@ const DietSummary = ({ profiles, data = [] }) => {
                     ))}
                 </div>
 
-                {/* Table METs */}
-                <h4 className="ds-section-title-sm"><Dumbbell size={15} /> Facteurs d'Activité (METs)</h4>
+                {/* Table PAL */}
+                <h4 className="ds-section-title-sm"><Dumbbell size={15} /> Niveaux d'Activité (PAL)</h4>
                 <div className="ds-table-scroll">
                     <table className="diet-table ds-met-table">
                         <thead>
                             <tr>
-                                <th>Activité</th>
-                                <th>MET</th>
-                                <th style={{ color: '#38bdf8' }}>Axel (min/sem)</th>
-                                <th style={{ color: '#818cf8' }}>Prisca (min/sem)</th>
-                                <th style={{ color: '#38bdf8' }}>Axel (kcal/sem)</th>
-                                <th style={{ color: '#818cf8' }}>Prisca (kcal/sem)</th>
+                                <th>Niveau</th>
+                                <th>Multiplicateur</th>
+                                <th>Description</th>
+                                <th style={{ color: '#38bdf8' }}>Axel</th>
+                                <th style={{ color: '#818cf8' }}>Prisca</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {ACTIVITIES.map(act => {
-                                const mA = Number(profiles.axel.activities[act.id])   || 0;
-                                const mP = Number(profiles.prisca.activities[act.id]) || 0;
-                                const cA = r(profiles.axel.weight   * (mA / 60) * act.met);
-                                const cP = r(profiles.prisca.weight * (mP / 60) * act.met);
+                            {PAL_OPTIONS.map(opt => {
+                                const isAxel   = profiles.axel.pal   === opt.value;
+                                const isPrisca = profiles.prisca.pal === opt.value;
                                 return (
-                                    <tr key={act.id} className={mA === 0 && mP === 0 ? 'ds-row-inactive' : ''}>
-                                        <td>{act.label}</td>
-                                        <td><span className="ds-val">{act.met}</span></td>
-                                        <td><span className="ds-val" style={{ color: '#38bdf8' }}>{mA || '—'}</span></td>
-                                        <td><span className="ds-val" style={{ color: '#818cf8' }}>{mP || '—'}</span></td>
-                                        <td><span className="ds-val" style={{ color: '#38bdf8' }}>{mA ? cA : '—'}</span></td>
-                                        <td><span className="ds-val" style={{ color: '#818cf8' }}>{mP ? cP : '—'}</span></td>
+                                    <tr key={opt.value} className={!isAxel && !isPrisca ? 'ds-row-inactive' : ''}>
+                                        <td style={{ fontWeight: (isAxel || isPrisca) ? 700 : 400 }}>{opt.label}</td>
+                                        <td><span className="ds-val">×{opt.value}</span></td>
+                                        <td style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{opt.desc}</td>
+                                        <td><span className="ds-val" style={{ color: '#38bdf8' }}>{isAxel   ? '✓' : '—'}</span></td>
+                                        <td><span className="ds-val" style={{ color: '#818cf8' }}>{isPrisca ? '✓' : '—'}</span></td>
                                     </tr>
                                 );
                             })}
@@ -332,7 +315,7 @@ const DietSummary = ({ profiles, data = [] }) => {
                                         { label: 'Lipides estimées',     val: `${r(plan.total_lip, 1)} g/j`,         color: '#fb923c' },
                                         { label: 'Glucides estimées',    val: `${r(plan.total_glu, 1)} g/j`,         color: '#facc15' },
                                         { label: 'Déficit appliqué',     val: `−${profiles[key].deficit} kcal`,      color: '#f59e0b' },
-                                        { label: 'Sport / semaine',      val: `${r(plan.sport_cal_week)} kcal`,      color },
+                                        { label: 'TDEE (BMR × PAL)',     val: `${r(plan.tdee_final)} kcal`,          color },
                                     ].map((item, i) => (
                                         <div key={i} className="ds-macro-item">
                                             <span className="ds-macro-label">{item.label}</span>

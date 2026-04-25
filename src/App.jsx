@@ -9,7 +9,8 @@ import SmartDiet from './components/SmartDiet';
 import DietSummary from './components/DietSummary';
 import ExternalMeal from './components/ExternalMeal';
 import RecipeIdeas from './components/RecipeIdeas';
-import { DEFAULT_PROFILES, DEFAULT_ACTIVITIES } from './utils/dietAlgo';
+import BatchCooking from './components/BatchCooking';
+import { DEFAULT_PROFILES } from './utils/dietAlgo';
 
 const App = () => {
   const [data, setData] = useState([]);
@@ -20,8 +21,8 @@ const App = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       // Migration : garantit que prot_ratio existe même pour les anciens localStorage (avec goal)
-      const axelRatio   = parsed.axel?.prot_ratio   ?? (parsed.axel?.goal === 'sante' ? 1.2 : 1.8);
-      const priscaRatio = parsed.prisca?.prot_ratio ?? (parsed.prisca?.goal === 'sante' ? 1.2 : 1.8);
+      const axelRatio   = parsed.axel?.prot_ratio   ?? (parsed.axel?.goal === 'sante' ? 1.2 : 1.6);
+      const priscaRatio = parsed.prisca?.prot_ratio ?? (parsed.prisca?.goal === 'sante' ? 1.2 : 1.6);
       return {
         axel:   { ...DEFAULT_PROFILES.axel,   ...parsed.axel,   prot_ratio: axelRatio },
         prisca: { ...DEFAULT_PROFILES.prisca, ...parsed.prisca, prot_ratio: priscaRatio },
@@ -55,21 +56,23 @@ const App = () => {
 
     setProfiles(prev => {
       const next = {
-        axel: { ...prev.axel, activities: { ...DEFAULT_ACTIVITIES, ...(prev.axel.activities || {}) } },
-        prisca: { ...prev.prisca, activities: { ...DEFAULT_ACTIVITIES, ...(prev.prisca.activities || {}) } }
+        axel:   { ...prev.axel },
+        prisca: { ...prev.prisca },
       };
 
       configRows.forEach(row => {
+        const param = row.Item;
         if (row.Section === 'Sport') {
-          // Nouvelles lignes d'activité avec MET précis
-          const actId = row.Item;
-          if (actId in DEFAULT_ACTIVITIES) {
-            next.axel.activities[actId] = parseFloat(row.Axel) || 0;
-            next.prisca.activities[actId] = parseFloat(row.Prisca) || 0;
+          // PAL (Physical Activity Level) — remplace l'ancien système MET
+          if (param === 'PAL') {
+            const validPAL = [1.2, 1.375, 1.55, 1.725];
+            const palA = parseFloat(row.Axel);
+            const palP = parseFloat(row.Prisca);
+            next.axel.pal   = validPAL.includes(palA) ? palA : 1.375;
+            next.prisca.pal = validPAL.includes(palP) ? palP : 1.375;
           }
         } else {
           // Lignes de profil standard
-          const param = row.Item;
           if (param === 'Weight') {
             next.axel.weight = parseFloat(row.Axel);
             next.prisca.weight = parseFloat(row.Prisca);
@@ -82,9 +85,6 @@ const App = () => {
           } else if (param === 'Deficit') {
             next.axel.deficit = parseFloat(row.Axel);
             next.prisca.deficit = parseFloat(row.Prisca);
-          } else if (param === 'Opt_Galettes') {
-            next.axel.opt_galettes = row.Axel === 'true';
-            next.prisca.opt_galettes = row.Prisca === 'true';
           } else if (param === 'Opt_Fromage') {
             next.axel.opt_fromage = parseFloat(row.Axel);
             next.prisca.opt_fromage = parseFloat(row.Prisca);
@@ -92,12 +92,8 @@ const App = () => {
             next.axel.opt_fb_soir = row.Axel === 'true';
             next.prisca.opt_fb_soir = row.Prisca === 'true';
           } else if (param === 'Prot_Ratio') {
-            next.axel.prot_ratio   = parseFloat(row.Axel)   || 1.8;
-            next.prisca.prot_ratio = parseFloat(row.Prisca) || 1.2;
-          } else if (param === 'SportMin') {
-            // Migration ancien format : assigner toutes les minutes à muscu_pdc
-            next.axel.activities.muscu_pdc = parseFloat(row.Axel) || 0;
-            next.prisca.activities.muscu_pdc = parseFloat(row.Prisca) || 0;
+            next.axel.prot_ratio   = parseFloat(row.Axel)   || 1.6;
+            next.prisca.prot_ratio = parseFloat(row.Prisca) || 1.6;
           }
         }
       });
@@ -143,6 +139,7 @@ const App = () => {
         <Route path="/diet-summary" element={<DietSummary profiles={profiles} data={data} />} />
         <Route path="/external-meal" element={<ExternalMeal profiles={profiles} />} />
         <Route path="/recipes" element={<RecipeIdeas profiles={profiles} />} />
+        <Route path="/batch-cooking" element={<BatchCooking profiles={profiles} />} />
       </Routes>
 
       <footer style={{ textAlign: 'center', padding: '2rem', color: '#64748b', fontSize: '0.8rem', fontStyle: 'italic' }}>
