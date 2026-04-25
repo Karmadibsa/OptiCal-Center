@@ -1,16 +1,16 @@
 [
   {
-    "name": "Pois chiches (sec)",
+    "name": "Pois chiches (égouttés)",
     "aliases": [
       "pois chiches"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.29,
-    "achat": "Boîte 1kg · ~3.29€ · ",
+    "price_per_unit": 3.72,
+    "achat": "Boîte 400g · ~1.49€ · ",
     "magasin": "Carrefour"
   },
   {
-    "name": "Haricots rouges (egouttés)",
+    "name": "Haricots rouges (égouttés)",
     "aliases": [
       "haricots rouges"
     ],
@@ -20,13 +20,13 @@
     "magasin": "Carrefour"
   },
   {
-    "name": "Haricots blancs (sec)",
+    "name": "Haricots blancs (égouttés)",
     "aliases": [
       "haricots blancs"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.19,
-    "achat": "Boîte 1kg · ~3.19€ · ",
+    "price_per_unit": 3.52,
+    "achat": "Boîte 395g · ~1.39€ · ",
     "magasin": "Carrefour"
   },
   {
