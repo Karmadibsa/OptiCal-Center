@@ -60,6 +60,8 @@ const BatchCooking = ({ profiles }) => {
     const [previewMd,      setPreviewMd]      = useState('');     // contenu markdown brut
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [priceDb,        setPriceDb]        = useState([]);     // base de données des prix
+    const [doneCookGroups,  setDoneCookGroups]  = useState({});    // cuisson : étapes cochées
+    const [checkedShopItems, setCheckedShopItems] = useState({});  // courses : items cochés
 
     // Helper : slot désactivé ?
     const isSlotDisabled = (day, meal) => !!disabledSlots[`${day}_${meal}`];
@@ -398,8 +400,10 @@ const BatchCooking = ({ profiles }) => {
         const assignedSlots = countAssignedSlots();
         const lines = [`🛒 LISTE DE COURSES — Batch Cooking`, `${assignedSlots} repas × 2 personnes`, ''];
         sections.forEach(sec => {
+            const unchecked = sec.items.filter(i => !checkedShopItems[normalizeIngName(i.name)]);
+            if (unchecked.length === 0) return;
             lines.push(sec.label);
-            sec.items.forEach(i => lines.push(`  • ${i.name} : ${i.display}`));
+            unchecked.forEach(i => lines.push(`  • ${i.name} : ${i.display}`));
             lines.push('');
         });
         if (hasPstSoir) {
@@ -681,13 +685,13 @@ const BatchCooking = ({ profiles }) => {
                                 <button
                                     onClick={e => { e.stopPropagation(); setPreviewRecipe(recipe); }}
                                     style={{
-                                        marginTop: 'auto', paddingTop: '0.55rem',
+                                        marginTop: 'auto',
                                         display: 'flex', alignItems: 'center', gap: '0.3rem',
                                         background: 'none', border: 'none', padding: '0.45rem 0',
                                         color: sel ? '#93c5fd' : '#475569',
                                         cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
                                         borderTop: '1px solid rgba(255,255,255,0.05)',
-                                        marginTop: '0.55rem', width: '100%',
+                                        width: '100%',
                                         transition: 'color 0.15s',
                                     }}
                                     onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'}
@@ -840,19 +844,42 @@ const BatchCooking = ({ profiles }) => {
                                             {section.label}
                                         </div>
                                         <div style={{ display: 'grid', gap: '0.2rem' }}>
-                                            {section.items.map((item, i) => (
-                                                <div key={item.name} style={{
-                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                                    padding: '0.38rem 0.65rem',
-                                                    background: i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'transparent',
-                                                    borderRadius: '5px',
-                                                }}>
-                                                    <span style={{ color: '#e2e8f0', fontWeight: 500, fontSize: '0.88rem' }}>{item.name}</span>
-                                                    <span style={{ color: section.color, fontFamily: 'monospace', fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem' }}>
-                                                        {item.display}
-                                                    </span>
-                                                </div>
-                                            ))}
+                                            {section.items.map((item, i) => {
+                                                const shopKey   = normalizeIngName(item.name);
+                                                const isChecked = !!checkedShopItems[shopKey];
+                                                return (
+                                                    <div key={item.name}
+                                                        onClick={() => setCheckedShopItems(prev => ({ ...prev, [shopKey]: !prev[shopKey] }))}
+                                                        style={{
+                                                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                                            padding: '0.38rem 0.65rem',
+                                                            background: i % 2 === 0 ? 'rgba(255,255,255,0.025)' : 'transparent',
+                                                            borderRadius: '5px',
+                                                            opacity: isChecked ? 0.38 : 1,
+                                                            cursor: 'pointer',
+                                                            transition: 'opacity 0.15s',
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
+                                                            <span style={{
+                                                                width: '15px', height: '15px', flexShrink: 0,
+                                                                border: `1.5px solid ${isChecked ? '#4ade80' : '#334155'}`,
+                                                                borderRadius: '3px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                                background: isChecked ? 'rgba(74,222,128,0.15)' : 'transparent',
+                                                                color: '#4ade80', fontSize: '0.6rem', fontWeight: 900,
+                                                            }}>
+                                                                {isChecked && '✓'}
+                                                            </span>
+                                                            <span style={{ color: '#e2e8f0', fontWeight: 500, fontSize: '0.88rem', textDecoration: isChecked ? 'line-through' : 'none' }}>
+                                                                {item.name}
+                                                            </span>
+                                                        </div>
+                                                        <span style={{ color: section.color, fontFamily: 'monospace', fontWeight: 700, whiteSpace: 'nowrap', fontSize: '0.9rem', textDecoration: isChecked ? 'line-through' : 'none' }}>
+                                                            {item.display}
+                                                        </span>
+                                                    </div>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -1002,13 +1029,18 @@ const BatchCooking = ({ profiles }) => {
                                     const isShared   = recipeIds.length > 1;
                                     const ingList    = Object.values(ings).filter(i => i.total_g >= 1).sort((a, b) => b.total_g - a.total_g);
 
+                                    const isDone2 = !!doneCookGroups[gk];
+                                    const displayTitle2 = FECULENT_GK.has(gk)
+                                        ? (gk === 'riz' ? 'Riz' : gk === 'pates' ? 'Pâtes' : 'Ebly')
+                                        : isShared ? 'Cuisson commune'
+                                        : `Accompagnement · ${prmList[0]?.recipe?.name || ''}`;
                                     return (
-                                        <div key={gk} style={S.boxCard}>
+                                        <div key={gk} style={{ ...S.boxCard, opacity: isDone2 ? 0.38 : 1, transition: 'opacity 0.2s' }}>
                                             {/* En-tête groupe */}
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 700, color: isShared ? '#38bdf8' : '#e2e8f0', fontSize: '0.92rem', textTransform: 'capitalize' }}>
-                                                        {isShared && '🔀 '}{label}
+                                                    <div style={{ fontWeight: 700, color: isShared ? '#38bdf8' : '#e2e8f0', fontSize: '0.92rem', textDecoration: isDone2 ? 'line-through' : 'none' }}>
+                                                        {isShared && '🔀 '}{displayTitle2}
                                                     </div>
                                                     {isShared && (
                                                         <div style={{ fontSize: '0.7rem', color: '#475569', marginTop: '0.1rem' }}>
@@ -1023,9 +1055,36 @@ const BatchCooking = ({ profiles }) => {
                                                         </div>
                                                     )}
                                                 </div>
+                                                {/* Bouton voir la recette */}
+                                                {!isShared && (
+                                                    <button
+                                                        onClick={() => setPreviewRecipe(prmList[0]?.recipe)}
+                                                        title="Voir la recette"
+                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: '0.15rem', flexShrink: 0, transition: 'color 0.15s' }}
+                                                        onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'}
+                                                        onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+                                                    >
+                                                        <BookOpen size={14} />
+                                                    </button>
+                                                )}
                                                 <span style={{ fontFamily: 'monospace', fontWeight: 900, color: '#fb923c', fontSize: '1rem', flexShrink: 0 }}>
                                                     {Math.round(total_g)} g
                                                 </span>
+                                                {/* Checkbox fait */}
+                                                <button
+                                                    onClick={() => setDoneCookGroups(prev => ({ ...prev, [gk]: !prev[gk] }))}
+                                                    title={isDone2 ? 'Marquer comme à faire' : 'Marquer comme fait'}
+                                                    style={{
+                                                        width: '24px', height: '24px', flexShrink: 0,
+                                                        background: isDone2 ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
+                                                        border: `1.5px solid ${isDone2 ? '#4ade80' : '#334155'}`,
+                                                        borderRadius: '6px', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        transition: 'all 0.15s',
+                                                    }}
+                                                >
+                                                    {isDone2 && <Check size={12} color="#4ade80" />}
+                                                </button>
                                             </div>
 
                                             {/* Liste des ingrédients */}
@@ -1113,20 +1172,55 @@ const BatchCooking = ({ profiles }) => {
                                     const perBoxGApprox = totalBoxes > 0 ? Math.round(totalRaw * estCoef / totalBoxes) : 0;
                                     const companionStr  = (companions || []).join(' + ');
 
-                                    const titleCap = label.charAt(0).toUpperCase() + label.slice(1);
+                                    const recipeIdsV3 = [...new Set(prmList.map(p => p.recipe.id))];
+                                    const isSharedV3  = recipeIdsV3.length > 1;
+                                    const isDone3 = !!doneCookGroups[gk];
+                                    const titleCap = isWeighable
+                                        ? (gk === 'riz' ? 'Riz' : gk === 'pates' ? 'Pâtes' : 'Ebly')
+                                        : isSharedV3 ? 'Cuisson commune'
+                                        : `Accompagnement · ${firstRecipe?.name || ''}`;
 
                                     return (
-                                        <div key={gk} style={S.boxCard}>
+                                        <div key={gk} style={{ ...S.boxCard, opacity: isDone3 ? 0.38 : 1, transition: 'opacity 0.2s' }}>
                                             {/* En-tête */}
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.8rem' }}>
                                                 <span style={{ fontSize: '1.1rem' }}>{isWeighable ? '⚖️' : '🥣'}</span>
                                                 <div style={{ flex: 1 }}>
-                                                    <div style={{ fontWeight: 700, color: isWeighable ? '#fbbf24' : '#e2e8f0', fontSize: '0.92rem' }}>{titleCap}</div>
+                                                    <div style={{ fontWeight: 700, color: isWeighable ? '#fbbf24' : '#e2e8f0', fontSize: '0.92rem', textDecoration: isDone3 ? 'line-through' : 'none' }}>
+                                                        {titleCap}
+                                                    </div>
                                                     <div style={{ fontSize: '0.68rem', color: '#475569', marginTop: '0.1rem' }}>
-                                                        {isWeighable ? 'Féculent — à peser' : 'Sauce / mélange'} · {totalBoxes} boîtes
+                                                        {isWeighable ? 'Féculent — à peser' : `${firstRecipe?.emoji || ''} ${firstRecipe?.name || 'Accompagnement'}`} · {totalBoxes} boîtes
                                                     </div>
                                                 </div>
+                                                {/* Bouton voir la recette */}
+                                                {!isWeighable && !isSharedV3 && firstRecipe && (
+                                                    <button
+                                                        onClick={() => setPreviewRecipe(firstRecipe)}
+                                                        title="Voir la recette"
+                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: '0.15rem', flexShrink: 0, transition: 'color 0.15s' }}
+                                                        onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'}
+                                                        onMouseLeave={e => e.currentTarget.style.color = '#475569'}
+                                                    >
+                                                        <BookOpen size={14} />
+                                                    </button>
+                                                )}
                                                 <span style={{ fontFamily: 'monospace', color: '#64748b', fontSize: '0.8rem' }}>{Math.round(totalRaw)} g cru</span>
+                                                {/* Checkbox fait */}
+                                                <button
+                                                    onClick={() => setDoneCookGroups(prev => ({ ...prev, [gk]: !prev[gk] }))}
+                                                    title={isDone3 ? 'Marquer comme à faire' : 'Marquer comme fait'}
+                                                    style={{
+                                                        width: '24px', height: '24px', flexShrink: 0,
+                                                        background: isDone3 ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
+                                                        border: `1.5px solid ${isDone3 ? '#4ade80' : '#334155'}`,
+                                                        borderRadius: '6px', cursor: 'pointer',
+                                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                        transition: 'all 0.15s',
+                                                    }}
+                                                >
+                                                    {isDone3 && <Check size={12} color="#4ade80" />}
+                                                </button>
                                             </div>
 
                                             {/* Calibration (féculents seulement) */}
@@ -1149,7 +1243,7 @@ const BatchCooking = ({ profiles }) => {
                                             {/* Instruction répartition (sauces) */}
                                             {!isWeighable && (
                                                 <div style={{ background: 'rgba(148,163,184,0.05)', border: '1px solid #1e293b', borderRadius: '7px', padding: '0.5rem 0.7rem', marginBottom: '0.8rem', fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.6 }}>
-                                                    🥄 Répartir <strong style={{ color: '#e2e8f0' }}>{titleCap}</strong> équitablement dans les{' '}
+                                                    🥄 Répartir <strong style={{ color: '#e2e8f0' }}>{firstRecipe ? `${firstRecipe.emoji} ${firstRecipe.name}` : 'cet accompagnement'}</strong> équitablement dans les{' '}
                                                     <strong style={{ color: '#38bdf8' }}>{totalBoxes} boîtes</strong>{' '}
                                                     (~<strong style={{ color: '#e2e8f0', fontFamily: 'monospace' }}>{perBoxGApprox} g</strong>/boîte)
                                                     {companionStr && (

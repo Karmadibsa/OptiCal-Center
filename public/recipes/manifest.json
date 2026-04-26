@@ -32,22 +32,6 @@
     "emoji": "🫘"
   },
   {
-    "file": "plaisir/double_lentil_porn_wrap_boulettes_umami.md",
-    "id": "119512",
-    "name": "Double Lentil Porn-Wrap & Boulettes Umami",
-    "category": "plats|vege",
-    "kcal": "1137",
-    "prot": "78",
-    "lip": "21",
-    "glu": "159",
-    "price": "7.20",
-    "prep_active": "25 min",
-    "prep_inactive": "10 min",
-    "description": "Un wrap sans farine (100% lentilles corail) garni de boulettes de lentilles vertes aux oignons caramélisés et une sauce blanche citronnée.",
-    "tips": "Pour des boulettes qui se tiennent sans œuf, mixez une partie des lentilles vertes en purée et gardez l'autre moitié entière pour la texture.",
-    "emoji": "🌯"
-  },
-  {
     "file": "plaisir/dynamite_shrimp_tacos_salsa_mangue.md",
     "id": "204477",
     "name": "Dynamite Shrimp Tacos & Salsa Mangue",
@@ -1266,7 +1250,7 @@
         "lip_100": 0.5,
         "glu_100": 78,
         "role": "feculent",
-        "cook_group": "riz"
+        "cook_group": "sauce_muja"
       },
       {
         "name": "Oignons (à caraméliser)",
