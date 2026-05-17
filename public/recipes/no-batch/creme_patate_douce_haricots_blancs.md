@@ -21,7 +21,7 @@ emoji: 🥦
 | Ingrédient | Qty Base | Unité | Kcal/100g | Prot | Lip | Glu | Rôle |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | Haricots blancs (égouttés) | 120 | g | 114 | 7 | 0.5 | 19 | Protéine + Glucides |
-| Pâtes complètes (sèches) | 70 | g | 350 | 13 | 2 | 70 | Féculent |
+| Pâtes sèches | 70 | g | 360 | 13 | 1.5 | 72 | Féculent |
 | Patate douce (crue) | 100 | g | 86 | 1.6 | 0.1 | 20 | Légumes |
 | Brocolis (fleurettes) | 150 | g | 34 | 2.82 | 0.37 | 6.64 | Légumes |
 | Huile d'olive | 10 | g | 884 | 0 | 100 | 0 | Lipides |
@@ -31,7 +31,7 @@ emoji: 🥦
 
 ### Prix des ingrédients
 - Haricots blancs (égouttés) : 0.55€
-- Pâtes complètes (sèches) : 0.45€
+- Pâtes sèches : 0.45€
 - Patate douce (crue) : 0.30€
 - Brocolis (fleurettes) : 0.80€
 - Huile d'olive : 0.15€

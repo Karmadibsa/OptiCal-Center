@@ -339,59 +339,64 @@ const ExternalMeal = ({ profiles }) => {
     };
 
     const generateRecipePrompt = () => {
-        const mealLabel = meal === 'midi' ? 'MIDI' : 'SOIR';
         const ba = budgetAxel.total;
         const bp = budgetPrisca.total;
         const totalKcal = Math.round(ba.kcal + bp.kcal);
-        
-        return `Agis en tant que nutritionniste et chef culinaire spécialisé dans les macros (diète sportive et rééquilibrage). 
-Je souhaite créer une bibliothèque de recettes saines, savoureuses (un peu "porn food" mais healthy) pour les ajouter directement sur mon site web.
 
-Je cherche 3 idées de recettes pour le ${mealLabel}.
+        return `Agis en tant que nutritionniste et chef culinaire spécialisé dans les macros (diète sportive et rééquilibrage).
+Je souhaite créer une bibliothèque de recettes batch cooking saines, savoureuses (un peu "porn food" mais healthy) pour les ajouter sur mon site web.
+
+Je cherche 3 nouvelles idées de recettes batch cooking végétariennes.
 
 ### CONTEXTE ET OBJECTIF GLOBAL
 L'application calculera dynamiquement les quantités pour Axel (qui a gros appétit) et Prisca (petit appétit).
-Tu dois donc imaginer **UN SEUL PLAT GLOBAL** dont le but calorique cumulé (la poêle pleine) approche les **${totalKcal} kcal au total** (soit environ ${ba.kcal}kcal pour Axel + ${bp.kcal}kcal pour Prisca).
-- Ratio du plat attendu : Riche en protéines (viande, tofu, poisson), lipides contrôlés, féculents sains.
+Tu dois imaginer **UN SEUL PLAT BASE** (portion individuelle de référence) dont le calorique cible est environ **${Math.round(ba.kcal)} kcal**.
+- Riche en protéines végétales (légumineuses, tofu, tempeh), lipides contrôlés, féculents sains.
+- Total pour les deux : ~${totalKcal} kcal (Axel ${ba.kcal} kcal + Prisca ${bp.kcal} kcal).
 
-### CONTRAINTES DE LA RECETTE
-1. Simple et sans prise de tête (max 30 min de préparation active).
-2. Invoquer de bonnes sources de protéines maigres, et ne pas exploser le compteur de lipides.
-3. Données réalistes : inclure une estimation du coût global et du temps.
+### CONTRAINTES DE LA RECETTE BATCH
+1. Simple et sans prise de tête (max 20 min de préparation active, cuisson passive ensuite).
+2. Se conserve 4-5 jours au frigo, réchauffable facilement.
+3. Sources de protéines végétales maigres : lentilles, pois chiches, haricots, tofu, edamame, etc.
+4. Coût raisonnable : moins de 3€ par portion.
 
 ### FORMAT DE SORTIE ATTENDU
-Pour chaque recette, tu dois me livrer le code EXHAUSTIF au format "Markdown avec Frontmatter YAML", copiable directement.
-Utilise ce template strict avec le Frontmatter suivant :
+Pour chaque recette, livre le code EXHAUSTIF au format Markdown avec Frontmatter YAML, copiable directement dans un fichier .md.
 
 ---
-id: [un nombre aléatoire entre 200 et 900]
-name: [Nom sexy de la recette]
-category: plats|viande (ou plats|vege, plats|poisson)
-kcal: [kcal total de la base de la recette] 
-prot: [prot total]
-lip: [lip total]
-glu: [glu total]
-price: [prix total estimé de la base de la recette, ex: 8.50]
-prep_active: [temps actif aux fourneaux, ex: 15 min]
-prep_inactive: [temps de repos/cuisson seul, ex: 20 min (laisser vide si <5m)]
-description: [Courte description donnant envie]
-tips: [Une petite astuce de cuisson ou de conservation]
+id: [un nombre à 6 chiffres unique, entre 600014 et 699999]
+name: [Nom appétissant de la recette]
+category: plats|vege
+scalable: true
+has_pst: false
+cook_coef: [coefficient entre 1.5 et 2.5 selon la richesse]
+kcal: [kcal total de la portion base]
+prot: [prot en g]
+lip: [lip en g]
+glu: [glu en g]
+price: [prix de la portion base en euros, ex: 2.40]
+prep_active: [ex: 15 min]
+prep_inactive: [ex: 30 min]
+description: [1-2 phrases courtes, ton simple et appétissant]
+tips: [1-2 conseils pratiques de chef ou de conservation]
 emoji: [Un emoji représentant le plat]
 ---
 
-### 📊 Matrice des Ingrédients (Obligatoire, respecte ce format de tableau !)
-*(Ajoute les macros pour chaque ligne pour LA PORTION BASE que tu as définie)*
-| Ingrédient | Qty Base | Unité | Kcal | Prot | Lip | Glu | Divisible | Vol. Cuit | Prix estimé (€) |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Poulet | 200 | g | 220 | 44 | 4 | 0 | oui | non | 2.50 |
-| Riz cru | 100 | g | 350 | 8 | 1 | 78 | oui | oui | 0.35 |
-| Galette Blé | 2 | u | 160 | 10 | 4 | 20 | non (0.5 minimum) | non | 0.80 |
+### 📊 Matrice des Ingrédients
+| Ingrédient | Qty Base | Unité | Kcal/100g | Prot | Lip | Glu | Rôle |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Lentilles corail (sèches) | 70 | g | 340 | 24 | 1 | 55 | Protéine + Glucides |
+| Patate douce (crue) | 200 | g | 86 | 1.6 | 0.1 | 20 | Légumes |
+
+### Prix des ingrédients
+- [Ingrédient 1] : [prix]€
+- [Ingrédient 2] : [prix]€
 
 ### Protocole
 1. **Étape 1** — ...
 2. **Étape 2** — ...
 3. **Étape 3** — ...`;
-    };
+    }
 
     const handleCopyRestaurant = () => {
         navigator.clipboard.writeText(generateRestaurantPrompt()).then(() => {
