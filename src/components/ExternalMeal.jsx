@@ -292,8 +292,23 @@ const EXAMPLES_MIDI = [
 
 // ─── Composant principal ──────────────────────────────────────────────────────
 const ExternalMeal = ({ profiles }) => {
-    const [meal,   setMeal]   = React.useState('soir');
-    const [copied, setCopied] = React.useState(null);
+    const [meal,         setMeal]        = React.useState('soir');
+    const [copied,       setCopied]      = React.useState(null);
+    const [batchRecipes, setBatchRecipes] = React.useState([]);
+
+    // ── Chargement des noms de recettes batch existantes ─────────────────────
+    React.useEffect(() => {
+        const base = import.meta.env.BASE_URL || '/';
+        fetch(`${base}recipes/manifest.json`)
+            .then(r => r.json())
+            .then(data => {
+                const names = data
+                    .filter(r => r.scalable === true || r.scalable === 'true')
+                    .map(r => r.name);
+                setBatchRecipes(names);
+            })
+            .catch(() => {});
+    }, []);
 
     const budgetFn = meal === 'soir' ? calcEveningBudget : calcLunchBudget;
 
@@ -354,14 +369,15 @@ Tu dois imaginer **UN SEUL PLAT BASE** (portion individuelle de référence) don
 - Riche en protéines végétales (légumineuses, tofu, tempeh), lipides contrôlés, féculents sains.
 - Total pour les deux : ~${totalKcal} kcal (Axel ${ba.kcal} kcal + Prisca ${bp.kcal} kcal).
 
-### CONTRAINTES DE LA RECETTE BATCH
+${batchRecipes.length > 0 ? `### RECETTES DÉJÀ EXISTANTES (ne pas reproduire)\n` + batchRecipes.map(n => `- ${n}`).join('\n') + `\n\n` : ''}### CONTRAINTES DE LA RECETTE BATCH
 1. Simple et sans prise de tête (max 20 min de préparation active, cuisson passive ensuite).
 2. Se conserve 4-5 jours au frigo, réchauffable facilement.
-3. Sources de protéines végétales maigres : lentilles, pois chiches, haricots, tofu, edamame, etc.
+3. Sources de protéines végétales maigres faciles à trouver : lentilles, pois chiches, haricots (rouges, noirs, blancs), edamame surgelé, **protéines de soja texturées (PST)**. **Pas de tofu, tempeh ou produits spécialisés difficiles à trouver** — uniquement des ingrédients disponibles dans un supermarché classique (Carrefour, Leclerc, Lidl).
 4. Coût raisonnable : moins de 3€ par portion.
+5. Équipement disponible : four classique, plaques de cuisson, mixeur plongeant, et **air fryer** — n'hésitez pas à proposer des cuissons air fryer quand c'est pertinent (légumes rôtis, cubes croustillants, gratins express).
 
 ### FORMAT DE SORTIE ATTENDU
-Pour chaque recette, livre le code EXHAUSTIF au format Markdown avec Frontmatter YAML, copiable directement dans un fichier .md.
+Pour chaque recette, commence par indiquer le **nom du fichier** à créer (en snake_case, sans accents, ex: \`curry_pois_chiches_epinards.md\`), puis livre le code EXHAUSTIF au format Markdown avec Frontmatter YAML, copiable directement dans ce fichier .md.
 
 ---
 id: [un nombre à 6 chiffres unique, entre 600014 et 699999]
