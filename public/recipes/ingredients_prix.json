@@ -428,18 +428,6 @@
     "magasin": "Carrefour"
   },
   {
-    "name": "Passata de tomate",
-    "a_verifier": true,
-    "aliases": [
-      "passata",
-      "passata tomate"
-    ],
-    "buy_unit": "kg",
-    "price_per_unit": 1.60,
-    "achat": "Brique/bouteille 500g · ~0.80€",
-    "magasin": "Carrefour"
-  },
-  {
     "name": "Crème liquide légère 12%",
     "a_verifier": true,
     "aliases": [

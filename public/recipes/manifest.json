@@ -16,19 +16,19 @@
     "emoji": "🌮"
   },
   {
-    "file": "plaisir/black_bean_smash_burger_feta.md",
+    "file": "plaisir/red_bean_smash_burger_feta.md",
     "id": "112094",
-    "name": "Black Bean Smash Burger & Feta",
+    "name": "Red Bean Smash Burger & Feta",
     "category": "plats|vege",
-    "kcal": "1137",
-    "prot": "58",
+    "kcal": "1285",
+    "prot": "66",
     "lip": "28",
-    "glu": "163",
+    "glu": "189",
     "price": "8.10",
     "prep_active": "20 min",
     "prep_inactive": "5 min",
-    "description": "Un steak végétal \"maison\" à base de haricots noirs, smashé à la poêle pour obtenir des bords croustillants, marié à la fraîcheur de la feta.",
-    "tips": "Séchez bien les haricots noirs après les avoir rincés pour éviter que le steak ne soit trop mou.",
+    "description": "Un steak végétal \"maison\" à base de haricots rouges, smashé à la poêle pour obtenir des bords croustillants, marié à la fraîcheur de la feta.",
+    "tips": "Séchez bien les haricots rouges après les avoir rincés pour éviter que le steak ne soit trop mou.",
     "emoji": "🫘"
   },
   {
@@ -434,18 +434,18 @@
         "is_pst": false
       },
       {
-        "name": "Lentilles brunes ou vertes (conserve égouttées)",
-        "qty_g": 170,
-        "kcal_100": 115,
-        "prot_100": 8.8,
-        "lip_100": 0.6,
-        "glu_100": 15.5,
+        "name": "Lentilles vertes (sèches)",
+        "qty_g": 60,
+        "kcal_100": 340,
+        "prot_100": 26,
+        "lip_100": 1,
+        "glu_100": 52,
         "role": "protein_glu",
-        "cook_group": "sauce_butter_lentils",
+        "cook_group": "sauce_butter",
         "is_pst": false
       },
       {
-        "name": "Passata de tomate",
+        "name": "Coulis de tomate",
         "qty_g": 120,
         "kcal_100": 32,
         "prot_100": 1.5,
@@ -930,7 +930,7 @@
     "price": "1.90",
     "prep_active": "15 min",
     "prep_inactive": "20 min",
-    "description": "Tout le plaisir d'un burrito mexicain réuni dans un gratin de riz épicé, haricots noirs, maïs doux et mozzarella filante. Un plat complet et ultra-rassasiant qui tient parfaitement toute la semaine.",
+    "description": "Tout le plaisir d'un burrito mexicain réuni dans un gratin de riz épicé, haricots rouges, maïs doux et mozzarella filante. Un plat complet et ultra-rassasiant qui tient parfaitement toute la semaine.",
     "tips": "Ce plat se conserve à merveille 4 à 5 jours. Au moment de servir, ajoutez un filet de jus de citron vert frais et quelques feuilles de coriandre pour réveiller les saveurs !",
     "emoji": "🇲🇽",
     "ingredients": [
@@ -946,12 +946,12 @@
         "is_pst": false
       },
       {
-        "name": "Haricots noirs (conserve égouttés)",
+        "name": "Haricots rouges (égouttés)",
         "qty_g": 150,
-        "kcal_100": 93,
-        "prot_100": 6,
-        "lip_100": 0.6,
-        "glu_100": 14.6,
+        "kcal_100": 128,
+        "prot_100": 8.0,
+        "lip_100": 0.5,
+        "glu_100": 22.0,
         "role": "protein_glu",
         "cook_group": "sauce_el_paso",
         "is_pst": false
@@ -968,7 +968,7 @@
         "is_pst": false
       },
       {
-        "name": "Passata de tomate",
+        "name": "Coulis de tomate",
         "qty_g": 100,
         "kcal_100": 32,
         "prot_100": 1.5,
@@ -1447,7 +1447,7 @@
         "prot_100": 25,
         "lip_100": 16,
         "glu_100": 2,
-        "role": "protein_glu",
+        "role": "lipide",
         "cook_group": "sauce_pasta_bake",
         "is_pst": false
       },

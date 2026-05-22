@@ -23,7 +23,7 @@ emoji: 🍔
 | Pâtes complètes (sèches) | 100 | g | 350 | 12.5 | 2.0 | 65.0 | Féculent de base rassasiant |
 | PST (sèches) | 45 | g | 348 | 50.0 | 1.0 | 30.0 | Protéine végétale aspect "viande hachée" |
 | Coulis de tomate | 150 | g | 32 | 1.5 | 0.2 | 5.0 | Base de sauce burger juteuse |
-| Cheddar râpé allégé | 35 | g | 260 | 25.0 | 16.0 | 2.0 | Gourmandise et liant protéiné |
+| Cheddar râpé allégé | 35 | g | 260 | 25.0 | 16.0 | 2.0 | Lipide |
 | Huile d'olive | 8 | g | 900 | 0.0 | 100.0 | 0.0 | Cuisson et saveur |
 | Lait demi-écrémé | 100 | g | 47 | 3.3 | 1.6 | 4.8 | Base de la sauce fromagère légère |
 | Maïzena | 10 | g | 350 | 0.5 | 0.1 | 86.0 | Épaississant pour béchamel light |
