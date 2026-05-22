@@ -397,11 +397,8 @@ export const scaleRecipeForMeal = (key, profiles, recipe, meal = 'midi') => {
     const meal_ratio       = meal === 'midi' ? 0.55 : 0.45;
     const meal_prot_needed = (plan.prot_goal - plan.fixed_prot_socle) * meal_ratio;
 
-    // Soir + has_pst : exclure les ingrédients PST (protéines couvertes par les œufs du socle)
-    const hasPstSwap      = meal === 'soir' && (recipe.has_pst === true || recipe.has_pst === 'true');
-    const activeIngredients = hasPstSwap
-        ? recipe.ingredients.filter(ing => !ing.is_pst)
-        : recipe.ingredients;
+    const hasPstSwap      = false;
+    const activeIngredients = recipe.ingredients;
 
     if (activeIngredients.length === 0) return null;
 

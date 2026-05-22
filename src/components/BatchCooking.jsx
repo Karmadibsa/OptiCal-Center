@@ -170,14 +170,6 @@ const BatchCooking = ({ profiles }) => {
         DAYS.forEach(d => MEALS.forEach(m => { if (!isSlotDisabled(d, m) && weekPlan[d]?.[m]) n++; }));
         return n;
     };
-    const countSoirPstDays = () => {
-        let n = 0;
-        DAYS.forEach(d => {
-            const id = weekPlan[d]?.soir;
-            if (id) { const r = recipes.find(r => r.id === id); if (r?.has_pst) n++; }
-        });
-        return n;
-    };
     const getDaysForRecipeMeal = (recipeId, meal) =>
         DAYS.filter(day => weekPlan[day]?.[meal] === recipeId);
 
@@ -199,7 +191,6 @@ const BatchCooking = ({ profiles }) => {
 
         // agg[normalizedName] = { display_name, total_g, role, unit, g_per_pc }
         const agg = {};
-        let hasPstSoir = false;
 
         DAYS.forEach(day => {
             const plan = weekPlan[day] || {};
@@ -209,7 +200,6 @@ const BatchCooking = ({ profiles }) => {
                 if (!recipeId) return;
                 const recipe = recipes.find(r => r.id === recipeId);
                 if (!recipe) return;
-                if (meal === 'soir' && (recipe.has_pst === true || recipe.has_pst === 'true')) hasPstSoir = true;
                 ['axel', 'prisca'].forEach(person => {
                     const scaled = getScaled(recipeId, person, meal);
                     if (!scaled) return;
@@ -244,7 +234,6 @@ const BatchCooking = ({ profiles }) => {
             sections: GROUP_ORDER
                 .filter(g => groups[g])
                 .map(g => ({ group: g, ...GROUP_META[g], items: groups[g] })),
-            hasPstSoir,
         };
     };
 
@@ -396,7 +385,7 @@ const BatchCooking = ({ profiles }) => {
 
     // ── Copie liste de courses (clipboard) ───────────────────────────────────
     const copyShoppingList = () => {
-        const { sections, hasPstSoir } = buildShoppingList();
+        const { sections } = buildShoppingList();
         const assignedSlots = countAssignedSlots();
         const lines = [`🛒 LISTE DE COURSES — Batch Cooking`, `${assignedSlots} repas × 2 personnes`, ''];
         sections.forEach(sec => {
@@ -406,12 +395,6 @@ const BatchCooking = ({ profiles }) => {
             unchecked.forEach(i => lines.push(`  • ${i.name} : ${i.display}`));
             lines.push('');
         });
-        if (hasPstSoir) {
-            const soirDays   = countSoirPstDays();
-            const axelEggs   = calculatePlan('axel',   profiles).oeuf_qty_per_meal * soirDays;
-            const priscaEggs = calculatePlan('prisca', profiles).oeuf_qty_per_meal * soirDays;
-            lines.push(`🥚 Œufs (le soir, hors batch) : Axel ${axelEggs} / Prisca ${priscaEggs} sur ${soirDays} soir${soirDays > 1 ? 's' : ''}`);
-        }
         navigator.clipboard.writeText(lines.join('\n')).then(() => {
             setCopied(true);
             setTimeout(() => setCopied(false), 2500);
@@ -558,7 +541,7 @@ const BatchCooking = ({ profiles }) => {
     );
 
     const assignedSlots  = countAssignedSlots();
-    const { sections: shoppingItems, hasPstSoir } = buildShoppingList();
+    const { sections: shoppingItems } = buildShoppingList();
     const cuissonData    = buildCuissonData();
     const cookGroupData  = buildCookGroupData();
 
@@ -676,11 +659,6 @@ const BatchCooking = ({ profiles }) => {
                                     <span style={{ color: '#fb923c' }}>{recipe.lip}g L</span>
                                     <span style={{ color: '#a78bfa' }}>{recipe.glu}g G</span>
                                 </div>
-                                {recipe.has_pst && (
-                                    <div style={{ marginTop: '0.3rem', fontSize: '0.72rem', color: '#fbbf24' }}>
-                                        PST au <strong>MIDI</strong> · Œufs au <strong>SOIR</strong>
-                                    </div>
-                                )}
                                 {/* Bouton voir la recette */}
                                 <button
                                     onClick={e => { e.stopPropagation(); setPreviewRecipe(recipe); }}
@@ -754,9 +732,6 @@ const BatchCooking = ({ profiles }) => {
                                                 {recipe && scaled_a && (
                                                     <div style={S.dayMacros}>
                                                         <span style={{ color: '#38bdf8' }}>Axel {scaled_a.total_kcal} kcal · {scaled_a.total_prot}g P</span>
-                                                        {meal === 'soir' && recipe.has_pst && (
-                                                            <span style={{ color: '#fbbf24', fontSize: '0.7rem' }}>+ {calculatePlan('axel', profiles).oeuf_qty_per_meal} œufs</span>
-                                                        )}
                                                         {scaled_p && <span style={{ color: '#a78bfa' }}>Prisca {scaled_p.total_kcal} kcal · {scaled_p.total_prot}g P</span>}
                                                     </div>
                                                 )}
@@ -884,18 +859,6 @@ const BatchCooking = ({ profiles }) => {
                                     </div>
                                 ))}
                             </div>
-
-                            {hasPstSoir && (() => {
-                                const soirDays   = countSoirPstDays();
-                                const axelEggs   = calculatePlan('axel',   profiles).oeuf_qty_per_meal * soirDays;
-                                const priscaEggs = calculatePlan('prisca', profiles).oeuf_qty_per_meal * soirDays;
-                                return (
-                                    <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', background: 'rgba(251,191,36,0.08)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', fontSize: '0.85rem', color: '#fbbf24' }}>
-                                        🥚 <strong>Œufs au plat le soir</strong> (hors batch, cuisinés le soir-même) —
-                                        Axel : {axelEggs} œufs · Prisca : {priscaEggs} œufs sur {soirDays} soir{soirDays > 1 ? 's' : ''}
-                                    </div>
-                                );
-                            })()}
 
                             {/* ── Estimation prix semaine (base de données ingredients_prix.json) ── */}
                             {(() => {
@@ -1265,7 +1228,6 @@ const BatchCooking = ({ profiles }) => {
                                                 {rmList.map(({ recipe, meal, count, persons }) => {
                                                     const axelG   = Math.round((persons.axel   || 0) * effectCoef);
                                                     const priscaG = Math.round((persons.prisca || 0) * effectCoef);
-                                                    const isSoirPst = meal === 'soir' && (recipe.has_pst === true || recipe.has_pst === 'true');
                                                     return (
                                                         <div key={`${recipe.id}_${meal}`} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.4rem', alignItems: 'center', background: 'rgba(0,0,0,0.12)', borderRadius: '6px', padding: '0.4rem 0.45rem' }}>
                                                             <div style={{ fontSize: '0.74rem', color: '#94a3b8', lineHeight: 1.3 }}>
@@ -1277,12 +1239,10 @@ const BatchCooking = ({ profiles }) => {
                                                             <div style={{ textAlign: 'center' }}>
                                                                 <div style={{ fontFamily: 'monospace', fontWeight: 900, color: '#38bdf8', fontSize: '1.05rem', lineHeight: 1 }}>{axelG}g</div>
                                                                 <div style={{ fontSize: '0.62rem', color: '#334155' }}>×{count} = {axelG * count}g</div>
-                                                                {isSoirPst && <div style={{ fontSize: '0.6rem', color: '#fbbf24' }}>🥚 +{calculatePlan('axel', profiles).oeuf_qty_per_meal}</div>}
                                                             </div>
                                                             <div style={{ textAlign: 'center' }}>
                                                                 <div style={{ fontFamily: 'monospace', fontWeight: 900, color: '#a78bfa', fontSize: '1.05rem', lineHeight: 1 }}>{priscaG}g</div>
                                                                 <div style={{ fontSize: '0.62rem', color: '#334155' }}>×{count} = {priscaG * count}g</div>
-                                                                {isSoirPst && <div style={{ fontSize: '0.6rem', color: '#fbbf24' }}>🥚 +{calculatePlan('prisca', profiles).oeuf_qty_per_meal}</div>}
                                                             </div>
                                                         </div>
                                                     );
@@ -1356,13 +1316,6 @@ const BatchCooking = ({ profiles }) => {
                                     </p>
                                 )}
                             </div>
-
-                            {/* Note PST */}
-                            {(previewRecipe.has_pst === true || previewRecipe.has_pst === 'true') && (
-                                <div style={{ fontSize: '0.8rem', color: '#fbbf24', background: 'rgba(251,191,36,0.07)', border: '1px solid rgba(251,191,36,0.2)', borderRadius: '8px', padding: '0.6rem 0.85rem' }}>
-                                    ★ PST incluses au <strong>MIDI</strong> uniquement · Au <strong>SOIR</strong> : remplacées par les œufs au plat (socle)
-                                </div>
-                            )}
 
                             {/* Tableau ingrédients */}
                             {Array.isArray(previewRecipe.ingredients) && previewRecipe.ingredients.length > 0 && (
