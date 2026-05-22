@@ -5,6 +5,12 @@
  * Fusionne les données du frontmatter .md avec les champs JSON-only
  * du manifest existant (notamment l'array `ingredients` des recettes batch).
  *
+ * Auto-parsing ingrédients : si une recette batch (scalable: true) n'a pas
+ * encore d'ingrédients dans le manifest, le script lit la table
+ * "### 📊 Matrice des Ingrédients" du fichier .md et génère l'array automatiquement.
+ * Les ingrédients déjà présents dans le manifest sont TOUJOURS préservés
+ * (les saisies manuelles ont priorité sur l'auto-parse).
+ *
  * Ordre de sortie : plaisir → racine → batch
  */
 
@@ -32,7 +38,7 @@ function generateSlug(str) {
     return str
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[̀-ͯ]/g, '')
         .replace(/[^a-z0-9]+/g, '_')
         .replace(/(^_|_$)/g, '');
 }
@@ -71,6 +77,133 @@ function parseFrontmatter(content) {
     return data;
 }
 
+// ─── Auto-parse ingrédients depuis la table Markdown ─────────────────────────
+
+/**
+ * Normalise un texte pour la comparaison : minuscules, sans accents.
+ */
+function norm(s) {
+    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+}
+
+/**
+ * Mappe le texte de rôle d'un ingrédient vers l'enum interne.
+ * Utilise le texte de la colonne "Rôle" ET le nom de l'ingrédient comme fallback.
+ */
+function mapRole(roleText, ingName) {
+    const rt = norm(roleText);
+    const nm = norm(ingName);
+
+    // Féculent — toujours prioritaire
+    if (rt.includes('feculent') || rt.includes('glucidique') || rt.includes('glucides'))
+        return 'feculent';
+
+    // Protéine végétale (avec glucides associés)
+    if (rt.includes('proteine') || rt.includes('protein') ||
+        /\bpst\b/.test(nm) || nm.includes('edamame') ||
+        nm.includes('lentille') || nm.includes('pois chiche') || nm.includes('haricot'))
+        return 'protein_glu';
+
+    // Lipides (matières grasses, produits laitiers gras, fromages)
+    if (rt.includes('lipide') || rt.includes('corps gras') || rt.includes('onctu') ||
+        rt.includes('porn food') || rt.includes('topping fondant') || rt.includes('gourmand') ||
+        nm.includes('huile') || nm.includes('beurre') || nm.includes('creme') ||
+        nm.includes('cheddar') || nm.includes('parmesan') || nm.includes('mozzarella') ||
+        nm.includes('grana') || nm.includes('fromage') || nm.includes('lait'))
+        return 'lipide';
+
+    // Légumes & sauces à base de légumes
+    if (rt.includes('legume') || rt.includes('legumineuse') || rt.includes('fraicheur') ||
+        rt.includes('touche sucree') || rt.includes('corps de la sauce') ||
+        nm.includes('tomate') || nm.includes('carotte') || nm.includes('courgette') ||
+        nm.includes('mais') || nm.includes('courge') || nm.includes('butternut') ||
+        nm.includes('potimarron') || nm.includes('cerise') || nm.includes('patate douce'))
+        return 'legume';
+
+    return 'aromatique';
+}
+
+/**
+ * Parse la table "📊 Matrice des Ingrédients" d'un fichier .md batch.
+ * Retourne un array d'objets ingrédients compatible manifest.json.
+ * Retourne [] si la table est absente ou mal formée.
+ *
+ * Format attendu :
+ * | Ingrédient | Qty Base | Unité | Kcal/100g | Prot | Lip | Glu | Rôle |
+ */
+function parseIngredientTable(content, recipeName) {
+    if (!content) return [];
+
+    const lines = content.split('\n');
+
+    // Trouver l'en-tête : ligne contenant "Qty Base" et "Kcal"
+    let headerIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].includes('Qty Base') && lines[i].includes('Kcal')) {
+            headerIdx = i;
+            break;
+        }
+    }
+    if (headerIdx === -1) return [];
+
+    // Groupe sauce dérivé des 2 premiers mots du nom de la recette
+    const slug       = generateSlug(recipeName || '');
+    const sauceGroup = 'sauce_' + slug.split('_').slice(0, 2).join('_');
+
+    const ingredients = [];
+
+    for (let i = headerIdx + 1; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line.startsWith('|')) break;               // Fin de table
+        if (/^\|[\s|:\-]+\|$/.test(line)) continue;    // Ligne séparateur ---
+
+        // Découper par | (ignorer les cellules vides de début/fin)
+        const cells = line.split('|')
+            .map(c => c.trim())
+            .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+
+        if (cells.length < 7) continue;
+
+        const [rawName, qtyStr, , kcalStr, protStr, lipStr, gluStr, roleText] = cells;
+        const name  = rawName.trim();
+        const qty_g = parseFloat(qtyStr) || 0;
+        if (!name || qty_g === 0) continue;
+
+        const kcal_100 = parseFloat(kcalStr) || 0;
+        const prot_100 = parseFloat(protStr) || 0;
+        const lip_100  = parseFloat(lipStr)  || 0;
+        const glu_100  = parseFloat(gluStr)  || 0;
+
+        const role   = mapRole(roleText || '', name);
+        const is_pst = /\bpst\b/i.test(name);
+
+        // ── Cook group ────────────────────────────────────────────────────────
+        let cook_group;
+        if (role === 'feculent') {
+            const nl = norm(name);
+            if (nl.includes('riz') || nl.includes('basmati'))             cook_group = 'riz';
+            else if (nl.includes('pate') || nl.includes('pasta') ||
+                     nl.includes('coquillette') || nl.includes('penne'))  cook_group = 'pates';
+            else if (nl.includes('ebly') || nl.includes('ble precuit'))   cook_group = 'ebly';
+            else if (nl.includes('gnocchi'))                               cook_group = 'gnocchis';
+            else                                                           cook_group = sauceGroup;
+        } else {
+            cook_group = sauceGroup;
+        }
+
+        // fixed_qty : épices/aromates en petite quantité (≤ 10g) — non scalés
+        const fixed_qty = (role === 'aromatique' && qty_g <= 10);
+
+        const ing = { name, qty_g, kcal_100, prot_100, lip_100, glu_100, role, cook_group, is_pst };
+        if (fixed_qty) ing.fixed_qty = true;
+        ingredients.push(ing);
+    }
+
+    return ingredients;
+}
+
+// ─── Construire une entrée manifest ──────────────────────────────────────────
+
 /**
  * Convertit les valeurs string du frontmatter en types corrects pour le manifest.
  * Préserve les champs JSON-only de l'entrée existante (ingredients, etc.).
@@ -107,8 +240,8 @@ function buildEntry(filePath, frontmatter, existingEntry) {
     });
 
     // ── Champs JSON-only (pas dans le .md) : préserver depuis l'existant ─────
-    // ingredients : array complet des ingrédients batch (cook_group, role, qty_g, macros…)
-    if (existingEntry?.ingredients) {
+    // ingredients : toujours préservé depuis le manifest (saisie manuelle ou auto-parse précédent)
+    if (existingEntry?.ingredients && existingEntry.ingredients.length > 0) {
         entry.ingredients = existingEntry.ingredients;
     }
 
@@ -137,8 +270,10 @@ function generateManifest() {
     existing.forEach(e => { if (e.file) existingByFile[e.file] = e; });
 
     const manifest = [];
-    let total = 0;
-    let skipped = 0;
+    let total         = 0;
+    let skipped       = 0;
+    let autoParsed    = 0;
+    const missingIngs = [];   // recettes scalables sans ingrédients après tentative
 
     for (const { subdir, prefix } of SCAN_FOLDERS) {
         const folderPath = subdir
@@ -151,7 +286,6 @@ function generateManifest() {
         const files = fs.readdirSync(folderPath)
             .filter(f => {
                 if (!f.endsWith('.md') || f.startsWith('_')) return false;
-                // Pour la racine : exclure les dossiers qui se terminent en .md (peu probable mais sûr)
                 const stat = fs.statSync(path.join(folderPath, f));
                 return stat.isFile();
             })
@@ -163,7 +297,7 @@ function generateManifest() {
 
         for (const file of files) {
             const absPath  = path.join(folderPath, file);
-            const relPath  = prefix + file;   // ex: "batch/bolognaise_lentilles.md"
+            const relPath  = prefix + file;
             const content  = fs.readFileSync(absPath, 'utf-8');
             const fm       = parseFrontmatter(content);
 
@@ -179,13 +313,28 @@ function generateManifest() {
             }
 
             const existingEntry = existingByFile[relPath];
-            const entry = buildEntry(relPath, fm, existingEntry);
+            const entry         = buildEntry(relPath, fm, existingEntry);
+
+            // ── Auto-parse ingrédients si manquants ──────────────────────────
+            // Ne s'applique qu'aux recettes batch scalables sans ingrédients existants.
+            const isScalable = entry.scalable === true || entry.scalable === 'true';
+            if (isScalable && (!entry.ingredients || entry.ingredients.length === 0)) {
+                const autoIng = parseIngredientTable(content, fm.name || '');
+                if (autoIng.length > 0) {
+                    entry.ingredients = autoIng;
+                    autoParsed++;
+                    console.log(`  ✓ ${entry.id}  ${entry.name}  📊 ${autoIng.length} ingrédients auto-parsés`);
+                } else {
+                    missingIngs.push(entry.name);
+                    console.log(`  ✓ ${entry.id}  ${entry.name}  ⚠️  table ingrédients introuvable`);
+                }
+            } else {
+                const isNew = !existingEntry ? ' [NEW]' : '';
+                console.log(`  ✓ ${entry.id}  ${entry.name}${isNew}`);
+            }
 
             manifest.push(entry);
             total++;
-
-            const isNew = !existingEntry ? ' [NEW]' : '';
-            console.log(`  ✓ ${entry.id}  ${entry.name}${isNew}`);
         }
     }
 
@@ -196,6 +345,14 @@ function generateManifest() {
     console.log(`   ${total} recette(s) générée(s)${skipped ? ` · ${skipped} ignorée(s)` : ''}`);
     console.log(`   Batch   : ${manifest.filter(r => r.scalable === true).length}`);
     console.log(`   Plaisir : ${manifest.filter(r => !r.scalable && r.category?.startsWith('plats')).length}`);
+    if (autoParsed > 0) {
+        console.log(`   📊 ${autoParsed} recette(s) avec ingrédients auto-parsés depuis le .md`);
+    }
+    if (missingIngs.length > 0) {
+        console.log(`\n⚠️  Table ingrédients manquante pour :`);
+        missingIngs.forEach(n => console.log(`   • ${n}`));
+        console.log(`   → Ajoutez "### 📊 Matrice des Ingrédients" dans le fichier .md`);
+    }
     console.log('─'.repeat(50));
 }
 

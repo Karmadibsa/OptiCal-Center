@@ -5,7 +5,9 @@
       "Bash(node -e ' *)",
       "Bash(npm run *)",
       "Bash(del curry_lentilles_corail.md poulet_saute_riz_basmati.md bowl_quinoa_crevettes.md pois_chiches_epinards_tomates.md)",
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(node --input-type=module)",
+      "Bash(node scripts/generate_recipes.js)"
     ]
   }
 }

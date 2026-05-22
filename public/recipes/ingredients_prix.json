@@ -413,5 +413,207 @@
     "price_per_unit": 12.50,
     "achat": "Estimation uniforme toutes épices · ~0.10€ pour 8g",
     "magasin": ""
+  },
+  {
+    "name": "Lentilles brunes ou vertes (conserve égouttées)",
+    "a_verifier": true,
+    "aliases": [
+      "lentilles brunes",
+      "lentilles en conserve",
+      "lentilles egoutees"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.36,
+    "achat": "Boîte 400g · ~1.09€ → ~250g égouttés",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Passata de tomate",
+    "a_verifier": true,
+    "aliases": [
+      "passata",
+      "passata tomate"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.60,
+    "achat": "Brique/bouteille 500g · ~0.80€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Crème liquide légère 12%",
+    "a_verifier": true,
+    "aliases": [
+      "creme liquide",
+      "creme legere",
+      "creme liquide legere"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 2.45,
+    "density": 1.02,
+    "achat": "Brique 20cl · ~0.49€ → 2.45€/L",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Beurre doux classique",
+    "a_verifier": true,
+    "aliases": [
+      "beurre doux",
+      "beurre"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 7.56,
+    "achat": "Plaquette 250g · ~1.89€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Mozzarella râpée",
+    "a_verifier": true,
+    "aliases": [
+      "mozzarella rapee",
+      "mozzarella"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 8.45,
+    "achat": "Sachet 200g · ~1.69€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Gnocchis frais (à poêler)",
+    "a_verifier": true,
+    "aliases": [
+      "gnocchis frais",
+      "gnocchis",
+      "gnocchi"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.38,
+    "achat": "Sachet 500g · ~2.19€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Gnocchis frais (au rayon frais)",
+    "a_verifier": true,
+    "aliases": [
+      "gnocchis rayon frais"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.38,
+    "achat": "Sachet 500g · ~2.19€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Tomates cerise",
+    "a_verifier": true,
+    "aliases": [
+      "tomates cerises",
+      "tomate cerise",
+      "cherry tomato"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 5.00,
+    "achat": "Barquette 250g · ~1.25€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Purée de potimarron ou butternut (cuite)",
+    "a_verifier": true,
+    "aliases": [
+      "puree potimarron",
+      "puree butternut",
+      "potimarron cuit",
+      "butternut cuit",
+      "courge cuite"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3.50,
+    "achat": "Butternut surgelée 1kg · ~3.29€ · estimation purée cuite ~3.50€/kg",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Cheddar râpé",
+    "a_verifier": true,
+    "aliases": [
+      "cheddar rape",
+      "cheddar"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 11.45,
+    "achat": "Sachet 200g · ~2.29€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Cheddar râpé allégé",
+    "a_verifier": true,
+    "aliases": [
+      "cheddar rape allege",
+      "cheddar allege"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 11.50,
+    "achat": "Sachet 200g · ~2.30€ (allégé)",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Lait demi-écrémé",
+    "a_verifier": true,
+    "aliases": [
+      "lait demi ecreme",
+      "lait"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 0.99,
+    "density": 1.03,
+    "achat": "Brique 1L · ~0.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Maïzena",
+    "a_verifier": true,
+    "aliases": [
+      "maizena",
+      "fecule de mais",
+      "fecule"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.73,
+    "achat": "Boîte 400g · ~1.89€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Cornichons (en morceaux)",
+    "a_verifier": true,
+    "aliases": [
+      "cornichons",
+      "cornichon"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.45,
+    "achat": "Bocal 380g · ~1.69€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Edamame (surgelés, écossés)",
+    "a_verifier": true,
+    "aliases": [
+      "edamame",
+      "edamame surgeles"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 5.98,
+    "achat": "Sachet 500g · ~2.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Sauce Barbecue (BBQ)",
+    "a_verifier": true,
+    "aliases": [
+      "sauce bbq",
+      "sauce barbecue",
+      "bbq"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 5.69,
+    "achat": "Bouteille 350g · ~1.99€",
+    "magasin": "Carrefour"
   }
 ]
