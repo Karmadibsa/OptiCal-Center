@@ -212,7 +212,6 @@
   {
     "name": "Sauce soja",
     "aliases": [
-      "soja",
       "tamari",
       "sauce soja"
     ],
@@ -602,6 +601,183 @@
     "buy_unit": "kg",
     "price_per_unit": 5.69,
     "achat": "Bouteille 350g · ~1.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Avocat",
+    "a_verifier": true,
+    "aliases": [
+      "avocat pour la sauce",
+      "avocats",
+      "demi avocat"
+    ],
+    "buy_unit": "pc",
+    "price_per_unit": 0.99,
+    "g_per_unit": 150,
+    "achat": "1 avocat moyen ~0.99€ · ~150g net",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Yaourt de soja nature",
+    "a_verifier": true,
+    "aliases": [
+      "yaourt soja",
+      "yaourt de soja",
+      "soja nature"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.96,
+    "achat": "Pack 4×125g · ~2.48€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Jus de citron vert",
+    "a_verifier": true,
+    "aliases": [
+      "citron vert",
+      "jus citron vert",
+      "jus citron",
+      "citron"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 3.96,
+    "density": 1.03,
+    "achat": "Bouteille jus citron 250ml · ~0.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Pommes de terre (crues)",
+    "a_verifier": true,
+    "aliases": [
+      "pommes de terre",
+      "pomme de terre",
+      "patates",
+      "potato"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.49,
+    "achat": "Filet 2kg · ~2.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Lardons fumés",
+    "a_verifier": true,
+    "aliases": [
+      "lardons",
+      "lardons nature",
+      "allumettes de lardons"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 8.20,
+    "achat": "Barquette 200g · ~1.64€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Yaourt grec 0%",
+    "a_verifier": true,
+    "aliases": [
+      "yaourt grec",
+      "yaourt grec nature",
+      "yaourt grec 0"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 5.56,
+    "achat": "Pot 500g · ~2.78€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Fromage blanc 0%",
+    "a_verifier": true,
+    "aliases": [
+      "fromage blanc",
+      "fromage blanc nature",
+      "fromage blanc 0"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.50,
+    "achat": "Pot 500g · ~1.25€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Mayonnaise classique",
+    "a_verifier": true,
+    "aliases": [
+      "mayonnaise",
+      "mayo"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.60,
+    "achat": "Pot 475g · ~2.19€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Moutarde de Dijon",
+    "a_verifier": true,
+    "aliases": [
+      "moutarde",
+      "moutarde dijon",
+      "moutarde forte"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 6.30,
+    "achat": "Pot 370g · ~2.33€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Thon au naturel (égoutté)",
+    "a_verifier": true,
+    "aliases": [
+      "thon naturel",
+      "thon au naturel",
+      "thon egoutte",
+      "thon entier",
+      "thon"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 10.00,
+    "achat": "Boîte 112g égoutté · ~1.12€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Gruyère (en dés)",
+    "a_verifier": true,
+    "aliases": [
+      "gruyere",
+      "gruyere rape",
+      "comte",
+      "gruyere en des",
+      "gruyere ou comte"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 17.50,
+    "achat": "Bloc 200g · ~3.50€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Concombre",
+    "a_verifier": true,
+    "aliases": [
+      "concombres",
+      "demi concombre"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 1.99,
+    "achat": "1 concombre ~500g · ~0.99€",
+    "magasin": "Carrefour"
+  },
+  {
+    "name": "Vinaigre de cidre",
+    "aliases": [
+      "vinaigre",
+      "vinaigre cidre",
+      "vinaigre vin",
+      "vinaigre de vin",
+      "vinaigre balsamique"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 2.49,
+    "density": 1.01,
+    "achat": "Bouteille 750ml · ~1.89€",
     "magasin": "Carrefour"
   }
 ]
