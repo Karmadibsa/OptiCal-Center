@@ -491,6 +491,104 @@
     ]
   },
   {
+    "file": "batch/chili_blanc_ete_coco.md",
+    "id": "610019",
+    "scalable": true,
+    "has_pst": true,
+    "name": "Chili Blanc d'Été au Maïs Doux & Coco",
+    "category": "plats|vege",
+    "cook_coef": "1.5",
+    "kcal": "760",
+    "prot": "41",
+    "lip": "16",
+    "glu": "110",
+    "price": "2.10",
+    "prep_active": "10 min",
+    "prep_inactive": "15 min",
+    "description": "Une version estivale et crémeuse du chili classique. Pas de tomate ici, mais un bouillon onctueux au lait de coco léger, des haricots blancs fondants et du maïs croquant.",
+    "tips": "Ce chili est le roi absolu du batch cooking. Le lait de coco fige légèrement au froid, mais il redevient une sauce soyeuse en 2 minutes au micro-ondes.",
+    "emoji": "🌽",
+    "ingredients": [
+      {
+        "name": "Riz Basmati (cru)",
+        "qty_g": 80,
+        "kcal_100": 350,
+        "prot_100": 9,
+        "lip_100": 1,
+        "glu_100": 75,
+        "role": "feculent",
+        "cook_group": "riz",
+        "is_pst": false
+      },
+      {
+        "name": "Haricots blancs (conserve)",
+        "qty_g": 150,
+        "kcal_100": 90,
+        "prot_100": 6,
+        "lip_100": 0.5,
+        "glu_100": 13,
+        "role": "protein_glu",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": false
+      },
+      {
+        "name": "PST (émincés/gros)",
+        "qty_g": 40,
+        "kcal_100": 350,
+        "prot_100": 50,
+        "lip_100": 1,
+        "glu_100": 30,
+        "role": "protein_glu",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": true
+      },
+      {
+        "name": "Maïs doux (conserve)",
+        "qty_g": 80,
+        "kcal_100": 80,
+        "prot_100": 3,
+        "lip_100": 1,
+        "glu_100": 15,
+        "role": "legume",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": false
+      },
+      {
+        "name": "Courgette",
+        "qty_g": 150,
+        "kcal_100": 17,
+        "prot_100": 1,
+        "lip_100": 0,
+        "glu_100": 3,
+        "role": "legume",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": false
+      },
+      {
+        "name": "Lait de coco (allégé)",
+        "qty_g": 100,
+        "kcal_100": 70,
+        "prot_100": 1,
+        "lip_100": 7,
+        "glu_100": 2,
+        "role": "lipide",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": false
+      },
+      {
+        "name": "Huile d'olive",
+        "qty_g": 5,
+        "kcal_100": 900,
+        "prot_100": 0,
+        "lip_100": 100,
+        "glu_100": 0,
+        "role": "lipide",
+        "cook_group": "sauce_chili_blanc",
+        "is_pst": false
+      }
+    ]
+  },
+  {
     "file": "batch/chili_sin_carne.md",
     "id": "600003",
     "scalable": true,
@@ -1183,6 +1281,104 @@
         "glu_100": 17.5,
         "role": "legume",
         "cook_group": "sauce_gnocchis_cremeux",
+        "is_pst": false
+      }
+    ]
+  },
+  {
+    "file": "batch/jambalaya_cajun_haricots_pst.md",
+    "id": "610022",
+    "scalable": true,
+    "has_pst": true,
+    "name": "Jambalaya Cajun aux Poivrons & Haricots Rouges",
+    "category": "plats|vege",
+    "cook_coef": "2.2",
+    "kcal": "781",
+    "prot": "45",
+    "lip": "15",
+    "glu": "107",
+    "price": "2.05",
+    "prep_active": "15 min",
+    "prep_inactive": "25 min",
+    "description": "Un concentré de Louisiane dans tes tupperwares. Épicé juste comme il faut, ce ragoût de riz aux poivrons fondants et haricots rouges est une vraie bombe d'énergie.",
+    "tips": "L'avantage du Jambalaya, c'est que le riz cuit dans la sauce. Il garde ainsi un moelleux incroyable même après 4 jours de frigo et un passage au micro-ondes.",
+    "emoji": "🌶️",
+    "ingredients": [
+      {
+        "name": "Riz long grain (cru)",
+        "qty_g": 85,
+        "kcal_100": 350,
+        "prot_100": 8,
+        "lip_100": 1,
+        "glu_100": 75,
+        "role": "feculent",
+        "cook_group": "riz",
+        "is_pst": false
+      },
+      {
+        "name": "Haricots rouges (conserve)",
+        "qty_g": 120,
+        "kcal_100": 110,
+        "prot_100": 8,
+        "lip_100": 0.5,
+        "glu_100": 16,
+        "role": "protein_glu",
+        "cook_group": "sauce_jambalaya_cajun",
+        "is_pst": false
+      },
+      {
+        "name": "PST (petits morceaux)",
+        "qty_g": 40,
+        "kcal_100": 350,
+        "prot_100": 50,
+        "lip_100": 1,
+        "glu_100": 30,
+        "role": "protein_glu",
+        "cook_group": "sauce_jambalaya_cajun",
+        "is_pst": true
+      },
+      {
+        "name": "Poivron (mix rouge/vert)",
+        "qty_g": 150,
+        "kcal_100": 20,
+        "prot_100": 1,
+        "lip_100": 0,
+        "glu_100": 4,
+        "role": "legume",
+        "cook_group": "sauce_jambalaya_cajun",
+        "is_pst": false
+      },
+      {
+        "name": "Tomates concassées (boîte)",
+        "qty_g": 150,
+        "kcal_100": 25,
+        "prot_100": 1,
+        "lip_100": 0,
+        "glu_100": 4,
+        "role": "legume",
+        "cook_group": "sauce_jambalaya_cajun",
+        "is_pst": false
+      },
+      {
+        "name": "Cheddar (râpé)",
+        "qty_g": 25,
+        "kcal_100": 400,
+        "prot_100": 25,
+        "lip_100": 33,
+        "glu_100": 2,
+        "role": "lipide",
+        "cook_group": "sauce_jambalaya_cajun",
+        "is_pst": false
+      },
+      {
+        "name": "Huile d'olive",
+        "qty_g": 5,
+        "kcal_100": 900,
+        "prot_100": 0,
+        "lip_100": 100,
+        "glu_100": 0,
+        "role": "lipide",
+        "cook_group": "sauce_jambalaya_cajun",
         "is_pst": false
       }
     ]
