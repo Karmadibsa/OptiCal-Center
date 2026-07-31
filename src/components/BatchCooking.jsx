@@ -1,9 +1,26 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { ChefHat, ShoppingCart, Copy, Check, Shuffle, Upload, Download, BookOpen, X } from 'lucide-react';
-import { scaleRecipeForMeal, calculatePlan } from '../utils/dietAlgo';
+import { scaleRecipeForMeal, calculatePlan, computeGlycemic, getSocleItems, getRecipeTags, GL_MEAL_LOW, GL_MEAL_MID } from '../utils/dietAlgo';
 
-const DAYS  = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+// Émoji par tag pour la barre de filtres
+const TAG_META = {
+    chaud: '🔥', froid: '❄️', 'pâtes': '🍝', riz: '🍚', ebly: '🌾', gnocchis: '🥟',
+    'patate douce': '🍠', PST: '🫛', 'légumineuses': '🫘', thon: '🐟',
+};
+
+// Groupes de filtres (affichés triés par catégorie)
+const TAG_GROUPS = [
+    { label: 'Température', tags: ['chaud', 'froid'] },
+    { label: 'Féculent',    tags: ['pâtes', 'riz', 'ebly', 'gnocchis', 'patate douce'] },
+    { label: 'Protéine',    tags: ['PST', 'légumineuses', 'thon'] },
+];
+
+// Couleur d'un niveau de charge glycémique (CG lissée d'un repas)
+const glColor = (gl) => gl <= GL_MEAL_LOW ? '#4ade80' : gl <= GL_MEAL_MID ? '#fbbf24' : '#f87171';
+
+const DAYS  = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+const MAX_RECIPES = 5; // nombre max de plats différents sélectionnables par semaine
 const MEALS = ['midi', 'soir'];
 const LS_KEY = 'batch_cooking_v2';
 
@@ -40,8 +57,39 @@ const fmtIng = (name, raw_g, unit, g_per_pc, fixed_qty) => {
 const normalizeIngName = (name) =>
     name.toLowerCase().replace(/\s*\([^)]*\)/g, '').replace(/\s+/g, ' ').trim();
 
-// ─── Groupes féculents (à cuire séparément, à peser cuit) ────────────────────
+// ─── Noms canoniques : homogénéise les variantes d'un même ingrédient ────────
+// Ex : "Riz basmati (cru)", "Riz long grain", "Riz (cru)" → un seul "Riz" (on
+// n'utilise qu'un seul type). Sert à fusionner les lignes de la liste de courses.
+// Règles ordonnées (mot-clé sans accent → nom canonique), 1re correspondance gagne.
+const CANON_RULES = [
+    ['maizena', 'Maïzena'],
+    ['riz', 'Riz'],
+    ['gnocchi', 'Gnocchis'],
+    ['ebly', 'Ebly'],
+    ['pate complet', 'Pâtes complètes'], ['pates complet', 'Pâtes complètes'], ['pate', 'Pâtes'],
+    ['pst', 'PST'],
+    ['carotte', 'Carottes'],
+    ['courgette', 'Courgettes'],
+    ['mais', 'Maïs'],
+    ['epice', 'Épices'],
+];
+const canonIngredientName = (name) => {
+    const n = normalizeIngName(name).normalize('NFD').replace(/[̀-ͯ]/g, '');
+    for (const [kw, canon] of CANON_RULES) if (n.includes(kw)) return canon;
+    return name;
+};
+
+// ─── Groupes féculents / à pré-cuire (à cuire séparément, à peser cuit) ───────
 const FECULENT_GK = new Set(['riz', 'pates', 'ebly']);
+
+// Groupes synthétiques de pré-cuisson (ingrédients precook:true) + leurs labels
+const PRECOOK_GK = { pst: 'precuisson_pst', legumineuses: 'precuisson_legumineuses' };
+const COOK_FIRST_LABELS = {
+    precuisson_pst:          '🫛 PST à réhydrater — À FAIRE D\'ABORD',
+    precuisson_legumineuses: '🫘 Légumineuses sèches à cuire — À FAIRE D\'ABORD',
+};
+// Un groupe "à cuire d'abord" = féculent à peser OU pré-cuisson
+const isCookFirst = (gk) => FECULENT_GK.has(gk) || gk.startsWith('precuisson_');
 
 const BatchCooking = ({ profiles }) => {
     const init = loadState();
@@ -53,6 +101,8 @@ const BatchCooking = ({ profiles }) => {
     const [disabledSlots,  setDisabledSlots]  = useState(init.disabledSlots  || {});
     const [activeView,     setActiveView]     = useState('shopping');
     const [copied,         setCopied]         = useState(false);
+    const [fsCopied,       setFsCopied]       = useState(false);
+    const [filterTags,     setFilterTags]     = useState([]);     // filtres tags actifs (multi-sélection)
     const [importCode,     setImportCode]     = useState('');
     const [syncMsg,        setSyncMsg]        = useState('');
     const [showSync,       setShowSync]       = useState(false);
@@ -110,7 +160,7 @@ const BatchCooking = ({ profiles }) => {
         return next;
     }, []);
 
-    // ── Sélection recette (max 4) ─────────────────────────────────────────────
+    // ── Sélection recette (max MAX_RECIPES) ───────────────────────────────────
     const toggleRecipe = (id) => {
         setSelectedIds(prev => {
             if (prev.includes(id)) {
@@ -118,7 +168,7 @@ const BatchCooking = ({ profiles }) => {
                 setWeekPlan(wp => cleanPlan(next, wp));
                 return next;
             }
-            if (prev.length >= 4) return prev;
+            if (prev.length >= MAX_RECIPES) return prev;
             return [...prev, id];
         });
     };
@@ -137,7 +187,7 @@ const BatchCooking = ({ profiles }) => {
     const randomSelect = () => {
         if (recipes.length === 0) return;
         const shuffled = [...recipes].sort(() => Math.random() - 0.5);
-        const picked   = shuffled.slice(0, Math.min(4, shuffled.length));
+        const picked   = shuffled.slice(0, Math.min(MAX_RECIPES, shuffled.length));
         const ids      = picked.map(r => r.id);
         setSelectedIds(ids);
         setWeekPlan(wp => cleanPlan(ids, wp));
@@ -204,9 +254,10 @@ const BatchCooking = ({ profiles }) => {
                     const scaled = getScaled(recipeId, person, meal);
                     if (!scaled) return;
                     scaled.ingredients.forEach(ing => {
-                        const key = normalizeIngName(ing.name);
+                        const canon = canonIngredientName(ing.name);
+                        const key = normalizeIngName(canon);
                         if (!agg[key]) agg[key] = {
-                            display_name: ing.name,
+                            display_name: canon,
                             total_g:  0,
                             role:     ing.role    || 'aromatique',
                             unit:     ing.unit    || 'g',
@@ -320,8 +371,15 @@ const BatchCooking = ({ profiles }) => {
                 const scaled = getScaled(recipeId, person, meal);
                 if (!scaled) return;
                 scaled.ingredients.forEach(ing => {
-                    const gk = ing.cook_group || rk;
-                    if (!groups[gk]) groups[gk] = { gk, label: gk.replace(/_/g, ' '), per_prm: {}, ings: {}, total_g: 0 };
+                    // Ingrédient à pré-cuire → sorti de sa sauce vers un groupe "à cuire d'abord"
+                    let gk;
+                    if (ing.precook) {
+                        const n = normalizeIngName(ing.name);
+                        gk = (/\bpst\b/.test(n) || n.includes('pst')) ? PRECOOK_GK.pst : PRECOOK_GK.legumineuses;
+                    } else {
+                        gk = ing.cook_group || rk;
+                    }
+                    if (!groups[gk]) groups[gk] = { gk, label: COOK_FIRST_LABELS[gk] || gk.replace(/_/g, ' '), cookFirst: isCookFirst(gk), per_prm: {}, ings: {}, total_g: 0 };
                     const grp = groups[gk];
 
                     // Accumulate per-person per-recipe×meal totals
@@ -329,9 +387,10 @@ const BatchCooking = ({ profiles }) => {
                     if (!grp.per_prm[prmKey]) grp.per_prm[prmKey] = { person, recipe, meal, count, g_per_day: 0 };
                     grp.per_prm[prmKey].g_per_day += ing.raw_g;
 
-                    // Accumulate ingredient totals
-                    const ik = normalizeIngName(ing.name);
-                    if (!grp.ings[ik]) grp.ings[ik] = { name: ing.name, total_g: 0, unit: ing.unit || 'g', g_per_pc: ing.g_per_pc, fixed_qty: ing.fixed_qty, role: ing.role };
+                    // Accumulate ingredient totals (nom canonique pour fusionner les variantes)
+                    const canon = canonIngredientName(ing.name);
+                    const ik = normalizeIngName(canon);
+                    if (!grp.ings[ik]) grp.ings[ik] = { name: canon, total_g: 0, unit: ing.unit || 'g', g_per_pc: ing.g_per_pc, fixed_qty: ing.fixed_qty, role: ing.role };
                     grp.ings[ik].total_g += ing.raw_g * count;
                     grp.total_g += ing.raw_g * count;
                 });
@@ -339,7 +398,7 @@ const BatchCooking = ({ profiles }) => {
         });
         // ── Companions : pour chaque groupe sauce, trouver le féculent partenaire ──
         Object.values(groups).forEach(grp => {
-            if (FECULENT_GK.has(grp.gk)) { grp.companions = []; return; }
+            if (isCookFirst(grp.gk)) { grp.companions = []; return; }
             const compSet = new Set();
             Object.values(grp.per_prm).forEach(({ recipe: r, meal }) => {
                 (r.ingredients || []).forEach(ing => {
@@ -353,12 +412,9 @@ const BatchCooking = ({ profiles }) => {
             grp.companions = [...compSet];
         });
 
-        // ── Tri : féculents en tête, puis le reste ──────────────────────────────
-        return Object.values(groups).sort((a, b) => {
-            const aF = FECULENT_GK.has(a.gk) ? 0 : 1;
-            const bF = FECULENT_GK.has(b.gk) ? 0 : 1;
-            return aF - bF;
-        });
+        // ── Tri : "à cuire d'abord" (pré-cuisson + féculents) en tête, puis le reste ──
+        const rank = (gk) => gk.startsWith('precuisson_') ? 0 : FECULENT_GK.has(gk) ? 1 : 2;
+        return Object.values(groups).sort((a, b) => rank(a.gk) - rank(b.gk));
     }, [weekPlan, disabledSlots, recipes, profiles]); // eslint-disable-line
 
     // ── Couverture protéines (pour panneau info) ──────────────────────────────
@@ -383,6 +439,33 @@ const BatchCooking = ({ profiles }) => {
         };
     };
 
+    // ── Charge glycémique par jour (lissage / équilibrage sur la semaine) ──────
+    // Somme la CG "lissée" des repas actifs (midi + soir) par jour et par personne,
+    // puis calcule la moyenne hebdo pour repérer les jours en "pic" (déséquilibre).
+    const computeGlycemicPerDay = () => {
+        const days = [];
+        DAYS.forEach(day => {
+            let axel = 0, prisca = 0, hasMeal = false;
+            MEALS.forEach(meal => {
+                if (isSlotDisabled(day, meal)) return;
+                const id = weekPlan[day]?.[meal];
+                if (!id) return;
+                hasMeal = true;
+                const sa = getScaled(id, 'axel', meal);
+                const sp = getScaled(id, 'prisca', meal);
+                const ga = sa && computeGlycemic(sa);
+                const gp = sp && computeGlycemic(sp);
+                if (ga) axel   += ga.gl_smoothed;
+                if (gp) prisca += gp.gl_smoothed;
+            });
+            if (hasMeal) days.push({ day, axel: Math.round(axel), prisca: Math.round(prisca) });
+        });
+        if (days.length === 0) return null;
+        const avgAxel   = Math.round(days.reduce((s, d) => s + d.axel,   0) / days.length);
+        const avgPrisca = Math.round(days.reduce((s, d) => s + d.prisca, 0) / days.length);
+        return { days, avgAxel, avgPrisca };
+    };
+
     // ── Copie liste de courses (clipboard) ───────────────────────────────────
     const copyShoppingList = () => {
         const { sections } = buildShoppingList();
@@ -401,9 +484,65 @@ const BatchCooking = ({ profiles }) => {
         });
     };
 
+    // ── FatSecret : socle fixe + plats par jour, macros complètes par personne ──
+    const buildFatSecretData = () => {
+        const people = [
+            { key: 'axel',   label: 'Axel',   color: '#38bdf8' },
+            { key: 'prisca', label: 'Prisca', color: '#a78bfa' },
+        ];
+        const dayShort = { Lundi: 'Lun', Mardi: 'Mar', Mercredi: 'Mer', Jeudi: 'Jeu', Vendredi: 'Ven', Samedi: 'Sam', Dimanche: 'Dim' };
+        return people.map(({ key, label, color }) => {
+            const socle = getSocleItems(key, profiles);
+            const plan  = calculatePlan(key, profiles);
+            // Déduplication : un plat identique (même recette + même repas) n'apparaît
+            // qu'UNE fois, avec la liste des jours où il revient (mêmes quantités).
+            const dishMap = {};
+            DAYS.forEach(day => {
+                MEALS.forEach(meal => {
+                    if (isSlotDisabled(day, meal)) return;
+                    const id = weekPlan[day]?.[meal];
+                    if (!id) return;
+                    const dk = `${id}_${meal}`;
+                    if (!dishMap[dk]) {
+                        const recipe = recipes.find(r => r.id === id);
+                        const s = getScaled(id, key, meal);
+                        if (!recipe || !s) return;
+                        dishMap[dk] = { meal, name: recipe.name, emoji: recipe.emoji, days: [],
+                            kcal: s.total_kcal, prot: s.total_prot, lip: s.total_lip, glu: s.total_glu };
+                    }
+                    dishMap[dk].days.push(dayShort[day] || day.slice(0, 3));
+                });
+            });
+            // Tri : midi avant soir, puis par nom
+            const dishes = Object.values(dishMap).sort((a, b) =>
+                a.meal === b.meal ? a.name.localeCompare(b.name) : (a.meal === 'midi' ? -1 : 1));
+            return { key, label, color, socle, dishes, target: Math.round(plan.target_daily) };
+        });
+    };
+
+    const copyFatSecret = () => {
+        const L = [];
+        buildFatSecretData().forEach(pd => {
+            L.push(`===== ${pd.label.toUpperCase()} — cible ${pd.target} kcal/j =====`);
+            L.push('-- Fixe chaque jour --');
+            pd.socle.items.forEach(i => L.push(`  ${i.moment} · ${i.name} (${i.detail}) : ${Math.round(i.kcal)} kcal · ${i.prot}P ${i.lip}L ${i.glu}G`));
+            L.push(`  = Sous-total fixe : ${Math.round(pd.socle.total.kcal)} kcal · ${pd.socle.total.prot.toFixed(1)}P ${pd.socle.total.lip.toFixed(1)}L ${pd.socle.total.glu.toFixed(1)}G`);
+            L.push('');
+            L.push('-- Plats (une fois chacun) --');
+            pd.dishes.forEach(d => {
+                L.push(`  ${d.meal === 'midi' ? 'Midi' : 'Soir'} · ${d.name} [${d.days.join(', ')}] : ${d.kcal} kcal · ${d.prot}P ${d.lip}L ${d.glu}G`);
+            });
+            L.push('');
+        });
+        navigator.clipboard.writeText(L.join('\n')).then(() => {
+            setFsCopied(true);
+            setTimeout(() => setFsCopied(false), 2500);
+        });
+    };
+
     // ── Export / Import plan — format compact v2 ─────────────────────────────
-    // Format : "v2:{id1,id2,...}|{12 slots: index 0-3 ou -}|{disabled slot indices}"
-    // Exemple : "v2:600001,600002|01-1-10-1-|5,9" — ~40 chars vs ~340 en base64
+    // Format : "v2:{id1,id2,...}|{slots midi/soir par jour: index 0-4 ou -}|{disabled slot indices}"
+    // Exemple : "v2:600001,600002|01-1-10-1-...|5,9" — compact vs base64
     const exportPlan = () => {
         try {
             const slots = DAYS.flatMap(d => MEALS.map(m => {
@@ -550,7 +689,7 @@ const BatchCooking = ({ profiles }) => {
         <div className="animate-fade-in section-container">
             <h2 style={S.pageTitle}><ChefHat size={24} /> Batch Cooking Hebdomadaire</h2>
             <p style={{ color: '#64748b', fontSize: '0.88rem', marginBottom: '1.25rem' }}>
-                Sélectionne jusqu'à 4 recettes · Assigne midi et soir · Génère la liste et les boîtes.
+                Sélectionne jusqu'à {MAX_RECIPES} recettes · Assigne midi et soir · Génère la liste et les boîtes.
             </p>
 
             {/* ── Sync cross-device ── */}
@@ -621,7 +760,7 @@ const BatchCooking = ({ profiles }) => {
             {/* ── ÉTAPE 1 : Recettes ── */}
             <div style={{ marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={S.stepLabel}>ÉTAPE 1 — RECETTES BATCH COOKING ({selectedIds.length}/4)</div>
+                    <div style={S.stepLabel}>ÉTAPE 1 — RECETTES BATCH COOKING ({selectedIds.length}/{MAX_RECIPES})</div>
                     <button onClick={randomSelect} style={{
                         display: 'flex', alignItems: 'center', gap: '0.4rem',
                         padding: '0.38rem 0.85rem',
@@ -633,10 +772,49 @@ const BatchCooking = ({ profiles }) => {
                         <Shuffle size={13} /> Sélection aléatoire
                     </button>
                 </div>
+
+                {/* ── Filtres par tag (multi-sélection, triés par catégorie) ── */}
+                {(() => {
+                    const present = new Set();
+                    recipes.forEach(r => getRecipeTags(r).forEach(t => present.add(t)));
+                    if (present.size === 0) return null;
+                    const toggle = (t) => setFilterTags(prev => prev.includes(t) ? prev.filter(x => x !== t) : [...prev, t]);
+                    const nbFiltered = recipes.filter(r => { const rt = getRecipeTags(r); return filterTags.every(t => rt.includes(t)); }).length;
+                    const chip = (label, active, onClick, key) => (
+                        <button key={key} onClick={onClick} style={{
+                            padding: '0.26rem 0.65rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 700,
+                            background: active ? 'rgba(56,189,248,0.18)' : 'rgba(15,23,42,0.6)',
+                            border: `1px solid ${active ? '#38bdf8' : '#334155'}`,
+                            color: active ? '#38bdf8' : '#94a3b8', textTransform: 'capitalize',
+                        }}>{label}</button>
+                    );
+                    return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', marginBottom: '1rem' }}>
+                            {TAG_GROUPS.map(grp => {
+                                const tags = grp.tags.filter(t => present.has(t));
+                                if (tags.length === 0) return null;
+                                return (
+                                    <div key={grp.label} style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                                        <span style={{ fontSize: '0.64rem', color: '#64748b', fontWeight: 800, letterSpacing: '0.6px', width: '78px', flexShrink: 0 }}>{grp.label.toUpperCase()}</span>
+                                        {tags.map(t => chip(`${TAG_META[t] || ''} ${t}`, filterTags.includes(t), () => toggle(t), t))}
+                                    </div>
+                                );
+                            })}
+                            {filterTags.length > 0 && (
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.1rem' }}>
+                                    {chip('✕ Réinitialiser', false, () => setFilterTags([]), '_reset')}
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{nbFiltered} recette{nbFiltered > 1 ? 's' : ''}</span>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })()}
+
                 <div style={S.recipeGrid}>
-                    {recipes.map(recipe => {
+                    {recipes.filter(r => { const rt = getRecipeTags(r); return filterTags.every(t => rt.includes(t)); }).map(recipe => {
                         const sel = selectedIds.includes(recipe.id);
-                        const dis = !sel && selectedIds.length >= 4;
+                        const dis = !sel && selectedIds.length >= MAX_RECIPES;
+                        const tags = getRecipeTags(recipe);
                         return (
                             <div key={recipe.id}
                                 onClick={() => !dis && toggleRecipe(recipe.id)}
@@ -658,6 +836,17 @@ const BatchCooking = ({ profiles }) => {
                                     <span style={{ color: '#4ade80' }}>{recipe.prot}g P</span>
                                     <span style={{ color: '#fb923c' }}>{recipe.lip}g L</span>
                                     <span style={{ color: '#a78bfa' }}>{recipe.glu}g G</span>
+                                </div>
+                                {/* Tags */}
+                                <div style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap', margin: '0.35rem 0 0.1rem' }}>
+                                    {tags.map(t => (
+                                        <span key={t} style={{
+                                            fontSize: '0.62rem', padding: '0.05rem 0.4rem', borderRadius: '999px',
+                                            background: t === 'froid' ? 'rgba(56,189,248,0.12)' : t === 'chaud' ? 'rgba(251,146,60,0.12)' : 'rgba(148,163,184,0.1)',
+                                            color: t === 'froid' ? '#38bdf8' : t === 'chaud' ? '#fb923c' : '#94a3b8',
+                                            border: '1px solid rgba(255,255,255,0.06)', whiteSpace: 'nowrap',
+                                        }}>{TAG_META[t] || ''} {t}</span>
+                                    ))}
                                 </div>
                                 {/* Bouton voir la recette */}
                                 <button
@@ -688,7 +877,7 @@ const BatchCooking = ({ profiles }) => {
             {selectedIds.length > 0 && (
                 <div style={{ marginBottom: '2.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div style={S.stepLabel}>ÉTAPE 2 — SEMAINE ({assignedSlots}/12 slots)</div>
+                        <div style={S.stepLabel}>ÉTAPE 2 — SEMAINE ({assignedSlots}/{DAYS.length * MEALS.length} slots)</div>
                         <button onClick={autoDispatch} style={S.autoBtn}>
                             <Shuffle size={14} /> Auto-dispatch
                         </button>
@@ -705,6 +894,8 @@ const BatchCooking = ({ profiles }) => {
                                         const scaled_a = (!disabled && recipeId) ? getScaled(recipeId, 'axel',   meal) : null;
                                         const scaled_p = (!disabled && recipeId) ? getScaled(recipeId, 'prisca', meal) : null;
                                         const recipe   = (!disabled && recipeId) ? recipes.find(r => r.id === recipeId) : null;
+                                        const gly_a    = scaled_a ? computeGlycemic(scaled_a) : null;
+                                        const gly_p    = scaled_p ? computeGlycemic(scaled_p) : null;
                                         return (
                                             <div key={meal} style={{ marginBottom: meal === 'midi' ? '0.6rem' : 0 }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
@@ -731,8 +922,14 @@ const BatchCooking = ({ profiles }) => {
                                                 </select>
                                                 {recipe && scaled_a && (
                                                     <div style={S.dayMacros}>
-                                                        <span style={{ color: '#38bdf8' }}>Axel {scaled_a.total_kcal} kcal · {scaled_a.total_prot}g P</span>
-                                                        {scaled_p && <span style={{ color: '#a78bfa' }}>Prisca {scaled_p.total_kcal} kcal · {scaled_p.total_prot}g P</span>}
+                                                        <span style={{ color: '#38bdf8' }}>
+                                                            Axel {scaled_a.total_kcal} kcal · {scaled_a.total_prot}g P · {scaled_a.total_lip}g L · {scaled_a.total_glu}g G
+                                                            {gly_a && <span title={`CG brute ${gly_a.gl} · IG ${gly_a.gi} → lissé −${gly_a.reduction}%`} style={{ color: glColor(gly_a.gl_smoothed) }}> · CG {gly_a.gl_smoothed} · IG {gly_a.gi_smoothed}</span>}
+                                                        </span>
+                                                        {scaled_p && <span style={{ color: '#a78bfa' }}>
+                                                            Prisca {scaled_p.total_kcal} kcal · {scaled_p.total_prot}g P · {scaled_p.total_lip}g L · {scaled_p.total_glu}g G
+                                                            {gly_p && <span title={`CG brute ${gly_p.gl} · IG ${gly_p.gi} → lissé −${gly_p.reduction}%`} style={{ color: glColor(gly_p.gl_smoothed) }}> · CG {gly_p.gl_smoothed} · IG {gly_p.gi_smoothed}</span>}
+                                                        </span>}
                                                     </div>
                                                 )}
                                             </div>
@@ -777,12 +974,59 @@ const BatchCooking = ({ profiles }) => {
                         );
                     })()}
 
+                    {/* ── Panneau charge glycémique / lissage sur la semaine ── */}
+                    {(() => {
+                        const gpd = computeGlycemicPerDay();
+                        if (!gpd) return null;
+                        // Seuil de "pic" : +25% au-dessus de la moyenne hebdo de la personne
+                        const spikeAxel   = gpd.avgAxel   * 1.25;
+                        const spikePrisca = gpd.avgPrisca * 1.25;
+                        return (
+                            <div style={{ marginBottom: '1.25rem', padding: '0.7rem 1rem', background: 'rgba(251,191,36,0.06)', border: '1px solid rgba(251,191,36,0.22)', borderRadius: '8px', fontSize: '0.82rem' }}>
+                                <div style={{ fontWeight: 700, color: '#fbbf24', marginBottom: '0.4rem', fontSize: '0.72rem', letterSpacing: '0.8px' }}>
+                                    📈 CHARGE GLYCÉMIQUE — LISSAGE SUR LA SEMAINE
+                                </div>
+                                <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', color: '#cbd5e1', marginBottom: '0.5rem' }}>
+                                    <span>Moyenne <strong style={{ color: '#38bdf8' }}>Axel</strong> : {gpd.avgAxel} CG/j</span>
+                                    <span>Moyenne <strong style={{ color: '#a78bfa' }}>Prisca</strong> : {gpd.avgPrisca} CG/j</span>
+                                </div>
+                                {/* Barres par jour — Axel (bleu) + Prisca (violet), pic = +25% vs moyenne perso */}
+                                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                                    {gpd.days.map(d => {
+                                        const spikeA = d.axel   > spikeAxel;
+                                        const spikeP = d.prisca > spikePrisca;
+                                        const anySpike = spikeA || spikeP;
+                                        return (
+                                            <div key={d.day} title={`${d.day} — Axel ${d.axel}${spikeA ? ' ⚠️' : ''} · Prisca ${d.prisca}${spikeP ? ' ⚠️' : ''} CG`} style={{
+                                                flex: '1 1 62px', textAlign: 'center', padding: '0.3rem 0.2rem', borderRadius: '6px',
+                                                background: anySpike ? 'rgba(248,113,113,0.10)' : 'rgba(74,222,128,0.07)',
+                                                border: `1px solid ${anySpike ? '#f87171' : 'rgba(74,222,128,0.22)'}`,
+                                            }}>
+                                                <div style={{ fontSize: '0.6rem', color: '#94a3b8', letterSpacing: '0.5px', marginBottom: '0.15rem' }}>{d.day.slice(0, 3).toUpperCase()}</div>
+                                                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: spikeA ? '#f87171' : '#38bdf8' }}>{d.axel}{spikeA && ' ⚠️'}</div>
+                                                <div style={{ fontSize: '0.72rem', fontWeight: 700, color: spikeP ? '#f87171' : '#a78bfa' }}>{d.prisca}{spikeP && ' ⚠️'}</div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div style={{ marginTop: '0.5rem', display: 'flex', gap: '1rem', fontSize: '0.66rem', color: '#64748b' }}>
+                                    <span><span style={{ color: '#38bdf8', fontWeight: 800 }}>■</span> Axel (haut)</span>
+                                    <span><span style={{ color: '#a78bfa', fontWeight: 800 }}>■</span> Prisca (bas)</span>
+                                </div>
+                                <div style={{ marginTop: '0.35rem', color: '#94a3b8', fontSize: '0.72rem', lineHeight: 1.5 }}>
+                                    💡 Chiffres = CG <em>lissée</em> par jour (atténuée par lipides/protéines). Un chiffre en <span style={{ color: '#f87171' }}>rouge ⚠️</span> dépasse de +25% la moyenne de la personne → permute un plat riche en féculents vers un jour plus léger pour <strong>lisser la semaine</strong>. IG/CG = estimations (tables de référence).
+                                </div>
+                            </div>
+                        );
+                    })()}
+
                     {/* Sélecteur de vue */}
                     <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                         {[
                             { key: 'shopping',   label: '🛒 Courses',      num: '1' },
                             { key: 'cuisson_cru',label: '🍳 Cuisson Cru',  num: '2' },
                             { key: 'repartition',label: '📦 Répartition',  num: '3' },
+                            { key: 'fatsecret',  label: '🧾 FatSecret',    num: '4' },
                         ].map(tab => (
                             <button key={tab.key} onClick={() => setActiveView(tab.key)} style={{
                                 ...S.tabBtn,
@@ -993,8 +1237,10 @@ const BatchCooking = ({ profiles }) => {
                                     const ingList    = Object.values(ings).filter(i => i.total_g >= 1).sort((a, b) => b.total_g - a.total_g);
 
                                     const isDone2 = !!doneCookGroups[gk];
+                                    const isPrecook2 = gk.startsWith('precuisson_');
                                     const displayTitle2 = FECULENT_GK.has(gk)
                                         ? (gk === 'riz' ? 'Riz' : gk === 'pates' ? 'Pâtes' : 'Ebly')
+                                        : isPrecook2 ? label
                                         : isShared ? 'Cuisson commune'
                                         : `Accompagnement · ${prmList[0]?.recipe?.name || ''}`;
                                     return (
@@ -1251,6 +1497,80 @@ const BatchCooking = ({ profiles }) => {
                                         </div>
                                     );
                                 })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ─────────────── VUE 4 : FATSECRET ─────────────── */}
+                    {activeView === 'fatsecret' && (
+                        <div style={S.panel}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                <div style={S.panelTitle}>🧾 À SAISIR DANS FATSECRET</div>
+                                <button onClick={copyFatSecret} style={{
+                                    ...S.copyBtn,
+                                    background: fsCopied ? 'rgba(74,222,128,0.15)' : 'rgba(56,189,248,0.12)',
+                                    borderColor: fsCopied ? '#4ade80' : '#38bdf8',
+                                    color: fsCopied ? '#4ade80' : '#38bdf8',
+                                }}>
+                                    {fsCopied ? <Check size={13} /> : <Copy size={13} />}
+                                    {fsCopied ? 'Copié !' : 'Copier tout'}
+                                </button>
+                            </div>
+                            <div style={{ fontSize: '0.76rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.5 }}>
+                                Chaque plat est listé <strong>une seule fois</strong> (mêmes quantités quel que soit le jour) : crée-le une fois dans FatSecret, applique-le aux jours indiqués. Le « fixe chaque jour » = petit-déj + collation 16h + œufs du soir (+ fromage).
+                                ⚠️ Les recettes batch contiennent déjà leur crème / légumes / huile — ne les recompte pas.
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))', gap: '1.25rem' }}>
+                                {buildFatSecretData().map(pd => (
+                                    <div key={pd.key} style={{ border: `1px solid ${pd.color}30`, borderRadius: '10px', padding: '0.9rem' }}>
+                                        <div style={{ color: pd.color, fontWeight: 800, marginBottom: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                                            <span>{pd.label}</span>
+                                            <span style={{ fontSize: '0.8rem', opacity: 0.8 }}>cible {pd.target} kcal/j</span>
+                                        </div>
+
+                                        <div style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.8px', margin: '0.4rem 0 0.25rem' }}>FIXE CHAQUE JOUR</div>
+                                        <table style={{ width: '100%', fontSize: '0.74rem', borderCollapse: 'collapse' }}>
+                                            <tbody>
+                                                {pd.socle.items.map((i, idx) => (
+                                                    <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                        <td style={{ padding: '0.2rem 0.3rem', color: '#cbd5e1' }}>{i.name}<span style={{ color: '#475569' }}> · {i.detail}</span></td>
+                                                        <td style={{ padding: '0.2rem 0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#e2e8f0' }}>{Math.round(i.kcal)}</td>
+                                                        <td style={{ padding: '0.2rem 0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#4ade80' }}>{i.prot}P</td>
+                                                        <td style={{ padding: '0.2rem 0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#fb923c' }}>{i.lip}L</td>
+                                                        <td style={{ padding: '0.2rem 0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#facc15' }}>{i.glu}G</td>
+                                                    </tr>
+                                                ))}
+                                                <tr style={{ fontWeight: 800 }}>
+                                                    <td style={{ padding: '0.3rem', color: '#94a3b8' }}>Sous-total fixe</td>
+                                                    <td style={{ padding: '0.3rem', textAlign: 'right', fontFamily: 'monospace' }}>{Math.round(pd.socle.total.kcal)}</td>
+                                                    <td style={{ padding: '0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#4ade80' }}>{pd.socle.total.prot.toFixed(0)}P</td>
+                                                    <td style={{ padding: '0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#fb923c' }}>{pd.socle.total.lip.toFixed(0)}L</td>
+                                                    <td style={{ padding: '0.3rem', textAlign: 'right', fontFamily: 'monospace', color: '#facc15' }}>{pd.socle.total.glu.toFixed(0)}G</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+                                        <div style={{ fontSize: '0.66rem', color: '#64748b', fontWeight: 700, letterSpacing: '0.8px', margin: '0.9rem 0 0.4rem' }}>PLATS — UNE FOIS CHACUN</div>
+                                        {pd.dishes.length === 0 && <div style={{ fontSize: '0.72rem', color: '#475569' }}>Assigne des recettes aux jours (étape 2).</div>}
+                                        {pd.dishes.map((d, di) => (
+                                            <div key={di} style={{ marginBottom: '0.6rem', padding: '0.5rem 0.6rem', background: 'rgba(15,23,42,0.5)', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                                                    <span style={{ fontSize: '0.8rem', fontWeight: 700, color: '#e2e8f0', lineHeight: 1.25 }}>{d.emoji} {d.name}</span>
+                                                    <span style={{ fontSize: '0.62rem', fontWeight: 800, color: d.meal === 'midi' ? '#fbbf24' : '#818cf8', letterSpacing: '0.5px', flexShrink: 0 }}>{d.meal === 'midi' ? 'MIDI' : 'SOIR'}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', fontFamily: 'monospace', fontSize: '0.8rem' }}>
+                                                    <span style={{ color: '#e2e8f0', fontWeight: 700 }}>{d.kcal} kcal</span>
+                                                    <span style={{ color: '#4ade80' }}>{d.prot}g P</span>
+                                                    <span style={{ color: '#fb923c' }}>{d.lip}g L</span>
+                                                    <span style={{ color: '#facc15' }}>{d.glu}g G</span>
+                                                </div>
+                                                <div style={{ fontSize: '0.64rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                                    Jours : {d.days.join(' · ')} <span style={{ opacity: 0.7 }}>({d.days.length}×)</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}

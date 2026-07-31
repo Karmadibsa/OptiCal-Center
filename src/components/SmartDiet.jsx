@@ -2,8 +2,6 @@ import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Settings,
-    Activity,
-    Utensils,
     AlertTriangle,
     Download,
 } from 'lucide-react';
@@ -108,7 +106,6 @@ const InfoTooltip = ({ text }) => {
 const SmartDiet = ({ profiles, setProfiles }) => {
 
     const [activeTab,       setActiveTab]       = useState('axel');
-    const [showLegacyPlan,  setShowLegacyPlan]  = useState(false);
 
     const resAxel = calculatePlan('axel', profiles);
     const resPrisca = calculatePlan('prisca', profiles);
@@ -116,7 +113,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     // --- HANDLERS ---
     // Champs numériques : weight, height, age, deficit, opt_fromage, prot_ratio
     // Champs string : gender
-    const NUMERIC_FIELDS = new Set(['weight', 'form_weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio', 'lip_ratio', 'glu_target']);
+    const NUMERIC_FIELDS = new Set(['weight', 'form_weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio', 'lip_ratio', 'glu_target',
+        'pain_matin_g', 'cancoillotte_g', 'skyr_g', 'oeuf_matin', 'oeuf_soir', 'banane_qty', 'pomme_qty']);
 
     const handleInput = (key, field, val) => {
         setProfiles(prev => ({
@@ -162,7 +160,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
         ];
 
         const dataRows = [
-            ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', '140g Pain + 30g Canc. + 3 Œufs', '80g Pain + 20g Canc. + 2 Œufs', 'Base fixe'],
+            ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', `${resAxel.pain_g}g Pain + ${resAxel.canc_g}g Canc. + ${resAxel.oeuf_matin} Œufs`, `${resPrisca.pain_g}g Pain + ${resPrisca.canc_g}g Canc. + ${resPrisca.oeuf_matin} Œufs`, 'Base fixe'],
             ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
 
             ['Diet', 'Midi', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_midi)}g`, `${Math.round(resPrisca.pasta_midi)}g`, 'Calculé (55%)'],
@@ -170,7 +168,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Diet', 'Midi', 'Légumes', 'À volonté', 'À volonté', 'Volume'],
             ['Diet', 'Midi', 'Crème Fraîche', '30g (1 c.à.s)', '30g (1 c.à.s)', 'Lipides'],
 
-            ['Diet', '16H00', 'Banane', '1 Banane', '1 Banane', 'Glucides rapides'],
+            ['Diet', '16H00', 'Fruits', `${resAxel.banane_qty} Banane${resAxel.pomme_qty > 0 ? ` + ${resAxel.pomme_qty} Pomme` : ''}`, `${resPrisca.banane_qty} Banane${resPrisca.pomme_qty > 0 ? ` + ${resPrisca.pomme_qty} Pomme` : ''}`, 'Glucides'],
             ['Diet', '16H00', 'Whey', '1 Shaker de Whey (30g)', '1 Shaker de Whey (25g)', 'Récupération'],
 
             ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
@@ -189,16 +187,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             alert("CSV copié ! Collez-le dans public/diet.csv pour sauvegarder la configuration.");
         });
     };
-
-    // --- RENDER HELPERS ---
-    const PlanRow = ({ label, axelVal, priscaVal, note, isHeader = false }) => (
-        <div className={`plan-row ${isHeader ? 'header-row' : ''}`}>
-            <div className="col-item">{label}</div>
-            <div className="col-val axel">{axelVal}</div>
-            <div className="col-val prisca">{priscaVal}</div>
-            <div className="col-note">{note}</div>
-        </div>
-    );
 
     // Styles pour la liste verticale de checkboxes
     const S_cb = {
@@ -280,6 +268,9 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         placeholder="1.6"
                                         onChange={(e) => handleInput(key, 'prot_ratio', e.target.value)}
                                     />
+                                    <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#4ade80', fontFamily: 'monospace' }}>
+                                        → <strong>{Math.round(res.prot_goal)} g/jour</strong> <span style={{ color: '#475569' }}>({res.goal_weight || profiles[key].weight}kg forme)</span>
+                                    </div>
                                 </div>
                                 {/* Lipides cible */}
                                 <div className="input-group">
@@ -298,6 +289,9 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         placeholder="0.9"
                                         onChange={(e) => handleInput(key, 'lip_ratio', e.target.value)}
                                     />
+                                    <div style={{ marginTop: '0.25rem', fontSize: '0.75rem', color: '#fb923c', fontFamily: 'monospace' }}>
+                                        → <strong>{Math.round(res.lip_goal)} g/jour</strong> <span style={{ color: '#475569' }}>({res.goal_weight || profiles[key].weight}kg forme)</span>
+                                    </div>
                                 </div>
                                 {/* Glucides cible — éditable + bouton Ajuster selon Kcal */}
                                 <div className="input-group">
@@ -443,6 +437,36 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                 </div>
                             </div>
 
+                            {/* ── Petit-déjeuner / collation (ajustable) ── */}
+                            <div style={{ marginTop: '1.5rem' }}>
+                                <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', display: 'block', marginBottom: '0.6rem' }}>
+                                    PETIT-DÉJEUNER / COLLATION
+                                    <InfoTooltip text="Ajuste ce que tu manges hors recettes batch. Tout se répercute sur le socle fixe, la feuille FatSecret et la taille des plats batch (moins de petit-déj = plats plus gros, et inversement)." />
+                                </label>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '0.7rem' }}>
+                                    {[
+                                        { field: 'pain_matin_g',   label: 'Pain (matin)',      unit: 'g',  step: 5 },
+                                        { field: 'cancoillotte_g', label: 'Cancoillotte',      unit: 'g',  step: 5 },
+                                        { field: 'skyr_g',         label: 'Skyr / from. blanc',unit: 'g',  step: 10 },
+                                        { field: 'oeuf_matin',     label: 'Œufs matin',        unit: 'nb', step: 1 },
+                                        { field: 'oeuf_soir',      label: 'Œufs soir',         unit: 'nb', step: 1 },
+                                        { field: 'banane_qty',     label: 'Bananes / jour',    unit: 'nb', step: 1 },
+                                        { field: 'pomme_qty',      label: 'Pommes / jour',     unit: 'nb', step: 1 },
+                                    ].map(({ field, label, unit, step }) => (
+                                        <div key={field} style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                                            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{label} <span style={{ fontSize: '0.65rem', color: '#64748b' }}>({unit})</span></span>
+                                            <input
+                                                type="number" min="0" step={step}
+                                                value={profiles[key][field] === '' || profiles[key][field] === undefined ? '' : profiles[key][field]}
+                                                placeholder="0"
+                                                onChange={(e) => handleInput(key, field, e.target.value)}
+                                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.4rem 0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '0.9rem', fontFamily: 'monospace' }}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* ── Niveau d'activité PAL ── */}
                             <div style={{ marginTop: '1.5rem' }}>
                                 <label style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1px', display: 'block', marginBottom: '0.6rem' }}>
@@ -535,63 +559,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 <Download size={18} /> Copier Configuration CSV
             </button>
 
-            {/* --- TABLEAU DE RÉFÉRENCE LEGACY (collapsible) --- */}
-            <div style={{ marginTop: '3rem' }}>
-                <button
-                    onClick={() => setShowLegacyPlan(s => !s)}
-                    style={{
-                        display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        background: 'none', border: '1px solid #1e293b', borderRadius: '8px',
-                        padding: '0.5rem 1rem', color: '#475569', cursor: 'pointer',
-                        fontSize: '0.83rem', fontWeight: 600, width: '100%',
-                    }}
-                >
-                    <Utensils size={14} />
-                    Plan Alimentaire — Référence Pâtes/PST (ancien système)
-                    <span style={{ marginLeft: 'auto', fontSize: '0.7rem', color: '#334155' }}>
-                        {showLegacyPlan ? '▲ Masquer' : '▼ Afficher'}
-                    </span>
-                </button>
-
-                {showLegacyPlan && (
-                    <>
-                        <div style={{ marginTop: '0.5rem', padding: '0.6rem 0.9rem', background: 'rgba(251,146,60,0.07)', border: '1px solid rgba(251,146,60,0.2)', borderRadius: '7px', fontSize: '0.78rem', color: '#fb923c' }}>
-                            ⚠️ Ce tableau utilise l'<strong>ancien système Pâtes+PST</strong>. Pour la variété recommandée par la diéto, utilisez l'onglet <strong>Batch Cooking</strong> qui calcule automatiquement les bonnes quantités.
-                        </div>
-
-            <div className="plan-table">
-                <PlanRow isHeader label="ITEM" axelVal="AXEL" priscaVal="PRISCA" note="NOTE" />
-
-                <div className="section-divider">MATIN</div>
-                <PlanRow label="Pain + Cancoillotte + Œufs" axelVal="140g Pain + 30g Canc. + 3 Œufs" priscaVal="80g Pain + 20g Canc. + 2 Œufs" note="Base fixe" />
-                <PlanRow label="Whey" axelVal="1 Shaker (30g)" priscaVal="-" note="" />
-
-                <div className="section-divider">MIDI</div>
-                <PlanRow label="Pâtes Protein+ (Cru)" axelVal={`${Math.round(resAxel.pasta_midi)}g`} priscaVal={`${Math.round(resPrisca.pasta_midi)}g`} note="Calculé (55%)" />
-                <PlanRow label="PST (Cru)" axelVal={`${resAxel.pst_qty}g`} priscaVal={`${resPrisca.pst_qty}g`} note="Poids - 25" />
-                <PlanRow label="Légumes" axelVal="À volonté" priscaVal="À volonté" note="Volume" />
-                <PlanRow label="Crème Fraîche" axelVal="30g (1 c.à.s)" priscaVal="30g (1 c.à.s)" note="Lipides" />
-
-                <div className="section-divider">COLLATION (16H)</div>
-                <PlanRow label="Banane" axelVal="1 Banane" priscaVal="1 Banane" note="Glucides rapides" />
-                <PlanRow label="Whey" axelVal="1 Shaker (30g)" priscaVal="1 Shaker (25g)" note="Récupération" />
-
-                <div className="section-divider">SOIR</div>
-                <PlanRow label="Pâtes Protein+ (Cru)" axelVal={`${Math.round(resAxel.pasta_soir)}g`} priscaVal={`${Math.round(resPrisca.pasta_soir)}g`} note="Ajustement (45%)" />
-                <PlanRow label="Œufs" axelVal={`${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`} priscaVal={`${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`} note="OBLIGATOIRE" />
-                <PlanRow label="Légumes + Crème" axelVal="Légumes + 30g Crème" priscaVal="Légumes + 30g Crème" note="" />
-                <PlanRow label="Fromage" axelVal={profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-"} priscaVal={profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-"} note="Extra variable" />
-                <PlanRow
-                    label="Fromage Blanc 0%"
-                    axelVal={resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-"}
-                    priscaVal={resPrisca.fb_qty > 0 ? `${resPrisca.fb_qty}g` : "-"}
-                    note="Compensation prot. soir"
-                />
-            </div>
-                    </>
-                )}
-            </div>{/* fin bloc legacy */}
-
             {(resAxel.prot_warning || resPrisca.prot_warning) && (
                 <div className="alert-box">
                     <AlertTriangle size={24} />
@@ -611,39 +578,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                     </div>
                 </div>
             )}
-
-            {/* --- LOGS --- */}
-            <div style={{ marginTop: '4rem', borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '2rem' }}>
-                <h3 style={{ fontSize: '1.2rem', color: '#94a3b8', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Activity size={18} /> Détails de Calcul (Logs)
-                </h3>
-
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))', gap: '2rem', fontSize: '0.85rem', fontFamily: 'monospace', color: '#cbd5e1' }}>
-                    {[{ key: 'axel', res: resAxel, color: '#38bdf8', label: 'AXEL' }, { key: 'prisca', res: resPrisca, color: '#a78bfa', label: 'PRISCA' }].map(({ key, res, color, label }) => (
-                        <div key={key} style={{ background: 'rgba(0,0,0,0.3)', padding: '1.5rem', borderRadius: '12px' }}>
-                            <h4 style={{ color, marginBottom: '1rem' }}>LOGS {label}</h4>
-                            <p>Poids: {profiles[key].weight}kg | Taille: {profiles[key].height}cm | Age: {profiles[key].age}</p>
-                            <p>Protéines cible: <strong style={{ color }}>{profiles[key].prot_ratio}g/kg → {Math.round(res.prot_goal)}g/jour</strong></p>
-                            <p>BMR (Mifflin): {Math.round(res.bmr)} kcal</p>
-                            <p style={{ color: '#fbbf24' }}>PAL ×{profiles[key].pal} → TDEE {Math.round(res.tdee_final)} kcal</p>
-                            <p style={{ color: '#94a3b8', paddingLeft: '0.75rem' }}>↳ {PAL_OPTIONS.find(o => o.value === profiles[key].pal)?.label || '?'} — {PAL_OPTIONS.find(o => o.value === profiles[key].pal)?.desc || ''}</p>
-                            <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
-                            <p><strong>TDEE Final: {Math.round(res.tdee_final)} kcal</strong></p>
-                            <p>Cible (-{profiles[key].deficit}): {Math.round(res.target_daily)} kcal</p>
-                            <br />
-                            <p>Socle Fixe (sans PST): -{Math.round(res.fixed_cal - res.pst_qty * 3.3)} kcal</p>
-                            <p>PST: {res.pst_qty}g → -{Math.round(res.pst_qty * 3.3)} kcal | +{Math.round(res.pst_qty * 0.5)}g prot</p>
-                            {res.fb_qty > 0 && <p style={{ color: '#a78bfa' }}>FB 0%: {res.fb_qty}g → +{Math.round(res.fb_qty * 0.08)}g prot | -{Math.round(res.fb_qty * 0.48)} kcal/pâtes</p>}
-                            <p>Reste pour Pâtes: {Math.round(res.remaining_cal - res.pst_qty * 3.3)} kcal</p>
-                            <p><strong>= {Math.round(res.pasta_grams_day)}g Pâtes (Cru)</strong></p>
-                            <hr style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '0.5rem 0' }} />
-                            <p style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>
-                                Protéines: {Math.round(res.total_prot)}g / {Math.round(res.prot_goal)}g ({profiles[key].prot_ratio}g/kg)
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
 
             <style>{`
                 .section-title { font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; color: #fff; }

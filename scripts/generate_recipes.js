@@ -131,9 +131,26 @@ function mapRole(roleText, ingName) {
  * Format attendu :
  * | Ingrédient | Qty Base | Unité | Kcal/100g | Prot | Lip | Glu | Rôle |
  */
+/**
+ * Détecte, depuis le protocole, quels types d'ingrédients sont PRÉ-CUITS à part.
+ * Conservateur : uniquement mots-clés explicites (pré-cuire / réhydrater / préalablement cuit).
+ * Ne flague PAS les légumineuses mises sèches dans la sauce (corail, conserve).
+ * Retourne un Set de mots-clés : 'lentille', 'pst', 'pois chiche'.
+ */
+function detectPrecookKeywords(content) {
+    const kws = new Set();
+    const protoMatch = content.match(/### Protocole[\s\S]*?(?=\n###|$)/);
+    const np = norm(protoMatch ? protoMatch[0] : '');
+    if (/(pre-?cui|prealablement cuit)[^.]{0,60}lentille|lentille[^.]{0,60}(pre-?cui|prealablement cuit)|cuisez les lentilles|cuire les lentilles/.test(np)) kws.add('lentille');
+    if (/rehydrat[^.]{0,40}pst|pst[^.]{0,40}rehydrat|rehydratation des pst/.test(np)) kws.add('pst');
+    if (/(pre-?cui|prealablement cuit|bouilli)[^.]{0,60}pois chiche|pois chiche[^.]{0,60}(cuire|bouilli)[^.]{0,40}(reserv|egoutt)/.test(np)) kws.add('pois chiche');
+    return kws;
+}
+
 function parseIngredientTable(content, recipeName) {
     if (!content) return [];
 
+    const precookKw = detectPrecookKeywords(content);
     const lines = content.split('\n');
 
     // Trouver l'en-tête : ligne contenant "Qty Base" et "Kcal"
@@ -196,6 +213,9 @@ function parseIngredientTable(content, recipeName) {
 
         const ing = { name, qty_g, kcal_100, prot_100, lip_100, glu_100, role, cook_group, is_pst };
         if (fixed_qty) ing.fixed_qty = true;
+        // precook : légumineuse sèche / PST détectée comme pré-cuite dans le protocole
+        const nl = norm(name);
+        if ([...precookKw].some(kw => nl.includes(kw))) ing.precook = true;
         ingredients.push(ing);
     }
 

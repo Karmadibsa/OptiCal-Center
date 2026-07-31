@@ -218,7 +218,7 @@ C'est **la source de vérité** : si une recette n'est pas dans le manifest, ell
   "tips": "Conseil chef.",
   "emoji": "🥘",
   "ingredients": [
-    { "name": "Nom ingrédient", "qty_g": 150, "kcal_100": 164, "prot_100": 9, "lip_100": 3, "glu_100": 22, "role": "protein_glu", "cook_group": "sauce_nom" },
+    { "name": "Lentilles vertes (sèches)", "qty_g": 60, "kcal_100": 340, "prot_100": 26, "lip_100": 1, "glu_100": 52, "role": "protein_glu", "cook_group": "sauce_nom", "precook": true },
     { "name": "Pâtes sèches",   "qty_g": 80,  "kcal_100": 360, "prot_100": 13, "lip_100": 1.5, "glu_100": 72, "role": "feculent",    "cook_group": "pates" },
     { "name": "Huile d'olive",  "qty_g": 10,  "kcal_100": 884, "prot_100": 0,  "lip_100": 100, "glu_100": 0,  "role": "lipide",      "cook_group": "sauce_nom" },
     { "name": "Légumes",        "qty_g": 150, "kcal_100": 25,  "prot_100": 2,  "lip_100": 0.2, "glu_100": 4,  "role": "legume",      "cook_group": "sauce_nom" },
@@ -244,6 +244,7 @@ C'est **la source de vérité** : si une recette n'est pas dans le manifest, ell
 | `g_per_pc` | nombre | ⬜ | Poids moyen de la pièce en g. Requis si `unit: "pc"` |
 | `fixed_qty` | `true` | ⬜ | Mettre sur les épices/aromates : leur quantité n'est PAS scalée |
 | `is_pst` | `true` | ⬜ | Mettre uniquement sur l'ingrédient PST |
+| `precook` | `true` | ⬜ | Mettre sur un ingrédient à **cuire / réhydrater À PART avant l'assemblage** (voir §4.5). Ex : lentilles/pois chiches **secs** à bouillir, **PST sèches** à réhydrater. ⚠️ NE PAS mettre si l'ingrédient cuit directement dans la sauce (lentilles corail, PST ajoutée sèche dans un plat mijoté, légumineuses en conserve). |
 
 #### Valeurs de `role`
 
@@ -274,6 +275,31 @@ Le `cook_group` détermine comment les ingrédients sont regroupés dans l'ÉTAP
 > ⚠️ `pates`, `riz`, `ebly` sont les **seuls** cook_groups qui génèrent un affichage "à peser au gramme près".
 > Les autres affichent une quantité en g mais sans indication de pesée.
 
+### 4.5 — Système de cuisson (ordre & pré-cuisson) 🔑
+
+Le batch cooking suit une logique **« on cuit d'abord ce qui doit l'être, on assemble ensuite »**.
+Le site regroupe les ingrédients en **3 temps** :
+
+1. **À PRÉ-CUIRE D'ABORD** (remonte en tête de l'étape Cuisson) :
+   - **Féculents à peser** : `cook_group` = `riz` / `pates` / `ebly` / `gnocchis`.
+   - **Ingrédients `precook: true`** : légumineuses **sèches** à bouillir (lentilles vertes, pois chiches secs) et **PST sèches** à réhydrater.
+2. **LA SAUCE / L'ASSEMBLAGE** : tout le reste (`cook_group` = `sauce_[nom]`, `legumes_[nom]`…).
+3. **LA FINITION** hors feu : `cook_group` = `finition_[nom]` (parmesan, herbes fraîches).
+
+#### 🧠 Règle de décision pour l'IA — mettre `precook: true` ou pas ?
+
+Pour **chaque légumineuse sèche ou PST**, regarde le protocole et décide :
+
+| Cas | `precook` | Exemple |
+|---|---|---|
+| Bouillie / réhydratée **séparément** puis égouttée avant d'être ajoutée | ✅ `true` | Lentilles vertes bouillies 20 min · PST réhydratées 10 min puis pressées |
+| Ajoutée **sèche directement** dans la sauce/marmite qui mijote avec du liquide | ❌ (rien) | Lentilles **corail** (fondent dans la sauce) · PST sèche versée dans un curry coco |
+| **En conserve / déjà cuite / égouttée** (aucune cuisson) | ❌ (rien) | Pois chiches en conserve, haricots rouges égouttés |
+
+#### 📝 Impact sur le protocole
+Si un ingrédient a `precook: true`, **l'étape 1 du protocole** doit être sa pré-cuisson, clairement nommée :
+`1. **Pré-cuire les lentilles** — …` ou `1. **Réhydrater les PST** — …`.
+
 ---
 
 ## 5. Checklist avant d'ajouter une recette
@@ -291,6 +317,8 @@ Le `cook_group` détermine comment les ingrédients sont regroupés dans l'ÉTAP
 - [ ] Chaque ingrédient a un `role` et un `cook_group` corrects
 - [ ] Les épices/aromates ont `fixed_qty: true`
 - [ ] L'oignon a `unit: "pc"` et `g_per_pc: 80`
+- [ ] `precook: true` sur les légumineuses **sèches** à bouillir et **PST sèches** à réhydrater séparément (voir §4.5) — PAS sur celles cuites dans la sauce ni en conserve
+- [ ] Si `precook` présent → l'étape 1 du protocole est bien la pré-cuisson
 
 ### Recette Plaisir
 - [ ] Fichier dans `plaisir/` avec nom en `snake_case.md`

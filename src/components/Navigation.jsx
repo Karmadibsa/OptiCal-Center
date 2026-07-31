@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Calculator, Salad, UtensilsCrossed, BookMarked, ChefHat, Menu, X } from 'lucide-react';
+import { Salad, UtensilsCrossed, BookMarked, ChefHat, Menu, X } from 'lucide-react';
 
 const NAV_ITEMS = [
-    { to: '/',              label: 'Dashboard',     icon: LayoutDashboard },
-    { to: '/calculator',   label: 'Calculateur',   icon: Calculator },
-    { to: '/smart-diet',   label: 'Macro Plan',    icon: Salad },
-    { to: '/external-meal',label: 'Repas Ext.',    icon: UtensilsCrossed },
-    { to: '/recipes',      label: 'Idées Recettes', icon: BookMarked },
     { to: '/batch-cooking',label: 'Batch Cooking', icon: ChefHat },
+    { to: '/smart-diet',   label: 'Macro Plan',    icon: Salad },
+    { to: '/recipes',      label: 'Idées Recettes', icon: BookMarked },
+    { to: '/external-meal',label: 'Repas Ext.',    icon: UtensilsCrossed },
 ];
 
 const Navigation = () => {

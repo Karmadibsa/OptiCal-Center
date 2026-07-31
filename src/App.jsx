@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Papa from 'papaparse';
 
 import Navigation from './components/Navigation';
-import Dashboard from './components/Dashboard';
-import Calculator from './components/Calculator';
 import SmartDiet from './components/SmartDiet';
 import DietSummary from './components/DietSummary';
 import ExternalMeal from './components/ExternalMeal';
@@ -133,8 +131,7 @@ const App = () => {
       <Navigation />
 
       <Routes>
-        <Route path="/" element={<Dashboard csvData={data} />} />
-        <Route path="/calculator" element={<Calculator profiles={profiles} />} />
+        <Route path="/" element={<Navigate to="/batch-cooking" replace />} />
         <Route path="/smart-diet" element={<SmartDiet profiles={profiles} setProfiles={setProfiles} />} />
         <Route path="/diet-summary" element={<DietSummary profiles={profiles} data={data} />} />
         <Route path="/external-meal" element={<ExternalMeal profiles={profiles} />} />

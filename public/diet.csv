@@ -3,10 +3,10 @@ Config,Profile,Weight,109,61,System Config
 Config,Profile,Height,183,160,System Config
 Config,Profile,Age,27,27,System Config
 Config,Profile,Deficit,500,250,System Config
-Config,Profile,Prot_Ratio,1.5,1.5,System Config
+Config,Profile,Prot_Ratio,1.9,1.9,System Config
 Config,Profile,Opt_Fromage,20,20,System Config
 Config,Profile,Opt_Fb_Soir,true,false,System Config
-Config,Sport,PAL,1.375,1.375,Niveau d'activité (Physical Activity Level)
+Config,Sport,PAL,1.55,1.55,Niveau d'activité (Physical Activity Level)
 Diet,Matin,Pain + Cancoillotte + Œufs,140g Pain + 30g Canc. + 3 Œufs,80g Pain + 20g Canc. + 2 Œufs,Base fixe
 Diet,Matin,Whey,1 Shaker de Whey (30g),Rien,
 Diet,Midi,Pâtes Protein+ (Cru),139g,63g,Calculé (55%)

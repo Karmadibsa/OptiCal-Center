@@ -219,7 +219,8 @@
         "lip_100": 1,
         "glu_100": 52,
         "role": "protein_glu",
-        "cook_group": "sauce_bolo"
+        "cook_group": "sauce_bolo",
+        "precook": true
       },
       {
         "name": "Pâtes sèches",
@@ -442,7 +443,8 @@
         "glu_100": 52,
         "role": "protein_glu",
         "cook_group": "sauce_butter",
-        "is_pst": false
+        "is_pst": false,
+        "precook": true
       },
       {
         "name": "Coulis de tomate",
@@ -625,7 +627,8 @@
         "lip_100": 5,
         "glu_100": 30,
         "role": "protein",
-        "cook_group": "pst"
+        "cook_group": "pst",
+        "precook": true
       },
       {
         "name": "Riz (cru)",
@@ -943,7 +946,8 @@
         "lip_100": 1,
         "glu_100": 52,
         "role": "protein_glu",
-        "cook_group": "sauce_cham"
+        "cook_group": "sauce_cham",
+        "precook": true
       },
       {
         "name": "Champignons de Paris (frais)",
@@ -1139,7 +1143,8 @@
         "glu_100": 30,
         "role": "protein_glu",
         "cook_group": "sauce_gnocchis_croustillants",
-        "is_pst": true
+        "is_pst": true,
+        "precook": true
       },
       {
         "name": "Haricots blancs (cuits, égouttés)",
@@ -1623,7 +1628,8 @@
         "glu_100": 30,
         "role": "protein_glu",
         "cook_group": "sauce_pasta_bake",
-        "is_pst": true
+        "is_pst": true,
+        "precook": true
       },
       {
         "name": "Coulis de tomate",
@@ -1843,7 +1849,8 @@
         "glu_100": 30,
         "role": "protein_glu",
         "cook_group": "sauce_patates_douces",
-        "is_pst": true
+        "is_pst": true,
+        "precook": true
       },
       {
         "name": "Edamame (surgelés, écossés)",
@@ -2037,7 +2044,8 @@
         "glu_100": 30,
         "role": "protein_glu",
         "cook_group": "sauce_salade_mexicaine",
-        "is_pst": true
+        "is_pst": true,
+        "precook": true
       },
       {
         "name": "Sauce Barbecue (BBQ)",

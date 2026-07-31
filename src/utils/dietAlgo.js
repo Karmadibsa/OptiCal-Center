@@ -94,6 +94,17 @@ export const MACRO_EST = {
 };
 
 
+// ─── Aliments ajustables du petit-déj / collation ────────────────────────────
+// Pain & cancoillotte : valeurs PAR GRAMME (dérivées des /100g). Œuf/banane/pomme : par unité.
+export const FOOD = {
+    pain_semi_complet: { kcal: 2.5,  prot: 0.09, lip: 0.015, glu: 0.48 }, // /g  (~250 kcal/100g)
+    cancoillotte:      { kcal: 1.2,  prot: 0.13, lip: 0.065, glu: 0.04 }, // /g  (~120 kcal/100g)
+    skyr:              { kcal: 0.63, prot: 0.11, lip: 0.002, glu: 0.04 }, // /g  Skyr/fromage blanc (~63 kcal/100g, 11g prot)
+    oeuf:              { kcal: 80,   prot: 6,    lip: 5,      glu: 0 },    // /unité
+    banane:            { kcal: 105,  prot: 1,    lip: 0,      glu: 25 },   // /unité
+    pomme:             { kcal: 72,   prot: 0.4,  lip: 0.2,    glu: 19 },   // /unité
+};
+
 export const DEFAULT_PROFILES = {
     axel: {
         weight: 110,
@@ -102,9 +113,9 @@ export const DEFAULT_PROFILES = {
         birthdate: '1999-07-03', // 3 juillet 1999
         gender: 'male',
         // Objectif protéines libre en g/kg (ex: 1.6, 2.0, 1.8...)
-        prot_ratio: 1.6,
+        prot_ratio: 1.9,
         lip_ratio:  0.9,  // g lipides / kg — cible diéto (0.8-1.0)
-        pal: 1.375,        // Physical Activity Level — budget identique 7j/7
+        pal: 1.55,         // Physical Activity Level — budget identique 7j/7
         deficit: 300,
         opt_fromage: 0,
         opt_fb_soir: false,
@@ -113,6 +124,14 @@ export const DEFAULT_PROFILES = {
         opt_whey_matin:     true, // shaker du matin (Axel uniquement)
         opt_whey_collation: true, // shaker de 16h — peut être supprimé si batch couvre les prot.
         opt_omega3:         true, // 2 gélules Zenement le soir (700 EPA + 500 DHA)
+        // ── Petit-déj / collation ajustables ──
+        pain_matin_g:   140, // g de pain semi-complet le matin
+        cancoillotte_g: 30,  // g de cancoillotte le matin
+        skyr_g:         0,   // g de skyr / fromage blanc (matin)
+        oeuf_matin:     3,   // nb d'œufs le matin
+        oeuf_soir:      3,   // nb d'œufs le soir
+        banane_qty:     1,   // nb de bananes (collation 16h)
+        pomme_qty:      0,    // nb de pommes / jour
     },
     prisca: {
         weight: 62,
@@ -120,9 +139,9 @@ export const DEFAULT_PROFILES = {
         height: 160,
         birthdate: '1999-04-04', // 4 avril 1999
         gender: 'female',
-        prot_ratio: 1.6,
+        prot_ratio: 1.9,
         lip_ratio:  0.9,
-        pal: 1.375,        // Physical Activity Level — budget identique 7j/7
+        pal: 1.55,         // Physical Activity Level — budget identique 7j/7
         deficit: 300,
         opt_fromage: 0,
         opt_fb_soir: false,
@@ -131,6 +150,14 @@ export const DEFAULT_PROFILES = {
         opt_whey_matin:     false, // pas de whey matin pour Prisca (absent dans le plan)
         opt_whey_collation: true,
         opt_omega3:         true, // 2 gélules Zenement le soir (700 EPA + 500 DHA)
+        // ── Petit-déj / collation ajustables ──
+        pain_matin_g:   80,
+        cancoillotte_g: 20,
+        skyr_g:         0,
+        oeuf_matin:     2,
+        oeuf_soir:      2,
+        banane_qty:     1,
+        pomme_qty:      0,
     }
 };
 
@@ -179,6 +206,8 @@ export const calculatePlan = (key, profiles) => {
             glu_goal: 0, glu_warning: false, glu_critical: false,
             total_lip: 0, total_glu: 0,
             pst_qty: 0, oeuf_qty_per_meal: 0, total_estimated: 0,
+            pain_g: 0, canc_g: 0, skyr_g: 0, oeuf_matin: 0, oeuf_soir: 0, banane_qty: 0, pomme_qty: 0,
+            pain_kcal: 0, pain_prot: 0, pain_lip: 0, pain_glu: 0,
             fb_qty: 0, computed_age: computedAge,
             batch_midi_budget: 0, batch_soir_budget: 0,
             omega3_lip: 0, use_omega3: false,
@@ -197,37 +226,54 @@ export const calculatePlan = (key, profiles) => {
     // Étape 3 : Cible = TDEE − déficit
     const target_daily = tdee_final - p.deficit;
 
-    // ── Budget Batch Cooking ──────────────────────────────────────────────────
-    // 65% des kcal totales sont allouées aux repas (midi + soir) afin que les
-    // recettes de batch représentent la fraction principale du plan alimentaire.
-    // Le socle fixe (pain matin, whey, collations, etc.) occupe les ~35% restants.
-    const batch_total_budget = Math.max(0, target_daily) * MEAL_PCT;
-    const batch_midi_budget  = batch_total_budget * 0.55;  // 55% des repas → midi
-    const batch_soir_budget  = batch_total_budget * 0.45;  // 45% des repas → soir
-
     // Étape 3 : Socle Fixe SANS les PST
     let fixed_cal_sans_pst = 0;
     let fixed_prot_sans_pst = 0;
 
-    // Œufs du soir : verrouillés — Axel = 3 (> 80 kg), Prisca = 2
-    const oeuf_qty_per_meal = p.weight > 80 ? 3 : 2;
-    const total_oeufs_day   = oeuf_qty_per_meal * 2; // matin + soir
+    const isAxel = key === 'axel';
+
+    // ── Petit-déj / collation AJUSTABLES (par personne) ──────────────────────
+    const numF = (v, d) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : d; };
+    const pain_g   = numF(raw.pain_matin_g,   isAxel ? 140 : 80);
+    const canc_g   = numF(raw.cancoillotte_g, isAxel ? 30  : 20);
+    const skyr_g   = numF(raw.skyr_g, 0);
+    const oeuf_matin = Math.round(numF(raw.oeuf_matin, p.weight > 80 ? 3 : 2));
+    const oeuf_soir  = Math.round(numF(raw.oeuf_soir,  p.weight > 80 ? 3 : 2));
+    const banane_qty = numF(raw.banane_qty, 1);
+    const pomme_qty  = numF(raw.pomme_qty,  0);
+
+    // œuf_qty_per_meal conservé pour l'affichage du repas du soir (compat)
+    const oeuf_qty_per_meal = oeuf_soir;
+    const total_oeufs_day   = oeuf_matin + oeuf_soir;
+
+    // Pain + cancoillotte + skyr du matin — macros calculées depuis les grammes
+    const pain = {
+        kcal: pain_g * FOOD.pain_semi_complet.kcal + canc_g * FOOD.cancoillotte.kcal + skyr_g * FOOD.skyr.kcal,
+        prot: pain_g * FOOD.pain_semi_complet.prot + canc_g * FOOD.cancoillotte.prot + skyr_g * FOOD.skyr.prot,
+        lip:  pain_g * FOOD.pain_semi_complet.lip  + canc_g * FOOD.cancoillotte.lip  + skyr_g * FOOD.skyr.lip,
+        glu:  pain_g * FOOD.pain_semi_complet.glu  + canc_g * FOOD.cancoillotte.glu  + skyr_g * FOOD.skyr.glu,
+    };
+    // Fruits de la collation 16h (banane + pomme)
+    const fruits = {
+        kcal: banane_qty * FOOD.banane.kcal + pomme_qty * FOOD.pomme.kcal,
+        prot: banane_qty * FOOD.banane.prot + pomme_qty * FOOD.pomme.prot,
+        lip:  banane_qty * FOOD.banane.lip  + pomme_qty * FOOD.pomme.lip,
+        glu:  banane_qty * FOOD.banane.glu  + pomme_qty * FOOD.pomme.glu,
+    };
 
     // Whey : toggleable pour s'ajuster quand le batch cooking couvre les protéines
-    const isAxel             = key === 'axel';
     const use_whey_matin     = isAxel && (p.opt_whey_matin     !== false); // Axel only
     const use_whey_collation =            p.opt_whey_collation !== false;  // les deux
-
-    const oeuf_cal  = total_oeufs_day * 80;
-    const oeuf_prot = total_oeufs_day * 6;
+    const oeuf_cal  = total_oeufs_day * FOOD.oeuf.kcal;
+    const oeuf_prot = total_oeufs_day * FOOD.oeuf.prot;
 
     const items = [
-        socle.pain_matin,
+        { kcal: pain.kcal, prot: pain.prot },                                // pain + cancoillotte matin
         use_whey_matin     ? socle.matin_whey     : { kcal: 0, prot: 0 },
         use_whey_collation ? socle.collation_whey : { kcal: 0, prot: 0 },
-        socle.collation_fruit,
+        { kcal: fruits.kcal, prot: fruits.prot },                            // banane + pomme
         socle.midi_creme,
-        { kcal: oeuf_cal, prot: oeuf_prot },
+        { kcal: oeuf_cal, prot: oeuf_prot },                                 // œufs matin + soir
         socle.soir_creme,
         socle.legumes,
     ];
@@ -245,19 +291,37 @@ export const calculatePlan = (key, profiles) => {
     const omega3_kcal = use_omega3 ? OMEGA3_ZENEMENT.kcal_per_dose : 0;
     fixed_cal_sans_pst += omega3_kcal;
 
+    // ── Budget Batch Cooking ──────────────────────────────────────────────────
+    // Les recettes batch remplacent les féculents (pâtes/PST) et contiennent déjà
+    // leur crème/légumes/huile. Elles sont donc calibrées sur ce qu'il RESTE après
+    // le socle réellement mangé hors recettes (petit-déj + collations 16h + œufs
+    // du soir + fromage). Ainsi : socle_hors_recettes + batch = cible (pas de
+    // dépassement). Ce socle correspond exactement à getSocleItems (feuille FatSecret).
+    const socle_fatsecret_kcal =
+        pain.kcal +
+        (use_whey_matin     ? socle.matin_whey.kcal     : 0) +
+        (use_whey_collation ? socle.collation_whey.kcal : 0) +
+        fruits.kcal +
+        oeuf_cal + // œufs matin + soir
+        (p.opt_fromage > 0 ? p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal : 0);
+    const batch_total_budget = Math.max(0, target_daily - socle_fatsecret_kcal);
+    const batch_midi_budget  = batch_total_budget * 0.55;  // 55% des repas → midi
+    const batch_soir_budget  = batch_total_budget * 0.45;  // 45% des repas → soir
+
     let fixed_lip_sans_pst =
-        (isAxel ? MACRO_EST.pain_axel_lip : MACRO_EST.pain_prisca_lip) +
+        pain.lip +
         (wheyNb * MACRO_EST.whey_lip_per) +
         (total_oeufs_day * MACRO_EST.oeuf_lip) +
         (MACRO_EST.creme_lip_per_30g * 2) + 1 + // Légumes lip = 1
+        fruits.lip +
         omega3_lip;
 
     let fixed_glu_sans_pst =
-        (isAxel ? MACRO_EST.pain_axel_glu : MACRO_EST.pain_prisca_glu) +
+        pain.glu +
         (wheyNb * MACRO_EST.whey_glu_per) +
         (2) + // crème glu
         (MACRO_EST.legumes_glu_jour) +
-        (MACRO_EST.banane_glu);
+        fruits.glu;
 
     if (p.opt_fromage > 0) {
         fixed_cal_sans_pst += p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal;
@@ -370,6 +434,9 @@ export const calculatePlan = (key, profiles) => {
         pst_qty,
         fb_qty,
         oeuf_qty_per_meal,
+        // ── Petit-déj / collation ajustables (pour getSocleItems, DietSummary) ──
+        pain_g, canc_g, skyr_g, oeuf_matin, oeuf_soir, banane_qty, pomme_qty,
+        pain_kcal: pain.kcal, pain_prot: pain.prot, pain_lip: pain.lip, pain_glu: pain.glu,
         use_whey_matin,     // bool — état actuel du shaker matin
         use_whey_collation, // bool — état actuel du shaker 16h
         use_omega3,         // bool — Oméga-3 Zenement actif
@@ -423,6 +490,7 @@ export const scaleRecipeForMeal = (key, profiles, recipe, meal = 'midi') => {
             g_per_pc:   ing.g_per_pc   || null,   // grammes / pièce (si unit='pc')
             cook_group: ing.cook_group || null,   // groupe de cuisson pour BatchCooking
             fixed_qty:  !!ing.fixed_qty,          // passthrough pour affichage BatchCooking
+            precook:    !!ing.precook,            // à cuire/réhydrater d'abord (lentilles/PST secs)
             kcal_100:   ing.kcal_100,             // conservé pour le lip boost
             lip_100:    ing.lip_100,              // conservé pour le lip boost
             raw_g:      effectiveQty,
@@ -581,5 +649,243 @@ export const getMealBudget = (key, profiles, meal) => {
         prot: r(total.prot, 1),
         lip:  r(total.lip, 1),
         glu:  r(total.glu, 1)
+    };
+};
+
+// ─── Socle fixe "à saisir dans FatSecret" (hors plats batch) ─────────────────
+// Liste itemisée des aliments constants chaque jour NON contenus dans les recettes
+// batch : petit-déjeuner (pain + cancoillotte + œufs + whey), collation 16h
+// (banane + whey), œufs du soir et fromage optionnel.
+// ⚠️ Volontairement SANS la crème et les légumes : les recettes batch les
+// contiennent déjà (on éviterait un double comptage), et SANS les pâtes/PST
+// (l'ancien système féculent est remplacé par les recettes batch).
+export const getSocleItems = (key, profiles) => {
+    const plan   = calculatePlan(key, profiles);
+    const isAxel = key === 'axel';
+    const socle  = { ...SOCLE_DATA.common, ...SOCLE_DATA[key] };
+    const p      = profiles[key];
+    const { pain_g, canc_g, skyr_g, oeuf_matin, oeuf_soir, banane_qty, pomme_qty } = plan;
+    const F = FOOD;
+
+    const items = [];
+    // ── Matin ──
+    if (pain_g > 0) items.push({
+        moment: 'Matin', name: 'Pain semi-complet', detail: `${pain_g}g`,
+        kcal: pain_g * F.pain_semi_complet.kcal, prot: pain_g * F.pain_semi_complet.prot,
+        lip: pain_g * F.pain_semi_complet.lip, glu: pain_g * F.pain_semi_complet.glu,
+    });
+    if (canc_g > 0) items.push({
+        moment: 'Matin', name: 'Cancoillotte', detail: `${canc_g}g`,
+        kcal: canc_g * F.cancoillotte.kcal, prot: canc_g * F.cancoillotte.prot,
+        lip: canc_g * F.cancoillotte.lip, glu: canc_g * F.cancoillotte.glu,
+    });
+    if (skyr_g > 0) items.push({
+        moment: 'Matin', name: 'Skyr / fromage blanc', detail: `${skyr_g}g`,
+        kcal: skyr_g * F.skyr.kcal, prot: skyr_g * F.skyr.prot,
+        lip: skyr_g * F.skyr.lip, glu: skyr_g * F.skyr.glu,
+    });
+    if (oeuf_matin > 0) items.push({
+        moment: 'Matin', name: 'Œufs entiers', detail: `${oeuf_matin} œuf${oeuf_matin > 1 ? 's' : ''}`,
+        kcal: oeuf_matin * F.oeuf.kcal, prot: oeuf_matin * F.oeuf.prot, lip: oeuf_matin * F.oeuf.lip, glu: 0,
+    });
+    if (plan.use_whey_matin) items.push({
+        moment: 'Matin', name: 'Whey', detail: '1 shaker (30g)',
+        kcal: socle.matin_whey.kcal, prot: socle.matin_whey.prot,
+        lip: MACRO_EST.whey_lip_per, glu: MACRO_EST.whey_glu_per,
+    });
+    // ── 16h ──
+    if (banane_qty > 0) items.push({
+        moment: '16h', name: 'Banane', detail: `${banane_qty} banane${banane_qty > 1 ? 's' : ''}`,
+        kcal: banane_qty * F.banane.kcal, prot: banane_qty * F.banane.prot, lip: banane_qty * F.banane.lip, glu: banane_qty * F.banane.glu,
+    });
+    if (pomme_qty > 0) items.push({
+        moment: '16h', name: 'Pomme', detail: `${pomme_qty} pomme${pomme_qty > 1 ? 's' : ''}`,
+        kcal: pomme_qty * F.pomme.kcal, prot: pomme_qty * F.pomme.prot, lip: pomme_qty * F.pomme.lip, glu: pomme_qty * F.pomme.glu,
+    });
+    if (plan.use_whey_collation) items.push({
+        moment: '16h', name: 'Whey', detail: isAxel ? '1 shaker (30g)' : '1 shaker (25g)',
+        kcal: socle.collation_whey.kcal, prot: socle.collation_whey.prot,
+        lip: MACRO_EST.whey_lip_per, glu: MACRO_EST.whey_glu_per,
+    });
+    // ── Soir (extras hors recette) ──
+    if (oeuf_soir > 0) items.push({
+        moment: 'Soir', name: 'Œufs entiers', detail: `${oeuf_soir} œuf${oeuf_soir > 1 ? 's' : ''}`,
+        kcal: oeuf_soir * F.oeuf.kcal, prot: oeuf_soir * F.oeuf.prot, lip: oeuf_soir * F.oeuf.lip, glu: 0,
+    });
+    if (p.opt_fromage > 0) items.push({
+        moment: 'Soir', name: 'Fromage', detail: `${p.opt_fromage}g`,
+        kcal: p.opt_fromage * SOCLE_DATA.common.fromage_unit.kcal,
+        prot: p.opt_fromage * SOCLE_DATA.common.fromage_unit.prot,
+        lip: p.opt_fromage * MACRO_EST.fromage_unit_lip, glu: 0,
+    });
+
+    const total = items.reduce((a, i) => ({
+        kcal: a.kcal + i.kcal, prot: a.prot + i.prot, lip: a.lip + i.lip, glu: a.glu + i.glu,
+    }), { kcal: 0, prot: 0, lip: 0, glu: 0 });
+
+    // Arrondis d'affichage (évite les artefacts flottants type 6.6000000001)
+    const round1 = (n) => Math.round((n || 0) * 10) / 10;
+    const roundedItems = items.map(i => ({
+        ...i, kcal: Math.round(i.kcal), prot: round1(i.prot), lip: round1(i.lip), glu: round1(i.glu),
+    }));
+    const roundedTotal = {
+        kcal: Math.round(total.kcal), prot: round1(total.prot), lip: round1(total.lip), glu: round1(total.glu),
+    };
+
+    return { items: roundedItems, total: roundedTotal };
+};
+
+// ─── Tags de recette (pour filtrer la sélection batch) ───────────────────────
+// Dérivés automatiquement des ingrédients / cook_group, + température (chaud/froid)
+// heuristique depuis le nom (les salades = froid). Retourne un tableau de tags.
+const _norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+export const getRecipeTags = (recipe) => {
+    if (!recipe) return [];
+    const tags = new Set();
+    const name = _norm(recipe.name);
+    const ings = recipe.ingredients || [];
+    const groups = new Set(ings.map(i => i.cook_group).filter(Boolean));
+    const ingHas = (kw) => ings.some(i => _norm(i.name).includes(kw));
+
+    // Température : salade / froid → froid, sinon chaud
+    tags.add(/salade|froid|taboule|wrap froid/.test(name) ? 'froid' : 'chaud');
+
+    // Base féculent
+    if (groups.has('riz')      || ingHas('riz'))       tags.add('riz');
+    if (groups.has('pates')    || ingHas('pate'))      tags.add('pâtes');
+    if (groups.has('ebly')     || ingHas('ebly'))      tags.add('ebly');
+    if (groups.has('gnocchis') || ingHas('gnocchi'))   tags.add('gnocchis');
+    if (ingHas('patate douce') || ingHas('pomme de terre')) tags.add('patate douce');
+
+    // Source protéines
+    if (recipe.has_pst === true || recipe.has_pst === 'true' || ingHas('pst')) tags.add('PST');
+    if (ingHas('lentille') || ingHas('haricot') || ingHas('pois chiche') || ingHas('edamame')) tags.add('légumineuses');
+    if (ingHas('thon'))    tags.add('thon');
+
+    return [...tags];
+};
+
+// ─── Index & Charge Glycémique ────────────────────────────────────────────────
+// ⚠️ Les IG ci-dessous sont des ESTIMATIONS issues des tables de référence
+// internationales (Foster-Powell 2002 / Univ. de Sydney). Ils servent à comparer
+// les recettes entre elles, pas à un usage médical (l'IG réel varie selon la
+// cuisson, la variété, la maturité, la transformation, etc.).
+//
+// Règles ordonnées : le PREMIER mot-clé trouvé dans le nom (normalisé) gagne.
+// On matche donc du plus spécifique au plus générique.
+const GI_RULES = [
+    // Légumineuses & protéines végétales (IG bas)
+    ['corail', 26], ['lentille', 30],
+    ['pois chiche', 33],
+    ['edamame', 18], ['soja', 18], ['pst', 20],
+    ['haricot', 35],
+    // Féculents
+    ['maizena', 85],
+    ['patate douce', 63],
+    ['pomme de terre', 78],
+    ['gnocchi', 68],
+    ['riz basmati', 58], ['riz', 70],
+    ['pate complet', 42], ['pates complet', 42], ['pate', 50],
+    ['ebly', 45], ['ble precuit', 45], ['ble', 45],
+    ['mais', 52],
+    // Légumes & tomate
+    ['carotte', 35],
+    ['coulis', 35], ['concentre de tomate', 35], ['pulpe', 35], ['tomate', 30],
+    ['oignon', 15], ['ail', 30],
+    ['courgette', 15], ['concombre', 15], ['poivron', 15], ['champignon', 15],
+    ['epinard', 15], ['chou', 15], ['celeri', 15], ['cornichon', 15], ['patate', 63],
+    // Sauces & aromatiques
+    ['barbecue', 60], ['bbq', 60], ['sauce soja', 20], ['moutarde', 35],
+    ['vinaigre', 5], ['citron', 20], ['levure', 35], ['epice', 40],
+    // Matières grasses / laitages (IG bas, souvent peu de glucides)
+    ['cacahuete', 14],
+    ['lait de coco', 40], ['lait', 30],
+    ['creme', 30], ['fromage blanc', 30], ['cheddar', 30], ['mozzarella', 30],
+    ['gruyere', 30], ['parmesan', 30], ['grana', 30], ['fromage', 30],
+    ['mayonnaise', 30], ['beurre', 30],
+    // Protéines animales (≈ 0 glucide → CG négligeable quel que soit l'IG)
+    ['thon', 0], ['lardon', 0],
+];
+
+// IG par défaut selon le rôle si aucun mot-clé ne matche
+const GI_ROLE_FALLBACK = {
+    feculent:    65,
+    protein_glu: 35,
+    protein:     35,
+    legume:      35,
+    lipide:      30,
+    aromatique:  40,
+};
+
+const normalizeGIName = (s) =>
+    String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+// Résout l'IG estimé d'un ingrédient depuis son nom (puis son rôle en secours)
+export const resolveIngredientGI = (name, role) => {
+    const n = normalizeGIName(name);
+    for (const [kw, gi] of GI_RULES) {
+        if (n.includes(kw)) return gi;
+    }
+    return GI_ROLE_FALLBACK[role] ?? 50;
+};
+
+// Seuils de charge glycémique PAR REPAS COMPLET (repère indicatif — les repas batch
+// sont volumineux ~120g de glucides, donc bien au-dessus des seuils "par aliment"
+// classiques low≤10/high≥20 ; ces bornes servent à comparer les plats entre eux).
+export const GL_MEAL_LOW = 25;   // ≤ 25 : bas
+export const GL_MEAL_MID = 45;   // ≤ 45 : modéré · au-delà : élevé
+
+// ─── Calcul IG + CG d'un repas scalé (issu de scaleRecipeForMeal) ─────────────
+// Retourne :
+//   carbs        : glucides totaux (g)
+//   gi / gl      : IG moyen (pondéré glucides) et charge glycémique BRUTS
+//   gi_smoothed  : IG "lissé" après atténuation repas mixte
+//   gl_smoothed  : charge glycémique "lissée"
+//   reduction    : % d'atténuation appliqué
+//   level        : 'bas' | 'modéré' | 'élevé' (sur la CG lissée)
+//
+// Lissage (atténuation repas mixte) : lipides & protéines ralentissent la vidange
+// gastrique et aplatissent la réponse glycémique. On applique une réduction bornée
+// fonction du ratio (lipides, protéines) / glucides. Les fibres atténuent aussi mais
+// ne sont pas disponibles dans les données → non prises en compte (estimation prudente).
+export const computeGlycemic = (scaled) => {
+    if (!scaled || !Array.isArray(scaled.ingredients)) return null;
+
+    let carbs = 0;
+    let giCarbSum = 0;
+    scaled.ingredients.forEach(ing => {
+        const c = Math.max(0, Number(ing.glu) || 0);
+        if (c <= 0) return;
+        const gi = resolveIngredientGI(ing.name, ing.role);
+        carbs     += c;
+        giCarbSum += gi * c;
+    });
+
+    if (carbs <= 0) {
+        return { carbs: 0, gi: 0, gl: 0, gi_smoothed: 0, gl_smoothed: 0, reduction: 0, level: 'bas' };
+    }
+
+    const gl = giCarbSum / 100;         // charge glycémique brute
+    const gi = giCarbSum / carbs;        // IG moyen pondéré par les glucides
+
+    const p = Math.max(0, Number(scaled.total_prot) || 0);
+    const l = Math.max(0, Number(scaled.total_lip)  || 0);
+    const fatRatio  = l / carbs;
+    const protRatio = p / carbs;
+    // Réduction bornée à 35% : 20% max via lipides, 12% max via protéines
+    const reduction = Math.min(0.35, 0.20 * Math.min(fatRatio, 1.5) + 0.12 * Math.min(protRatio, 2));
+
+    const gl_smoothed = gl * (1 - reduction);
+    const gi_smoothed = gi * (1 - reduction);
+    const level = gl_smoothed <= GL_MEAL_LOW ? 'bas' : gl_smoothed <= GL_MEAL_MID ? 'modéré' : 'élevé';
+
+    return {
+        carbs:       Math.round(carbs),
+        gi:          Math.round(gi),
+        gl:          +gl.toFixed(1),
+        gi_smoothed: Math.round(gi_smoothed),
+        gl_smoothed: +gl_smoothed.toFixed(1),
+        reduction:   Math.round(reduction * 100),
+        level,
     };
 };

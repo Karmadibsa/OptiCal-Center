@@ -20,32 +20,33 @@ const SocleTable = ({ planKey, plan, profiles }) => {
     const optFromage  = Math.max(0, Number(p.opt_fromage) || 0);
     const optFbSoir   = Boolean(p.opt_fb_soir);
 
-    const wheyKcal = socle.matin_whey.kcal + socle.collation_whey.kcal;
-    const wheyProt = socle.matin_whey.prot + socle.collation_whey.prot;
-    const wheyNb   = isAxel ? 2 : 1;
-    const totalOeufs = plan.oeuf_qty_per_meal * 2;
+    // Whey selon les toggles réels (matin Axel + collation 16h)
+    const wheyNb   = (plan.use_whey_matin ? 1 : 0) + (plan.use_whey_collation ? 1 : 0);
+    const wheyKcal = (plan.use_whey_matin ? socle.matin_whey.kcal : 0) + (plan.use_whey_collation ? socle.collation_whey.kcal : 0);
+    const wheyProt = (plan.use_whey_matin ? socle.matin_whey.prot : 0) + (plan.use_whey_collation ? socle.collation_whey.prot : 0);
+    const totalOeufs = (plan.oeuf_matin || 0) + (plan.oeuf_soir || 0);
 
-    // ─── Socle FIXE (vraiment constants, jamais recalculés) ───────────────
+    // ─── Socle FIXE (depuis les réglages petit-déj ajustables) ───────────────
     const fixedRows = [
         {
-            name: 'Pain + Cancoillotte (matin)',
-            detail: isAxel ? '140g pain + 30g canc.' : '80g pain + 20g canc.',
-            kcal: socle.pain_matin.kcal,
-            prot: socle.pain_matin.prot,
-            lip: isAxel ? EST.pain_axel_lip : EST.pain_prisca_lip,
-            glu: isAxel ? EST.pain_axel_glu : EST.pain_prisca_glu,
+            name: 'Petit-déj (pain/canc./skyr)',
+            detail: `${plan.pain_g}g pain + ${plan.canc_g}g canc.${plan.skyr_g > 0 ? ` + ${plan.skyr_g}g skyr` : ''}`,
+            kcal: plan.pain_kcal,
+            prot: plan.pain_prot,
+            lip: plan.pain_lip,
+            glu: plan.pain_glu,
         },
-        {
+        ...(wheyNb > 0 ? [{
             name: 'Whey Protéinée',
             detail: `×${wheyNb} shaker${wheyNb > 1 ? 's' : ''} / jour`,
             kcal: wheyKcal,
             prot: wheyProt,
             lip: wheyNb * EST.whey_lip_per,
             glu: wheyNb * EST.whey_glu_per,
-        },
+        }] : []),
         {
             name: 'Œufs entiers',
-            detail: `×${totalOeufs} / jour (${plan.oeuf_qty_per_meal} × 2 repas)`,
+            detail: `×${totalOeufs} / jour (${plan.oeuf_matin} matin + ${plan.oeuf_soir} soir)`,
             kcal: totalOeufs * 80,
             prot: totalOeufs * 6,
             lip: totalOeufs * EST.oeuf_lip,
@@ -67,14 +68,22 @@ const SocleTable = ({ planKey, plan, profiles }) => {
             lip: 1,
             glu: EST.legumes_glu_jour,
         },
-        {
+        ...((plan.banane_qty || 0) > 0 ? [{
             name: 'Banane (collation 16h)',
-            detail: '1 banane',
-            kcal: EST.banane_kcal,
-            prot: EST.banane_prot,
+            detail: `${plan.banane_qty} banane${plan.banane_qty > 1 ? 's' : ''}`,
+            kcal: plan.banane_qty * EST.banane_kcal,
+            prot: plan.banane_qty * EST.banane_prot,
             lip: 0,
-            glu: EST.banane_glu,
-        },
+            glu: plan.banane_qty * EST.banane_glu,
+        }] : []),
+        ...((plan.pomme_qty || 0) > 0 ? [{
+            name: 'Pomme (collation 16h)',
+            detail: `${plan.pomme_qty} pomme${plan.pomme_qty > 1 ? 's' : ''}`,
+            kcal: plan.pomme_qty * 72,
+            prot: plan.pomme_qty * 0.4,
+            lip: plan.pomme_qty * 0.2,
+            glu: plan.pomme_qty * 19,
+        }] : []),
     ];
 
     // Options passées dans les variables, plus dans fixedRows
@@ -140,10 +149,10 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                             <tr key={i}>
                                 <td className="ds-td-name">{row.name}</td>
                                 <td className="ds-td-detail">{row.detail}</td>
-                                <td><span className="ds-val">{row.kcal}</span></td>
-                                <td><span className="ds-val ds-prot">{row.prot}</span></td>
-                                <td><span className="ds-val ds-lip">{row.lip}</span></td>
-                                <td><span className="ds-val ds-glu">{row.glu}</span></td>
+                                <td><span className="ds-val">{r(row.kcal)}</span></td>
+                                <td><span className="ds-val ds-prot">{r(row.prot, 1)}</span></td>
+                                <td><span className="ds-val ds-lip">{r(row.lip, 1)}</span></td>
+                                <td><span className="ds-val ds-glu">{r(row.glu, 1)}</span></td>
                             </tr>
                         ))}
                     </tbody>
