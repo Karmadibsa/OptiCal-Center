@@ -144,6 +144,22 @@
     "emoji": "🍜"
   },
   {
+    "file": "plaisir/riz_au_thon_de_maman.md",
+    "id": "730027",
+    "name": "Riz au Thon de Maman",
+    "category": "plats|poisson",
+    "kcal": "585",
+    "prot": "40",
+    "lip": "11",
+    "glu": "74",
+    "price": "2.60",
+    "prep_active": "15 min",
+    "prep_inactive": "15 min",
+    "description": "La recette familiale réconfortante — du riz blanc lié à une sauce crémeuse de thon fondu, oignon et ail, puis rehaussé au dernier moment de thon et d'oignon crus qui croquent. Simple, généreux et ultra protéiné.",
+    "tips": "Le secret de maman : garde la moitié du thon et de l'oignon crus pour la fin. Ça apporte le croquant de l'oignon et des morceaux de thon frais qui font toute la différence.",
+    "emoji": "🐟"
+  },
+  {
     "file": "plaisir/skillet_patates_brocoli_oeufs.md",
     "id": "730022",
     "name": "Skillet Patates, Brocoli & Œufs",
