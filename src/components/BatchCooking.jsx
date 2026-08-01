@@ -116,6 +116,7 @@ const BatchCooking = ({ profiles }) => {
         try { return JSON.parse(localStorage.getItem('bc_done_steps') || '{}'); } catch { return {}; }
     });
     useEffect(() => { localStorage.setItem('bc_done_steps', JSON.stringify(doneSteps)); }, [doneSteps]);
+    const [recipeSteps, setRecipeSteps] = useState({});           // id → étapes du protocole (pour "prochaine étape")
 
     // Helper : slot désactivé ?
     const isSlotDisabled = (day, meal) => !!disabledSlots[`${day}_${meal}`];
@@ -136,6 +137,30 @@ const BatchCooking = ({ profiles }) => {
             setLoading(false);
         }).catch(() => setLoading(false));
     }, []);
+
+    // ── Chargement des protocoles des recettes du plan (pour "prochaine étape") ──
+    useEffect(() => {
+        if (recipes.length === 0) return;
+        const base = import.meta.env.BASE_URL || '/';
+        const ids = new Set();
+        DAYS.forEach(d => MEALS.forEach(m => { if (!disabledSlots[`${d}_${m}`]) { const id = weekPlan[d]?.[m]; if (id) ids.add(id); } }));
+        const missing = [...ids].filter(id => !recipeSteps[id]);
+        if (missing.length === 0) return;
+        const parseProto = (md) => {
+            const steps = []; let inSec = false;
+            (md || '').split('\n').forEach(line => {
+                if (/^###\s+Protocole/.test(line)) { inSec = true; return; }
+                if (inSec && /^###/.test(line)) inSec = false;
+                if (inSec && /^\d+\./.test(line.trim())) steps.push(line.trim().replace(/^\d+\.\s*/, ''));
+            });
+            return steps;
+        };
+        Promise.all(missing.map(id => {
+            const r = recipes.find(x => x.id === id);
+            if (!r?.file) return Promise.resolve([id, []]);
+            return fetch(`${base}recipes/${r.file}`).then(res => res.text()).then(t => [id, parseProto(t)]).catch(() => [id, []]);
+        })).then(pairs => setRecipeSteps(prev => { const n = { ...prev }; pairs.forEach(([id, s]) => { n[id] = s; }); return n; }));
+    }, [weekPlan, disabledSlots, recipes]); // eslint-disable-line
 
     // ── Sync localStorage ─────────────────────────────────────────────────────
     useEffect(() => {
@@ -1233,6 +1258,43 @@ const BatchCooking = ({ profiles }) => {
                             <p style={{ fontSize: '0.76rem', color: '#475569', marginBottom: '1.25rem' }}>
                                 Les ingrédients cuisinés ensemble sont regroupés. 🔀 = cuisson commune à plusieurs recettes.
                             </p>
+
+                            {/* ── Prochaine étape par plat (sans ouvrir la fiche) ── */}
+                            {(() => {
+                                const ids = [...new Set(DAYS.flatMap(d => MEALS.map(m => (!isSlotDisabled(d, m) ? weekPlan[d]?.[m] : null))).filter(Boolean))];
+                                const cards = ids.map(id => {
+                                    const r = recipes.find(x => x.id === id);
+                                    const steps = recipeSteps[id] || [];
+                                    if (!r || steps.length === 0) return null;
+                                    const nextIdx = steps.findIndex((_, i) => !doneSteps[`${id}_${i}`]);
+                                    const done = nextIdx === -1;
+                                    return { r, steps, nextIdx, done };
+                                }).filter(Boolean);
+                                if (cards.length === 0) return null;
+                                return (
+                                    <div style={{ marginBottom: '1.4rem', padding: '0.8rem 1rem', background: 'rgba(56,189,248,0.06)', border: '1px solid rgba(56,189,248,0.2)', borderRadius: '10px' }}>
+                                        <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.8px', marginBottom: '0.6rem' }}>👉 PROCHAINE ÉTAPE PAR PLAT</div>
+                                        <div style={{ display: 'grid', gap: '0.5rem' }}>
+                                            {cards.map(({ r, steps, nextIdx, done }) => (
+                                                <div key={r.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', padding: '0.4rem 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                                    <span style={{ fontSize: '0.95rem', flexShrink: 0 }}>{r.emoji}</span>
+                                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                                        <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#cbd5e1' }}>{r.name} <span style={{ color: '#475569', fontWeight: 400 }}>· {done ? '✅ terminé' : `étape ${nextIdx + 1}/${steps.length}`}</span></div>
+                                                        {!done && <div style={{ fontSize: '0.8rem', color: '#e2e8f0', lineHeight: 1.5, marginTop: '0.15rem' }}>{renderInline(steps[nextIdx])}</div>}
+                                                    </div>
+                                                    {!done && (
+                                                        <button onClick={() => setDoneSteps(prev => ({ ...prev, [`${r.id}_${nextIdx}`]: true }))} style={{
+                                                            flexShrink: 0, fontSize: '0.66rem', fontWeight: 700, padding: '0.3rem 0.55rem', borderRadius: '6px', cursor: 'pointer',
+                                                            background: 'rgba(74,222,128,0.12)', border: '1px solid #4ade80', color: '#4ade80',
+                                                        }}>✓ Fait</button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                );
+                            })()}
+
                             <div style={{ display: 'grid', gap: '1.1rem' }}>
                                 {cookGroupData.map(({ gk, label, per_prm, ings, total_g }) => {
                                     const prmList    = Object.values(per_prm);

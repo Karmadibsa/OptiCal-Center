@@ -25,7 +25,8 @@ emoji: 🍗
 | Épices (paprika, ail, sel) | 4 | g | 11 | 0.5 | 0.2 | 1.5 | non | non | 0.05 |
 
 ### Protocole
-1. **Étape 1** — Réhydratez les PST dans un bouillon chaud 10 min, égouttez et pressez fermement pour les assécher.
-2. **Étape 2** — Passez les PST dans l'œuf battu puis le panko assaisonné (paprika, ail, sel).
-3. **Étape 3** — Coupez la patate douce en frites, enrobez d'un filet d'huile et d'épices.
-4. **Étape 4** — Enfournez tenders et frites à 200° (ou air fryer) 20-25 min en retournant à mi-cuisson, jusqu'à ce que tout soit doré et croustillant.
+1. **Étape 1** — Préchauffez le four à 200° (ou l'air fryer). Réhydratez les PST dans un bouillon chaud 10 min, égouttez et pressez-les très fermement entre vos mains ou dans un torchon pour les assécher au maximum.
+2. **Étape 2** — Préparez une panure en 2 temps : passez chaque PST dans l'œuf battu, puis roulez-la dans le panko assaisonné (paprika, ail en poudre, sel) en appuyant pour bien l'enrober.
+3. **Étape 3** — Coupez la patate douce en bâtonnets réguliers (frites), enrobez-les d'un filet d'huile et d'épices dans un saladier.
+4. **Étape 4** — Disposez tenders et frites en une seule couche, sans les entasser (sinon ça cuit à la vapeur au lieu de croustiller).
+5. **Étape 5** — Enfournez 20-25 min à 200° (ou air fryer) en retournant à mi-cuisson, jusqu'à ce que les tenders soient dorés et croustillants et les frites tendres à cœur et dorées aux bords.

@@ -23,16 +23,18 @@ emoji: 🍕
 | Blanc de dinde supérieur | 70 | g | 75 | 15 | 1 | 0 | oui | non | 0.90 |
 | Herbes de Provence / Origan | 2 | g | 5 | 0.2 | 0.1 | 0.5 | non | non | 0.05 |
 
-### Déclinaisons de garniture (base identique : 2 feuilles de riz + 1,5 œuf)
-| Version | Garniture | Kcal | Prot | Lip | Glu |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **1 — Bianca mozza/dinde** | 100g mozzarella protéinée + 70g blanc de dinde + origan | 354 | 42 | 12 | 19 |
-| **2 — Fromage frais/poulet** | 2 carrés frais 0% (50g) + 50g émincé de poulet rôti + 20 tomates cerises + origan | 285 | 25 | 8 | 28 |
-| **3 — Base tomate/thon** | 40g coulis de tomate + 80g thon égoutté + 40g mozzarella light + origan | 300 | 35 | 9 | 15 |
-| **4 — Chèvre-miel/dinde** | 40g fromage frais + 30g bûche de chèvre + 60g dinde + un filet de miel + roquette | 360 | 32 | 16 | 20 |
-| **5 — Jambon-champignons** | 40g fromage frais + 50g jambon de dinde + champignons émincés + 30g emmental light | 320 | 33 | 12 | 18 |
+### Déclinaisons de garniture
+Base identique pour toutes : **2 feuilles de riz + 1,5 œuf** (~147 kcal). Varie la sauce et le topping selon tes macros du jour.
 
-> 💡 La base reste toujours 2 feuilles de riz + 1,5 œuf (~147 kcal). Varie la sauce (fromage frais crémeux ou coulis de tomate) et le topping protéiné selon ton envie et tes macros du jour.
+**Version 1 — Bianca mozza/dinde** — 100g mozzarella protéinée + 70g blanc de dinde + origan. _354 kcal · 42g P · 12g L · 19g G._
+
+**Version 2 — Fromage frais/poulet** — 2 carrés frais 0% (50g) + 50g émincé de poulet rôti + 20 tomates cerises + origan. _285 kcal · 25g P · 8g L · 28g G._
+
+**Version 3 — Base tomate/thon** — 40g coulis de tomate + 80g thon égoutté + 40g mozzarella light + origan. _300 kcal · 35g P · 9g L · 15g G._
+
+**Version 4 — Chèvre-miel/dinde** — 40g fromage frais + 30g bûche de chèvre + 60g dinde + un filet de miel + roquette. _360 kcal · 32g P · 16g L · 20g G._
+
+**Version 5 — Jambon-champignons** — 40g fromage frais + 50g jambon de dinde + champignons émincés + 30g emmental light. _320 kcal · 33g P · 12g L · 18g G._
 
 ### Protocole
 1. **Base croustillante** — Battez l'œuf dans une assiette. Passez rapidement chaque feuille de riz sous un filet d'eau pour l'assouplir, puis superposez les 2 feuilles en badigeonnant généreusement de jaune d'œuf entre les deux et sur le dessus.

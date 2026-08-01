@@ -10,7 +10,7 @@ price: 3.40
 prep_active: 15 min
 prep_inactive: 5 min
 description: Le pad thaï revisité léger : nouilles de konjac sautées, crevettes, œuf, germes de soja croquants et sauce tamarin, finies aux cacahuètes et citron vert.
-tips: Garde les germes de soja et les cacahuètes pour la toute fin, hors du feu, pour un maximum de croquant.
+tips: Garde germes de soja et cacahuètes pour la fin (croquant). ⚖️ Konjac quasi 0 kcal : pour plus copieux, augmente les crevettes plutôt que le konjac — max ~300-350g konjac (Axel) / 150-200g (Prisca).
 emoji: 🦐
 ---
 

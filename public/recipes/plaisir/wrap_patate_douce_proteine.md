@@ -27,8 +27,10 @@ emoji: 🌯
 | Épices (paprika, cumin, poivre) | 3 | g | 8 | 0.3 | 0.1 | 1 | non | non | 0.05 |
 
 ### Protocole
-1. **Étape 1** — Épluchez et coupez la patate douce en fines tranches ou en dés, disposez sur une plaque.
-2. **Étape 2** — Faites revenir le bœuf 5% avec l'oignon émincé, paprika, cumin et poivre.
-3. **Étape 3** — Répartissez le bœuf sur la patate douce, ajoutez le fromage protéiné et le cottage cheese.
-4. **Étape 4** — Enfournez 35 à 40 min à 180° jusqu'à ce que la patate douce soit fondante et le fromage doré.
-5. **Étape 5** — Ajoutez la salade fraîche et la sauce chipotle au moment de servir.
+1. **Étape 1** — Préchauffez le four à 180°. Épluchez la patate douce et coupez-la en fines tranches (~5 mm) ou en dés réguliers pour une cuisson homogène. Disposez-la en une couche sur une plaque avec papier cuisson, salez.
+2. **Étape 2** — Dans une poêle, faites revenir l'oignon émincé 2 min, ajoutez le bœuf 5% et écrasez-le à la spatule. Assaisonnez de paprika, cumin, sel et poivre. Faites cuire 5-6 min jusqu'à ce qu'il soit bien coloré.
+3. **Étape 3** — Répartissez le bœuf sur les tranches de patate douce. Émiettez le fromage protéiné et le cottage cheese par-dessus pour un gratiné crémeux.
+4. **Étape 4** — Enfournez 35 à 40 min à 180°, jusqu'à ce que la patate douce soit fondante (la pointe d'un couteau s'enfonce sans résistance) et le fromage doré et gratiné.
+5. **Étape 5** — À la sortie, laissez tiédir 2 min. Ajoutez la salade fraîche et un trait de sauce chipotle au moment de servir pour le contraste frais/chaud.
+
+> 💡 Les quantités sont celles du post original (une belle portion). Réduis patate douce (glucides) et bœuf (protéines) selon tes macros du jour — vise ~300g de patate douce max si c'est trop copieux.

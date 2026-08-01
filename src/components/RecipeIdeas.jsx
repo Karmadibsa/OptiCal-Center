@@ -219,7 +219,17 @@ const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, 
                         )}
                     </div>
                 </div>
-                
+
+                {/* Combien de portions pour le repas de cette personne */}
+                {budgetStr?.kcal && totalKcalBase > 0 && (() => {
+                    const portions = budgetStr.kcal / totalKcalBase;
+                    return (
+                        <div style={{ marginBottom: '0.85rem', padding: '0.5rem 0.7rem', background: `${color}12`, border: `1px solid ${color}33`, borderRadius: '8px', fontSize: '0.8rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                            🍽️ Recette de base <strong>{Math.round(totalKcalBase)} kcal</strong> → {personName} peut en manger <strong style={{ color }}>≈ {portions.toFixed(1)} portion{portions >= 2 ? 's' : ''}</strong> pour un repas (cible ~{Math.round(budgetStr.kcal)} kcal).
+                        </div>
+                    );
+                })()}
+
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <tbody>
                         {scaledData.map((ing, idx) => {
