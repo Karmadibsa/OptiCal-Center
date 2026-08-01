@@ -114,7 +114,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
     // Champs numériques : weight, height, age, deficit, opt_fromage, prot_ratio
     // Champs string : gender
     const NUMERIC_FIELDS = new Set(['weight', 'form_weight', 'height', 'age', 'deficit', 'opt_fromage', 'prot_ratio', 'lip_ratio', 'glu_target',
-        'pain_matin_g', 'cancoillotte_g', 'skyr_g', 'oeuf_matin', 'oeuf_soir', 'banane_qty', 'pomme_qty']);
+        'pain_matin_g', 'cancoillotte_g', 'skyr_g', 'oeuf_matin', 'oeuf_soir', 'banane_qty', 'pomme_qty', 'glu_pct']);
 
     const handleInput = (key, field, val) => {
         setProfiles(prev => ({
@@ -293,49 +293,52 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         → <strong>{Math.round(res.lip_goal)} g/jour</strong> <span style={{ color: '#475569' }}>({res.goal_weight || profiles[key].weight}kg forme)</span>
                                     </div>
                                 </div>
-                                {/* Glucides cible — éditable + bouton Ajuster selon Kcal */}
+                                {/* Glucides cible — en g OU en % des kcal */}
                                 <div className="input-group">
                                     <label htmlFor={`profile-${key}-glu`}>
                                         Glucides cible
-                                        <span className="unit-badge">g/j</span>
-                                        <InfoTooltip text="OMS : 45–65% des kcal. Par défaut : résiduel calorique (kcal − P×4 − L×9) ÷ 4. Vous pouvez fixer une valeur manuelle ou cliquer 'Ajuster' pour recalculer depuis la cible kcal. ⚠️ Orange si < 65%. 🚨 Rouge si < 80%." />
+                                        <span className="unit-badge">g ou %</span>
+                                        <InfoTooltip text="OMS : 45–65% des kcal. 3 modes : Auto (résiduel kcal), en grammes, ou en % des kcal (ex. 50%). Le % est prioritaire s'il est renseigné. ⚠️ Orange si < 65% de la cible, 🚨 rouge si < 80%." />
                                     </label>
-                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'stretch' }}>
-                                        <input
-                                            id={`profile-${key}-glu`}
-                                            type="number"
-                                            min="0"
-                                            step="5"
-                                            value={(profiles[key].glu_target || 0) === 0 ? '' : profiles[key].glu_target}
-                                            placeholder={String(res.glu_formula)}
-                                            onChange={(e) => handleInput(key, 'glu_target', e.target.value)}
-                                            style={{
-                                                flex: 1,
-                                                border: `1px solid ${res.glu_critical ? 'rgba(248,113,113,0.5)' : res.glu_warning ? 'rgba(251,191,36,0.4)' : '#334155'}`,
-                                                color: res.glu_critical ? '#f87171' : res.glu_warning ? '#fbbf24' : '#a78bfa',
-                                                fontFamily: 'monospace', fontWeight: 700,
-                                            }}
-                                        />
+                                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'stretch', flexWrap: 'wrap' }}>
+                                        {/* Champ grammes */}
+                                        <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.2rem', flex: '1 1 90px' }}>
+                                            <input
+                                                id={`profile-${key}-glu`}
+                                                type="number" min="0" step="5"
+                                                value={(profiles[key].glu_target || 0) === 0 ? '' : profiles[key].glu_target}
+                                                placeholder={String(res.glu_formula)}
+                                                onChange={(e) => { handleInput(key, 'glu_target', e.target.value); handleInput(key, 'glu_pct', 0); }}
+                                                style={{ width: '100%', border: `1px solid ${res.glu_pct > 0 ? '#1e293b' : '#334155'}`, color: res.glu_pct > 0 ? '#475569' : '#a78bfa', fontFamily: 'monospace', fontWeight: 700 }}
+                                            />
+                                            <span style={{ alignSelf: 'center', fontSize: '0.72rem', color: '#64748b' }}>g</span>
+                                        </div>
+                                        {/* Champ pourcentage */}
+                                        <div style={{ display: 'flex', alignItems: 'stretch', gap: '0.2rem', flex: '1 1 70px' }}>
+                                            <input
+                                                type="number" min="0" max="100" step="1"
+                                                value={(profiles[key].glu_pct || 0) === 0 ? '' : profiles[key].glu_pct}
+                                                placeholder="%"
+                                                onChange={(e) => { handleInput(key, 'glu_pct', e.target.value); handleInput(key, 'glu_target', 0); }}
+                                                style={{ width: '100%', border: `1px solid ${res.glu_pct > 0 ? '#38bdf8' : '#334155'}`, color: res.glu_pct > 0 ? '#38bdf8' : '#64748b', fontFamily: 'monospace', fontWeight: 700 }}
+                                            />
+                                            <span style={{ alignSelf: 'center', fontSize: '0.72rem', color: '#64748b' }}>%</span>
+                                        </div>
                                         <button
-                                            onClick={() => handleInput(key, 'glu_target', res.glu_formula)}
-                                            title="Calcule les glucides pour atteindre exactement la cible calorique (kcal − Prot×4 − Lip×9) ÷ 4"
-                                            style={{
-                                                flexShrink: 0, padding: '0 0.65rem',
-                                                background: 'rgba(167,139,250,0.1)',
-                                                border: '1px solid rgba(167,139,250,0.35)',
-                                                borderRadius: '6px', color: '#a78bfa',
-                                                cursor: 'pointer', fontSize: '0.73rem', fontWeight: 700,
-                                                whiteSpace: 'nowrap', lineHeight: 1.2,
-                                            }}
+                                            onClick={() => { handleInput(key, 'glu_target', res.glu_formula); handleInput(key, 'glu_pct', 0); }}
+                                            title="Calcule les glucides résiduels (kcal − Prot×4 − Lip×9) ÷ 4"
+                                            style={{ flexShrink: 0, padding: '0 0.6rem', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '6px', color: '#a78bfa', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.2 }}
                                         >
-                                            Ajuster<br/>selon Kcal
+                                            Auto
                                         </button>
                                     </div>
                                     {/* Feedback valeur active */}
                                     <div style={{ marginTop: '0.25rem', fontSize: '0.71rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                        {profiles[key].glu_target > 0
-                                            ? <span style={{ color: '#a78bfa' }}>Manuel : {profiles[key].glu_target}g · Auto serait {res.glu_formula}g</span>
-                                            : <span style={{ color: '#475569' }}>Auto : {res.glu_formula}g (résiduel kcal)</span>
+                                        {res.glu_pct > 0
+                                            ? <span style={{ color: '#38bdf8' }}>Mode % : {res.glu_pct}% des kcal = <strong>{res.glu_goal}g</strong></span>
+                                            : profiles[key].glu_target > 0
+                                                ? <span style={{ color: '#a78bfa' }}>Manuel : {profiles[key].glu_target}g · Auto serait {res.glu_formula}g</span>
+                                                : <span style={{ color: '#475569' }}>Auto : {res.glu_formula}g (résiduel kcal)</span>
                                         }
                                         {res.glu_critical && <span style={{ color: '#f87171', fontWeight: 700 }}>🚨 −20%</span>}
                                         {!res.glu_critical && res.glu_warning && <span style={{ color: '#fbbf24' }}>⚠️ Faible</span>}

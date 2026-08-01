@@ -92,6 +92,18 @@ const App = () => {
           } else if (param === 'Prot_Ratio') {
             next.axel.prot_ratio   = parseFloat(row.Axel)   || 1.6;
             next.prisca.prot_ratio = parseFloat(row.Prisca) || 1.6;
+          } else {
+            // Champs petit-déj / collation ajustables (source de vérité CSV)
+            const breakfastMap = {
+              Pain_Matin_G: 'pain_matin_g', Cancoillotte_G: 'cancoillotte_g', Skyr_G: 'skyr_g',
+              Oeuf_Matin: 'oeuf_matin', Oeuf_Soir: 'oeuf_soir', Banane_Qty: 'banane_qty', Pomme_Qty: 'pomme_qty',
+            };
+            const field = breakfastMap[param];
+            if (field) {
+              const a = parseFloat(row.Axel), p = parseFloat(row.Prisca);
+              if (Number.isFinite(a)) next.axel[field]   = a;
+              if (Number.isFinite(p)) next.prisca[field] = p;
+            }
           }
         }
       });

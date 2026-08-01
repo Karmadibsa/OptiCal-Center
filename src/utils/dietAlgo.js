@@ -113,25 +113,26 @@ export const DEFAULT_PROFILES = {
         birthdate: '1999-07-03', // 3 juillet 1999
         gender: 'male',
         // Objectif protéines libre en g/kg (ex: 1.6, 2.0, 1.8...)
-        prot_ratio: 1.9,
+        prot_ratio: 2.0,
         lip_ratio:  0.9,  // g lipides / kg — cible diéto (0.8-1.0)
         pal: 1.55,         // Physical Activity Level — budget identique 7j/7
         deficit: 300,
         opt_fromage: 0,
         opt_fb_soir: false,
-        glu_target: 0,          // 0 = calculé auto (résiduel kcal) ; >0 = cible manuelle
+        glu_target: 0,          // 0 = calculé auto (résiduel kcal) ; >0 = cible manuelle en g
+        glu_pct:    0,          // >0 = cible en % des kcal (prioritaire sur glu_target)
         last_weighed: '',       // date ISO 'YYYY-MM-DD' de la dernière pesée
         opt_whey_matin:     true, // shaker du matin (Axel uniquement)
         opt_whey_collation: true, // shaker de 16h — peut être supprimé si batch couvre les prot.
         opt_omega3:         true, // 2 gélules Zenement le soir (700 EPA + 500 DHA)
-        // ── Petit-déj / collation ajustables ──
-        pain_matin_g:   140, // g de pain semi-complet le matin
-        cancoillotte_g: 30,  // g de cancoillotte le matin
-        skyr_g:         0,   // g de skyr / fromage blanc (matin)
-        oeuf_matin:     3,   // nb d'œufs le matin
-        oeuf_soir:      3,   // nb d'œufs le soir
-        banane_qty:     1,   // nb de bananes (collation 16h)
-        pomme_qty:      0,    // nb de pommes / jour
+        // ── Petit-déj / collation ajustables (valeurs réelles Axel) ──
+        pain_matin_g:   100, // g de pain semi-complet le matin
+        cancoillotte_g: 0,   // plus de cancoillotte (remplacée par fromage blanc)
+        skyr_g:         100, // g de fromage blanc / skyr le matin
+        oeuf_matin:     3,   // 3 œufs le matin
+        oeuf_soir:      0,   // pas d'œufs le soir
+        banane_qty:     0,   // plus de banane
+        pomme_qty:      1,    // 1 pomme / jour (mettre 2 les jours à 2 pommes)
     },
     prisca: {
         weight: 62,
@@ -139,25 +140,26 @@ export const DEFAULT_PROFILES = {
         height: 160,
         birthdate: '1999-04-04', // 4 avril 1999
         gender: 'female',
-        prot_ratio: 1.9,
+        prot_ratio: 2.0,
         lip_ratio:  0.9,
         pal: 1.55,         // Physical Activity Level — budget identique 7j/7
         deficit: 300,
         opt_fromage: 0,
         opt_fb_soir: false,
-        glu_target: 0,          // 0 = calculé auto (résiduel kcal) ; >0 = cible manuelle
+        glu_target: 0,          // 0 = calculé auto (résiduel kcal) ; >0 = cible manuelle en g
+        glu_pct:    0,          // >0 = cible en % des kcal (prioritaire sur glu_target)
         last_weighed: '',
         opt_whey_matin:     false, // pas de whey matin pour Prisca (absent dans le plan)
         opt_whey_collation: true,
         opt_omega3:         true, // 2 gélules Zenement le soir (700 EPA + 500 DHA)
-        // ── Petit-déj / collation ajustables ──
+        // ── Petit-déj / collation ajustables (valeurs réelles Prisca) ──
         pain_matin_g:   80,
         cancoillotte_g: 20,
         skyr_g:         0,
-        oeuf_matin:     2,
-        oeuf_soir:      2,
-        banane_qty:     1,
-        pomme_qty:      0,
+        oeuf_matin:     2,   // 2 œufs le matin
+        oeuf_soir:      0,   // pas d'œufs le soir
+        banane_qty:     0,   // plus de banane
+        pomme_qty:      1,    // 1 pomme / jour
     }
 };
 
@@ -211,7 +213,7 @@ export const calculatePlan = (key, profiles) => {
             fb_qty: 0, computed_age: computedAge,
             batch_midi_budget: 0, batch_soir_budget: 0,
             omega3_lip: 0, use_omega3: false,
-            goal_weight: 0, fixed_lip_socle: 0, glu_formula: 0,
+            goal_weight: 0, fixed_lip_socle: 0, glu_formula: 0, glu_pct: 0, glu_pct_g: 0,
         };
     }
 
@@ -399,7 +401,10 @@ export const calculatePlan = (key, profiles) => {
     // Cal résiduelles après protéines (4 kcal/g) + lipides (9 kcal/g)
     const glu_kcal    = Math.max(0, target_daily - (prot_goal * 4) - (lip_goal * 9));
     const glu_formula = Math.round(glu_kcal / 4);                                     // valeur auto (pour le bouton "Ajuster")
-    const glu_goal    = (p.glu_target > 0) ? p.glu_target : glu_formula;              // utilisé partout
+    // Cible glucides : priorité au % des kcal si défini, sinon g manuel, sinon auto (résiduel)
+    const glu_pct     = Math.max(0, Math.min(100, Number(raw.glu_pct) || 0));         // % des kcal totales
+    const glu_pct_g   = glu_pct > 0 ? Math.round(target_daily * (glu_pct / 100) / 4) : 0; // conversion % → g
+    const glu_goal    = glu_pct > 0 ? glu_pct_g : (p.glu_target > 0 ? p.glu_target : glu_formula);
     const glu_warning  = total_glu < glu_goal * 0.65;  // orange si −35% cible
     const glu_critical = total_glu < glu_goal * 0.80;  // rouge si −20% cible individuelle
 
@@ -428,6 +433,8 @@ export const calculatePlan = (key, profiles) => {
         lip_critical,
         lip_warning,
         glu_formula,  // valeur auto (résiduel kcal) — pour le bouton "Ajuster selon Kcal"
+        glu_pct,      // % des kcal visé (0 = pas en mode %)
+        glu_pct_g,    // g correspondant au % (pour affichage)
         glu_goal,
         glu_warning,
         glu_critical,

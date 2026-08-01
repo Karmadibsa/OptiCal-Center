@@ -3,9 +3,16 @@ Config,Profile,Weight,109,61,System Config
 Config,Profile,Height,183,160,System Config
 Config,Profile,Age,27,27,System Config
 Config,Profile,Deficit,500,250,System Config
-Config,Profile,Prot_Ratio,1.9,1.9,System Config
+Config,Profile,Prot_Ratio,2.0,2.0,System Config
 Config,Profile,Opt_Fromage,20,20,System Config
 Config,Profile,Opt_Fb_Soir,true,false,System Config
+Config,Profile,Pain_Matin_G,100,80,Petit-déj (g pain)
+Config,Profile,Cancoillotte_G,0,20,Petit-déj (g cancoillotte)
+Config,Profile,Skyr_G,100,0,Petit-déj (g skyr/fromage blanc)
+Config,Profile,Oeuf_Matin,3,2,Œufs le matin
+Config,Profile,Oeuf_Soir,0,0,Œufs le soir
+Config,Profile,Banane_Qty,0,0,Bananes / jour
+Config,Profile,Pomme_Qty,1,1,Pommes / jour
 Config,Sport,PAL,1.55,1.55,Niveau d'activité (Physical Activity Level)
 Diet,Matin,Pain + Cancoillotte + Œufs,140g Pain + 30g Canc. + 3 Œufs,80g Pain + 20g Canc. + 2 Œufs,Base fixe
 Diet,Matin,Whey,1 Shaker de Whey (30g),Rien,
