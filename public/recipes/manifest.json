@@ -32,6 +32,22 @@
     "emoji": "🍎"
   },
   {
+    "file": "plaisir/omelette_garnie_jambon_champignons.md",
+    "id": "730026",
+    "name": "Omelette Garnie Jambon, Champignons & Fromage",
+    "category": "plats|viande",
+    "kcal": "515",
+    "prot": "40",
+    "lip": "24",
+    "glu": "10",
+    "price": "2.50",
+    "prep_active": "10 min",
+    "prep_inactive": "8 min",
+    "description": "La grosse omelette pliée bien garnie — jambon de dinde, champignons poêlés et emmental fondant, boostée aux blancs d'œufs. Ultra protéinée, faible en glucides, prête en 15 min.",
+    "tips": "Version low-carb parfaite le soir. Ajoute des blancs d'œufs pour gonfler le volume et les protéines sans les calories. Accompagne d'une grosse salade pour encore plus de volume.",
+    "emoji": "🍳"
+  },
+  {
     "file": "plaisir/pad_thai_konjac.md",
     "id": "730019",
     "name": "Pad Thaï Konjac",
@@ -78,6 +94,22 @@
     "description": "Un hachis parmentier revisité en grosse poêlée express — pommes de terre sautées dorées, bœuf 5%, champignons, oignon et poivron. Beaucoup dans l'assiette, plein de protéines, ultra rassasiant sans crème ni beurre.",
     "tips": "Écrase grossièrement la moitié des pommes de terre à la fourchette pour lier façon hachis. Les champignons et le poivron gonflent le volume pour presque rien en calories.",
     "emoji": "🥩"
+  },
+  {
+    "file": "plaisir/poelee_perigourdine_gesiers.md",
+    "id": "730025",
+    "name": "Poêlée Périgourdine aux Gésiers",
+    "category": "plats|viande",
+    "kcal": "535",
+    "prot": "38",
+    "lip": "15",
+    "glu": "57",
+    "price": "3.60",
+    "prep_active": "15 min",
+    "prep_inactive": "20 min",
+    "description": "Le classique du Sud-Ouest en version équilibrée — pommes de terre sautées dorées, gésiers de canard confits fondants, haricots verts croquants et oignon. Généreux, riche en protéines et plein de goût.",
+    "tips": "Les gésiers confits sont déjà cuits : fais-les juste réchauffer et dorer en fin de poêlée pour qu'ils restent fondants. Égoutte-les bien de leur graisse.",
+    "emoji": "🦆"
   },
   {
     "file": "plaisir/poelee_savoyarde_allegee.md",
@@ -142,6 +174,22 @@
     "description": "Le combo régressif healthy — des tenders de PST panés au panko ultra croustillants (façon poulet frit) avec des frites de patate douce dorées au four. Zéro friture, plaisir maximal.",
     "tips": "Pas de panko ? Chapelure classique ou cornflakes nature écrasés font l'affaire. Air fryer ou four très chaud (200°) pour des tenders qui croustillent vraiment — ne surcharge pas la plaque.",
     "emoji": "🍗"
+  },
+  {
+    "file": "plaisir/tortilla_espagnole_proteinee.md",
+    "id": "730024",
+    "name": "Tortilla Espagnole Protéinée",
+    "category": "plats|vege",
+    "kcal": "575",
+    "prot": "38",
+    "lip": "15",
+    "glu": "50",
+    "price": "1.90",
+    "prep_active": "15 min",
+    "prep_inactive": "20 min",
+    "description": "La vraie tortilla espagnole épaisse et moelleuse — pommes de terre fondantes et oignon liés à l'œuf, boostée en protéines avec des blancs d'œufs. Un gros quart bien nourrissant, se mange chaud ou froid.",
+    "tips": "Cuis-la à feu doux et couvert pour qu'elle reste moelleuse au centre. Ajoute des blancs d'œufs pour monter les protéines sans les calories.",
+    "emoji": "🍳"
   },
   {
     "file": "plaisir/wrap_patate_douce_proteine.md",
