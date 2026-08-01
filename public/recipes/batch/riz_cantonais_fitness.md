@@ -46,8 +46,9 @@ emoji: 🍚
 - Sauce soja : 0.10€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bol de bouillon chaud 10 min, puis pressez-les fermement pour extraire l'eau.
-2. **Riz** — Cuisez le riz basmati, puis laissez-le refroidir (idéalement la veille).
-3. **Œufs** — Brouillez les œufs dans un filet d'huile, réservez.
-4. **Légumes** — Faites sauter oignon, carottes, petits pois, maïs et edamame à feu vif 5-6 min.
-5. **Assemblage** — Ajoutez le riz froid, les PST poêlées et les œufs. Déglacez à la sauce soja et faites sauter 3 min à feu vif.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un grand bol de bouillon de légumes chaud (ou eau + 1 c. à soupe de sauce soja) pendant 10 min. Égouttez, puis pressez-les fermement entre vos mains ou dans une passoire pour extraire un maximum d'eau.
+2. **Cuire le riz** — Rincez le riz basmati, cuisez-le à l'eau bouillante salée (~11 min), égouttez et étalez-le sur une plaque pour le faire refroidir vite. Idéalement, utilisez du riz de la veille : il saute sans coller.
+3. **Œufs brouillés** — Dans un wok ou une grande poêle, faites chauffer la moitié de l'huile et brouillez les œufs battus 1 min. Réservez-les.
+4. **PST dorées** — Dans le même wok, poêlez les PST pressées 3-4 min avec le reste d'huile jusqu'à ce qu'elles colorent et croustillent légèrement. Réservez avec les œufs.
+5. **Légumes** — Faites sauter à feu vif l'oignon émincé 2 min, puis ajoutez carottes en petits dés, petits pois, maïs et edamame. Sautez 4-5 min : ils doivent rester croquants.
+6. **Assemblage** — Ajoutez le riz froid, les PST et les œufs dans le wok. Versez la sauce soja et faites sauter le tout 2-3 min à feu vif en remuant sans arrêt. Rectifiez l'assaisonnement et servez.

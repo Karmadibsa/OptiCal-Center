@@ -10,7 +10,7 @@ price: 2.40
 prep_active: 20 min
 prep_inactive: 25 min
 description: Le combo régressif healthy — des tenders de PST panés au panko ultra croustillants (façon poulet frit) avec des frites de patate douce dorées au four. Zéro friture, plaisir maximal.
-tips: Air fryer ou four très chaud (200°) pour des tenders qui croustillent vraiment. Ne surcharge pas la plaque pour que ça dore bien.
+tips: Pas de panko ? Chapelure classique ou cornflakes nature écrasés font l'affaire. Air fryer ou four très chaud (200°) pour des tenders qui croustillent vraiment — ne surcharge pas la plaque.
 emoji: 🍗
 ---
 

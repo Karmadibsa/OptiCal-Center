@@ -42,7 +42,8 @@ emoji: 🥘
 - Épices : 0.05€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez.
-2. **Base** — Faites revenir oignon et poivron dans l'huile, ajoutez les épices paella.
-3. **Mijotage** — Ajoutez l'Ebly, les tomates concassées, les petits pois et les PST + un grand verre d'eau. Couvrez et laissez cuire 15-18 min jusqu'à absorption.
-4. **Repos** — Laissez reposer 5 min hors du feu avant de servir.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez fermement.
+2. **Base aromatique** — Dans une grande poêle ou sauteuse, faites revenir l'oignon émincé et le poivron en dés dans l'huile 4 min à feu moyen.
+3. **Épices** — Ajoutez les épices paella (curcuma, paprika, une pincée de safran si vous en avez) et faites-les revenir 30 s pour libérer les arômes et la couleur.
+4. **Mijotage** — Ajoutez l'Ebly, les tomates concassées, les petits pois et les PST. Versez ~2 fois le volume d'Ebly en eau ou bouillon, salez. Couvrez et laissez cuire 15-18 min à feu doux jusqu'à absorption du liquide.
+5. **Repos** — Coupez le feu, couvrez et laissez reposer 5 min : l'Ebly finit de gonfler et les saveurs se répartissent. Rectifiez l'assaisonnement.

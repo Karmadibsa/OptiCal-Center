@@ -13,7 +13,7 @@ price: 2.60
 prep_active: 15 min
 prep_inactive: 25 min
 description: Le curry japonais doux et réconfortant, avec des PST panées au panko et croustillantes façon katsu, patate douce fondante et riz.
-tips: 🌏 La sauce curry japonais (roux en tablette type S&B/Golden Curry) se trouve en épicerie asiatique ou rayon "cuisine du monde" — sinon remplace par un curry doux + un peu de maïzena.
+tips: 🌏 Pas de panko ? Remplace-le par de la chapelure classique, des cornflakes nature écrasés ou du pain sec mixé — le but est le croustillant. La sauce curry japonais (roux) se trouve en rayon "cuisine du monde".
 emoji: 🍛
 ---
 
@@ -42,8 +42,9 @@ emoji: 🍛
 - Huile d'olive : 0.12€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez fermement.
-2. **PST katsu** — Enrobez les PST de panko et faites-les dorer au four ou à la poêle jusqu'à ce qu'elles croustillent.
-3. **Sauce curry** — Faites revenir oignon, carottes et patate douce, couvrez d'eau, ajoutez le roux de curry et laissez épaissir 15 min.
-4. **Riz** — Cuisez le riz basmati.
-5. **Dressage** — Servez riz + sauce curry, déposez les PST katsu croustillantes par-dessus.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez très fermement.
+2. **PST katsu** — Passez les PST dans un peu de farine, puis de l'œuf battu, puis dans le panko (ou chapelure/cornflakes écrasés). Faites-les dorer au four à 200° 15-18 min (ou à la poêle) en les retournant, jusqu'à ce qu'elles soient bien croustillantes.
+3. **Sauce curry** — Faites revenir l'oignon, les carottes et la patate douce en dés dans un filet d'huile 5 min. Couvrez d'eau (~250 ml), portez à ébullition et laissez cuire 12-15 min jusqu'à ce que les légumes soient tendres.
+4. **Roux** — Coupez le feu, ajoutez les tablettes de roux de curry japonais et remuez jusqu'à dissolution : la sauce épaissit et devient nappante. Relancez 2 min à feu doux.
+5. **Riz** — Cuisez le riz basmati à l'eau bouillante salée, égouttez.
+6. **Dressage** — Servez le riz nappé de sauce curry, déposez les PST katsu croustillantes par-dessus juste avant de manger pour garder le croquant.

@@ -44,7 +44,9 @@ emoji: 🍛
 - Gingembre : 0.10€
 
 ### Protocole
-1. **Base aromatique** — Faites revenir oignon, ail et gingembre dans l'huile 3 min, ajoutez la pâte de curry.
-2. **Légumes** — Ajoutez les dés de patate douce et les pois chiches égouttés, enrobez d'épices.
-3. **Mijotage** — Versez le lait de coco + un verre d'eau, couvrez et laissez mijoter 20-25 min : la patate douce doit être fondante.
-4. **Finition** — Incorporez les épinards en fin de cuisson. Parsemez de cacahuètes concassées à l'assiette.
+1. **Base aromatique** — Épluchez et coupez la patate douce en cubes de ~2 cm. Dans une cocotte, faites revenir l'oignon émincé, l'ail et le gingembre râpé dans l'huile 3 min à feu moyen.
+2. **Pâte de curry** — Ajoutez la pâte de curry rouge et faites-la torréfier 1 min en remuant pour libérer les arômes.
+3. **Légumes** — Ajoutez les cubes de patate douce et les pois chiches égouttés, enrobez-les bien du mélange épicé pendant 2 min.
+4. **Mijotage** — Versez le lait de coco light + un grand verre d'eau (ou bouillon), salez. Portez à frémissement, couvrez et laissez mijoter 20-25 min à feu doux : la patate douce doit être fondante et la sauce onctueuse.
+5. **Épinards** — Incorporez les épinards surgelés dans les 5 dernières minutes, le temps qu'ils fondent dans la sauce.
+6. **Finition** — Concassez grossièrement les cacahuètes et gardez-les à part : parsemez-en à l'assiette au moment de manger pour préserver le croquant toute la semaine.

@@ -112,6 +112,10 @@ const BatchCooking = ({ profiles }) => {
     const [priceDb,        setPriceDb]        = useState([]);     // base de données des prix
     const [doneCookGroups,  setDoneCookGroups]  = useState({});    // cuisson : étapes cochées
     const [checkedShopItems, setCheckedShopItems] = useState({});  // courses : items cochés
+    const [doneSteps, setDoneSteps] = useState(() => {             // protocole : étapes cochées (persisté)
+        try { return JSON.parse(localStorage.getItem('bc_done_steps') || '{}'); } catch { return {}; }
+    });
+    useEffect(() => { localStorage.setItem('bc_done_steps', JSON.stringify(doneSteps)); }, [doneSteps]);
 
     // Helper : slot désactivé ?
     const isSlotDisabled = (day, meal) => !!disabledSlots[`${day}_${meal}`];
@@ -1671,27 +1675,66 @@ const BatchCooking = ({ profiles }) => {
                                 </div>
                             )}
 
-                            {/* Protocole */}
-                            <div>
-                                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', marginBottom: '0.7rem' }}>👨‍🍳 PROTOCOLE</div>
-                                {loadingPreview ? (
-                                    <p style={{ color: '#475569', fontSize: '0.85rem' }}>Chargement…</p>
-                                ) : extractProtocol(previewMd).length > 0 ? (
-                                    <ol style={{ margin: 0, paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.55rem' }}>
-                                        {extractProtocol(previewMd).map((step, i) => {
-                                            // Retirer le "N. " de début
-                                            const text = step.replace(/^\d+\.\s*/, '');
-                                            return (
-                                                <li key={i} style={{ color: '#cbd5e1', fontSize: '0.86rem', lineHeight: 1.6 }}>
-                                                    {renderInline(text)}
-                                                </li>
-                                            );
-                                        })}
-                                    </ol>
-                                ) : (
-                                    <p style={{ color: '#475569', fontSize: '0.85rem' }}>Protocole non disponible.</p>
-                                )}
-                            </div>
+                            {/* Protocole — étapes cochables + prochaine étape mise en avant */}
+                            {(() => {
+                                const steps = extractProtocol(previewMd);
+                                const rid = previewRecipe.id;
+                                const isDone = (i) => !!doneSteps[`${rid}_${i}`];
+                                const doneCount = steps.filter((_, i) => isDone(i)).length;
+                                const nextIdx = steps.findIndex((_, i) => !isDone(i));
+                                const toggleStep = (i) => setDoneSteps(prev => {
+                                    const k = `${rid}_${i}`; const n = { ...prev };
+                                    if (n[k]) delete n[k]; else n[k] = true; return n;
+                                });
+                                return (
+                                    <div>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.7rem', gap: '0.5rem', flexWrap: 'wrap' }}>
+                                            <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px' }}>👨‍🍳 PROTOCOLE</div>
+                                            {steps.length > 0 && (
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                    <span style={{ fontSize: '0.72rem', color: doneCount === steps.length ? '#4ade80' : '#64748b', fontWeight: 700 }}>{doneCount}/{steps.length}</span>
+                                                    {doneCount > 0 && <button onClick={() => setDoneSteps(prev => { const n = { ...prev }; steps.forEach((_, i) => delete n[`${rid}_${i}`]); return n; })} style={{ fontSize: '0.62rem', background: 'none', border: '1px solid #334155', borderRadius: '4px', color: '#64748b', cursor: 'pointer', padding: '0.1rem 0.4rem' }}>Réinitialiser</button>}
+                                                </div>
+                                            )}
+                                        </div>
+                                        {loadingPreview ? (
+                                            <p style={{ color: '#475569', fontSize: '0.85rem' }}>Chargement…</p>
+                                        ) : steps.length > 0 ? (
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                                                {steps.map((step, i) => {
+                                                    const text = step.replace(/^\d+\.\s*/, '');
+                                                    const done = isDone(i);
+                                                    const isNext = i === nextIdx;
+                                                    return (
+                                                        <button key={i} onClick={() => toggleStep(i)} style={{
+                                                            display: 'flex', gap: '0.6rem', alignItems: 'flex-start', textAlign: 'left', width: '100%',
+                                                            background: isNext ? 'rgba(56,189,248,0.10)' : 'transparent',
+                                                            border: `1px solid ${isNext ? '#38bdf8' : 'transparent'}`,
+                                                            borderRadius: '8px', padding: '0.5rem 0.6rem', cursor: 'pointer',
+                                                        }}>
+                                                            <span style={{
+                                                                flexShrink: 0, width: '20px', height: '20px', borderRadius: '5px', marginTop: '0.1rem',
+                                                                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem',
+                                                                background: done ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
+                                                                border: `1.5px solid ${done ? '#4ade80' : isNext ? '#38bdf8' : '#334155'}`,
+                                                                color: '#4ade80',
+                                                            }}>{done ? '✓' : i + 1}</span>
+                                                            <span style={{ flex: 1 }}>
+                                                                {isNext && <span style={{ display: 'block', fontSize: '0.58rem', fontWeight: 800, color: '#38bdf8', letterSpacing: '0.8px', marginBottom: '0.15rem' }}>👉 PROCHAINE ÉTAPE</span>}
+                                                                <span style={{ color: done ? '#475569' : '#cbd5e1', fontSize: '0.86rem', lineHeight: 1.55, textDecoration: done ? 'line-through' : 'none' }}>
+                                                                    {renderInline(text)}
+                                                                </span>
+                                                            </span>
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        ) : (
+                                            <p style={{ color: '#475569', fontSize: '0.85rem' }}>Protocole non disponible.</p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </div>
                     </div>
                 </div>,

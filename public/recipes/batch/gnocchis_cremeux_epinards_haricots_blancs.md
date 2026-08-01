@@ -38,6 +38,6 @@ emoji: 🍅
 - Ail : 0.08€
 
 ### Protocole
-1. **Gnocchis dorés** — Poêlez les gnocchis dans l'huile jusqu'à ce qu'ils soient dorés et croustillants, réservez.
-2. **Sauce** — Faites revenir l'ail, ajoutez les épinards puis la crème légère et les haricots blancs égouttés. Laissez réduire 5 min.
-3. **Assemblage** — Remettez les gnocchis dans la sauce, hors du feu incorporez le parmesan.
+1. **Gnocchis dorés** — Sans les pré-cuire, poêlez directement les gnocchis frais dans l'huile 6-8 min à feu moyen-vif en les retournant, jusqu'à ce qu'ils soient dorés et croustillants à l'extérieur, moelleux dedans. Réservez.
+2. **Sauce crémeuse** — Dans la même poêle, faites revenir l'ail émincé 30 s, ajoutez les épinards surgelés et laissez-les fondre 3 min. Versez la crème légère et ajoutez les haricots blancs égouttés. Salez, poivrez et laissez réduire 5 min.
+3. **Assemblage** — Remettez les gnocchis dorés dans la sauce, mélangez délicatement. Hors du feu, incorporez le parmesan râpé qui va lier et napper le tout.

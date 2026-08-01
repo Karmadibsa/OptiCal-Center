@@ -44,8 +44,8 @@ emoji: 🍚
 - Graines de sésame : 0.10€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez fermement.
-2. **PST croustillantes** — Poêlez les PST à sec puis avec un filet d'huile jusqu'à ce qu'elles dorent et croustillent.
-3. **Riz** — Cuisez le riz basmati et laissez-le refroidir.
-4. **Wok** — Faites sauter oignon, carottes, brocoli et poivron à feu vif 5 min.
-5. **Assemblage** — Ajoutez le riz froid et les PST, déglacez à la sauce teriyaki. Terminez par le sésame.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min. Égouttez et pressez-les très fermement (dans une passoire ou un torchon) : plus elles sont sèches, plus elles croustilleront.
+2. **PST croustillantes** — Poêlez d'abord les PST à sec 2-3 min pour évacuer l'humidité, puis ajoutez un filet d'huile et laissez-les dorer 3-4 min jusqu'à ce qu'elles croustillent comme du poulet frit. Réservez.
+3. **Cuire le riz** — Cuisez le riz basmati à l'eau bouillante salée, égouttez et étalez-le pour le refroidir (le riz froid saute mieux).
+4. **Wok de légumes** — À feu vif dans le wok, faites sauter l'oignon 1 min, puis carottes en fines lamelles, brocoli et poivron 4-5 min. Ils doivent rester croquants.
+5. **Assemblage** — Ajoutez le riz froid et les PST croustillantes, versez la sauce teriyaki et sautez 2 min à feu vif pour laquer le tout. Parsemez de graines de sésame juste avant de servir.

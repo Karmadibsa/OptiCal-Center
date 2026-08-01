@@ -40,7 +40,8 @@ emoji: 🍝
 - Ail : 0.08€
 
 ### Protocole
-1. **Poulet** — Coupez le poulet en dés et faites-le griller dans un filet d'huile avec l'ail, réservez.
-2. **Brocoli** — Faites cuire les fleurettes de brocoli 5-6 min (vapeur ou eau) pour les garder croquantes.
-3. **Pâtes** — Cuisez les pâtes complètes al dente.
-4. **Assemblage** — Mélangez pâtes, poulet, brocoli et pesto hors du feu. Parsemez de parmesan et de pignons torréfiés.
+1. **Torréfier les pignons** — Dans une poêle à sec (sans matière grasse), faites dorer les pignons 2-3 min à feu moyen en remuant. Réservez : ils apportent le croquant.
+2. **Poulet** — Coupez le poulet en dés, salez, poivrez. Faites-le griller dans un filet d'huile avec l'ail émincé 6-7 min à feu vif jusqu'à ce qu'il soit doré et cuit à cœur. Réservez.
+3. **Brocoli** — Détaillez le brocoli en petites fleurettes et faites-les cuire 5-6 min à la vapeur (ou eau bouillante salée). Elles doivent rester vert vif et légèrement croquantes ; égouttez.
+4. **Pâtes** — Cuisez les pâtes complètes al dente selon le paquet. Gardez une louche d'eau de cuisson avant d'égoutter.
+5. **Assemblage** — Hors du feu, mélangez pâtes, poulet et brocoli avec le pesto, en détendant avec un peu d'eau de cuisson pour bien enrober. Parsemez de parmesan et des pignons torréfiés au moment de servir.

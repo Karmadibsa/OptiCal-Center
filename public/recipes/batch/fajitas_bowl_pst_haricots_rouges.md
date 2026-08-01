@@ -44,8 +44,9 @@ emoji: 🌶️
 - Épices : 0.06€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez, pressez et effilochez à la main.
-2. **PST BBQ** — Poêlez les PST effilochées avec les épices fajitas jusqu'à ce qu'elles croustillent.
-3. **Riz** — Cuisez le riz basmati.
-4. **Légumes** — Faites sauter oignon et poivron à feu vif, ajoutez les haricots rouges égouttés et le maïs grillé.
-5. **Assemblage** — Dressez riz, légumes et PST en bowl, parsemez de cheddar râpé.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min. Égouttez, pressez fermement puis effilochez-les à la main (façon "pulled").
+2. **PST BBQ** — Poêlez les PST effilochées 4-5 min avec les épices fajitas (cumin, paprika fumé) et un filet d'huile jusqu'à ce qu'elles caramélisent et croustillent sur les bords.
+3. **Maïs grillé** — Dans une poêle bien chaude à sec, faites griller le maïs égoutté 2-3 min jusqu'à coloration : ça apporte un goût fumé et du croquant. Réservez.
+4. **Cuire le riz** — Cuisez le riz basmati à l'eau bouillante salée, égouttez.
+5. **Légumes** — Faites sauter l'oignon et le poivron en lamelles à feu vif 4 min (ils restent croquants), puis ajoutez les haricots rouges égouttés pour les réchauffer.
+6. **Assemblage** — Dressez en bowl : riz, légumes-haricots, PST effilochée et maïs grillé. Parsemez de cheddar râpé qui fondra à la chaleur.

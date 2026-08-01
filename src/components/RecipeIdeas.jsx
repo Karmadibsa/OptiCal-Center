@@ -100,9 +100,11 @@ const getPersonColor = (name) => PERSON_COLORS[name.toLowerCase()] || '#94a3b8';
 const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange }) => {
     const totalKcalBase = ingredientsConfig.reduce((acc, i) => acc + i.kcal, 0) || 1;
     
-    // Coef de reference (auto)
-    const targetAxel = budgetAxel ? budgetAxel.kcal / totalKcalBase : 1;
-    const targetPrisca = budgetPrisca ? budgetPrisca.kcal / totalKcalBase : 1;
+    // Coef de reference (auto) — plafonné à 1 : la recette s'affiche à ses quantités
+    // écrites (portion réelle), ajustable à la baisse, jamais gonflée à l'absurde
+    // (évite les 900g de konjac ou 600g de patate douce sur une recette légère).
+    const targetAxel = Math.min(1, budgetAxel ? budgetAxel.kcal / totalKcalBase : 1);
+    const targetPrisca = Math.min(1, budgetPrisca ? budgetPrisca.kcal / totalKcalBase : 1);
     
     const [coefAxel, setCoefAxel] = useState(targetAxel);
     const [coefPrisca, setCoefPrisca] = useState(targetPrisca);

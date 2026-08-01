@@ -48,8 +48,8 @@ emoji: 🍜
 - Gingembre / ail : 0.10€
 
 ### Protocole
-1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez.
-2. **PST dorées** — Poêlez les PST jusqu'à ce qu'elles croustillent, réservez.
-3. **Nouilles** — Cuisez les nouilles très al dente, égouttez.
-4. **Wok** — Faites sauter à feu vif oignon, carottes, brocoli et poivron 5 min (ils restent croquants).
-5. **Assemblage** — Ajoutez nouilles et PST, déglacez sauce soja + huître + ail/gingembre, sautez 2 min. Terminez au sésame.
+1. **Réhydrater les PST** — Plongez les PST sèches dans un bouillon chaud 10 min, égouttez et pressez fermement.
+2. **PST dorées** — Poêlez les PST à sec puis avec un filet d'huile 4 min jusqu'à ce qu'elles dorent et croustillent. Réservez.
+3. **Nouilles** — Cuisez les nouilles complètes très al dente (1-2 min de moins que le paquet) : elles finiront au wok. Égouttez et rincez à l'eau froide pour stopper la cuisson.
+4. **Wok de légumes** — Dans un wok très chaud, faites sauter à feu vif l'ail et le gingembre 30 s, puis oignon, carottes, brocoli et poivron 4-5 min. Les légumes doivent rester croquants et légèrement colorés.
+5. **Assemblage** — Ajoutez les nouilles et les PST dans le wok. Versez la sauce soja + sauce huître et sautez 2 min à feu vif en remuant pour tout enrober. Terminez par les graines de sésame.

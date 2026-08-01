@@ -40,8 +40,9 @@ emoji: 🧀
 - Épices : 0.05€
 
 ### Protocole
-1. **Pré-cuire les lentilles** — Rincez les lentilles vertes et cuisez-les 20 min à l'eau salée. Égouttez et réservez.
-2. **Courgettes** — Faites revenir les courgettes en rondelles avec l'oignon dans l'huile 8 min.
-3. **Béchamel légère** — Délayez la maïzena dans le lait froid, chauffez en remuant jusqu'à épaississement, muscade, sel, poivre.
-4. **Montage** — Mélangez lentilles, courgettes et béchamel dans un plat, couvrez de fromage râpé.
-5. **Gratiner** — Enfournez 25-30 min à 180° jusqu'à ce que le dessus soit doré.
+1. **Pré-cuire les lentilles** — Rincez les lentilles vertes, couvrez-les de 3 fois leur volume d'eau salée et cuisez 18-20 min à frémissement : elles doivent être tendres mais pas en purée. Égouttez et réservez.
+2. **Dégorger les courgettes** — Coupez les courgettes en rondelles, salez-les et laissez dégorger 10 min, puis épongez (ça évite un gratin trop liquide).
+3. **Courgettes** — Faites revenir les rondelles de courgette avec l'oignon émincé dans l'huile 8 min à feu moyen, jusqu'à ce qu'elles soient tendres et légèrement colorées.
+4. **Béchamel légère** — Délayez la maïzena dans le lait froid, versez dans une casserole et chauffez à feu moyen en fouettant sans arrêt jusqu'à épaississement (~3 min). Assaisonnez de muscade, sel et poivre.
+5. **Montage** — Dans un plat à gratin, mélangez lentilles, courgettes et béchamel. Lissez et couvrez de fromage râpé.
+6. **Gratiner** — Enfournez 25-30 min à 180° (chaleur tournante) jusqu'à ce que le dessus soit bien doré et gratiné.
