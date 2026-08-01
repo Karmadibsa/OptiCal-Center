@@ -64,6 +64,38 @@
     "emoji": "🍕"
   },
   {
+    "file": "plaisir/poelee_boeuf_patate_hachis.md",
+    "id": "730023",
+    "name": "Poêlée Bœuf & Patates façon Hachis",
+    "category": "plats|viande",
+    "kcal": "515",
+    "prot": "35",
+    "lip": "13",
+    "glu": "46",
+    "price": "3.00",
+    "prep_active": "15 min",
+    "prep_inactive": "15 min",
+    "description": "Un hachis parmentier revisité en poêlée express — pommes de terre sautées dorées, bœuf 5% relevé, oignon et poivron. Riche en protéines, ultra rassasiant.",
+    "tips": "Écrase grossièrement la moitié des pommes de terre à la fourchette dans la poêle : ça lie le tout façon hachis, sans crème ni beurre.",
+    "emoji": "🥩"
+  },
+  {
+    "file": "plaisir/poelee_savoyarde_allegee.md",
+    "id": "730021",
+    "name": "Poêlée Savoyarde Allégée",
+    "category": "plats|viande",
+    "kcal": "545",
+    "prot": "30",
+    "lip": "24",
+    "glu": "49",
+    "price": "3.20",
+    "prep_active": "15 min",
+    "prep_inactive": "20 min",
+    "description": "L'esprit tartiflette version poêlée légère — pommes de terre sautées bien dorées, lardons de dinde, oignon fondant et une pointe de reblochon qui file. Régressif à souhait.",
+    "tips": "Cuis les pommes de terre à l'eau la veille, puis saute-les à la poêle : elles dorent mieux et deviennent croustillantes dehors, fondantes dedans.",
+    "emoji": "🥔"
+  },
+  {
     "file": "plaisir/ramen_konjac_proteine.md",
     "id": "730018",
     "name": "Ramen Konjac Protéiné",
@@ -78,6 +110,22 @@
     "description": "Un ramen réconfortant et léger : nouilles de konjac dans un bouillon miso parfumé, poulet, œuf mollet et légumes croquants. Le gros bol plaisir sans culpabilité.",
     "tips": "Ajoute l'œuf mollet et les oignons verts au dernier moment. ⚖️ Konjac quasi 0 kcal : pour plus copieux, augmente le poulet plutôt que le konjac — max ~300-350g konjac (Axel) / 150-200g (Prisca).",
     "emoji": "🍜"
+  },
+  {
+    "file": "plaisir/skillet_patates_brocoli_oeufs.md",
+    "id": "730022",
+    "name": "Skillet Patates, Brocoli & Œufs",
+    "category": "plats|vege",
+    "kcal": "560",
+    "prot": "32",
+    "lip": "15",
+    "glu": "48",
+    "price": "2.40",
+    "prep_active": "15 min",
+    "prep_inactive": "15 min",
+    "description": "La poêlée brunch complète — pommes de terre sautées dorées, brocoli croquant, lardons de dinde et œufs coulants sur le dessus. Un plat unique qui cale et régale.",
+    "tips": "Casse les œufs directement dans la poêlée en fin de cuisson et couvre 3 min : le blanc prend, le jaune reste coulant et enrobe tout.",
+    "emoji": "🍳"
   },
   {
     "file": "plaisir/tenders_pst_croustillants_frites_patate_douce.md",
