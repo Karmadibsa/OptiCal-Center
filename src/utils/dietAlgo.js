@@ -759,7 +759,7 @@ export const getRecipeTags = (recipe) => {
 
     // Base féculent
     if (groups.has('riz')      || ingHas('riz'))       tags.add('riz');
-    if (groups.has('pates')    || ingHas('pate'))      tags.add('pâtes');
+    if (groups.has('pates')    || ingHas('pates') || ingHas('nouille')) tags.add('pâtes');
     if (groups.has('ebly')     || ingHas('ebly'))      tags.add('ebly');
     if (groups.has('gnocchis') || ingHas('gnocchi'))   tags.add('gnocchis');
     if (ingHas('patate douce') || ingHas('pomme de terre')) tags.add('patate douce');

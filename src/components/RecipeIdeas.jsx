@@ -2,6 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { BookMarked, ExternalLink, Search, Tag, Scale, X, ChevronDown, Euro } from 'lucide-react';
 import { getMealBudget } from '../utils/dietAlgo';
 
+// ─── Poids MAX par ingrédient (par recette id), en grammes et par personne ──────
+// Ingrédients "volume" quasi 0 kcal (konjac) ou incompressibles (patate douce du
+// wrap) : ils BLOQUENT à leur max, et les calories restantes sont redistribuées
+// automatiquement sur les autres ingrédients (toppings / protéines).
+const MAX_G_MAP = {
+    '730017': { konjac: { axel: 350, prisca: 200 } }, // Carbonara konjac
+    '730018': { konjac: { axel: 350, prisca: 200 } }, // Ramen konjac
+    '730019': { konjac: { axel: 350, prisca: 200 } }, // Pad thaï konjac
+    '730015': { 'patate douce': { axel: 300, prisca: 220 } }, // Wrap patate douce
+};
+const getMaxG = (recipeId, ingName, personKey) => {
+    const rec = MAX_G_MAP[String(recipeId)];
+    if (!rec) return null;
+    const n = (ingName || '').toLowerCase();
+    const kw = Object.keys(rec).find(k => n.includes(k));
+    return kw ? rec[kw][personKey] : null;
+};
+
 // ─── Badge macros ─────────────────────────────────────────────────────────────
 const MacroBadge = ({ val, unit, color, label }) => (
     <div className="ri-macro-badge">
@@ -97,14 +115,14 @@ const PERSON_COLORS = { axel: '#38bdf8', prisca: '#a78bfa' };
 const getPersonColor = (name) => PERSON_COLORS[name.toLowerCase()] || '#94a3b8';
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
-const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange }) => {
+const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange, recipeId }) => {
     const totalKcalBase = ingredientsConfig.reduce((acc, i) => acc + i.kcal, 0) || 1;
     
-    // Coef de reference (auto) — plafonné à 1 : la recette s'affiche à ses quantités
-    // écrites (portion réelle), ajustable à la baisse, jamais gonflée à l'absurde
-    // (évite les 900g de konjac ou 600g de patate douce sur une recette légère).
-    const targetAxel = Math.min(1, budgetAxel ? budgetAxel.kcal / totalKcalBase : 1);
-    const targetPrisca = Math.min(1, budgetPrisca ? budgetPrisca.kcal / totalKcalBase : 1);
+    // Coef de reference (auto) = ce qu'il faut pour atteindre la cible calorique du
+    // repas. Les ingrédients plafonnés (konjac, patate douce) bloquent à leur max et
+    // les calories restantes sont redistribuées sur les autres (toppings/protéines).
+    const targetAxel = budgetAxel ? budgetAxel.kcal / totalKcalBase : 1;
+    const targetPrisca = budgetPrisca ? budgetPrisca.kcal / totalKcalBase : 1;
     
     const [coefAxel, setCoefAxel] = useState(targetAxel);
     const [coefPrisca, setCoefPrisca] = useState(targetPrisca);
@@ -128,40 +146,54 @@ const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, 
         if (onTotalCoefChange) onTotalCoefChange(coefAxel + coefPrisca);
     }, [coefAxel, coefPrisca, onTotalCoefChange]);
 
-    const calculateValues = (coef, overrides) => {
-        return ingredientsConfig.map((ing, idx) => {
+    const calculateValues = (coef, overrides, personKey) => {
+        // Pass 1 : quantités de base + application des plafonds (max_g)
+        const rows = ingredientsConfig.map((ing, idx) => {
             const isDivisible = ing.divisible.toLowerCase().includes('oui') || ing.divisible.toLowerCase().includes('yes');
             let baseStep = 1;
             if (!isDivisible) {
                 const matchStep = ing.divisible.match(/([\d.]+)/);
                 if (matchStep) baseStep = parseFloat(matchStep[1]);
             }
+            const overridden = overrides[idx] !== undefined;
+            let qty = overridden ? overrides[idx] : ing.qty * coef;
+            const maxG = getMaxG(recipeId, ing.ingredient, personKey);
+            const capped = !overridden && maxG != null && qty > maxG;
+            if (capped) qty = maxG;
+            else if (!overridden) qty = isDivisible ? Math.round(qty) : Math.round(qty / baseStep) * baseStep;
+            return { ing, idx, isDivisible, qty, capped, overridden };
+        });
 
-            let finalQty = ing.qty * coef;
-            if (overrides[idx] !== undefined) {
-                finalQty = overrides[idx];
-            } else {
-                if (!isDivisible) {
-                    finalQty = Math.round(finalQty / baseStep) * baseStep;
-                } else {
-                    finalQty = Math.round(finalQty); 
-                }
+        // Pass 2 : les calories "économisées" par les plafonds sont redistribuées
+        // sur les ingrédients non plafonnés (toppings / protéines) pour tenir la cible.
+        if (rows.some(r => r.capped)) {
+            const targetKcal = coef * totalKcalBase;
+            const fixedKcal  = rows.filter(r => r.capped || r.overridden)
+                .reduce((s, r) => s + (r.ing.qty > 0 ? r.qty / r.ing.qty : 0) * r.ing.kcal, 0);
+            const freeBase   = rows.filter(r => !r.capped && !r.overridden)
+                .reduce((s, r) => s + r.ing.kcal, 0);
+            if (freeBase > 0) {
+                const boost = Math.max(0, (targetKcal - fixedKcal) / freeBase);
+                rows.forEach(r => { if (!r.capped && !r.overridden) r.qty = Math.round(r.ing.qty * boost); });
             }
+        }
 
-            const ratio = ing.qty > 0 ? finalQty / ing.qty : 0;
+        return rows.map(r => {
+            const ratio = r.ing.qty > 0 ? r.qty / r.ing.qty : 0;
             return {
-                ...ing,
-                scaledQty: finalQty,
-                scaledKcal: ratio * ing.kcal,
-                scaledProt: ratio * ing.prot,
-                scaledLip: ratio * ing.lip,
-                scaledGlu: ratio * ing.glu
+                ...r.ing,
+                scaledQty: r.qty,
+                scaledKcal: ratio * r.ing.kcal,
+                scaledProt: ratio * r.ing.prot,
+                scaledLip: ratio * r.ing.lip,
+                scaledGlu: ratio * r.ing.glu,
+                capped: r.capped,
             };
         });
     };
 
-    const scaledAxel = calculateValues(coefAxel, overridesAxel);
-    const scaledPrisca = calculateValues(coefPrisca, overridesPrisca);
+    const scaledAxel = calculateValues(coefAxel, overridesAxel, 'axel');
+    const scaledPrisca = calculateValues(coefPrisca, overridesPrisca, 'prisca');
 
     const handleOverride = (personKey, idx, val) => {
         const num = parseFloat(val);
@@ -213,10 +245,13 @@ const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, 
                             onChange={e => { const v = parseFloat(e.target.value); if(!isNaN(v)) { setCoef(v); setOverrides({}); } }}
                             style={{ width: '35px', outline: 'none', textAlign: 'center', background: 'transparent', border: 'none', color: '#fff', fontWeight: 'bold', fontSize: '0.9rem' }} />
                         <button onClick={() => { setCoef(c => c + 0.1); setOverrides({}); }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '24px', height: '24px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>+</button>
-                        
-                        {(Math.abs(currentCoef - baseCoef) > 0.01 || Object.keys(overrides).length > 0) && (
-                            <button onClick={() => { setCoef(baseCoef); setOverrides({}); }} style={{ background: `${color}20`, border: `1px solid ${color}40`, color: color, borderRadius: '4px', cursor: 'pointer', fontSize: '0.65rem', padding: '0.2rem 0.4rem', marginLeft: '0.3rem' }}>Reset</button>
-                        )}
+
+                        {/* Bouton Reco : cale le coef sur ta cible calorique du repas */}
+                        <button onClick={() => { setCoef(baseCoef); setOverrides({}); }}
+                            title="Règle le coefficient pour atteindre ta cible calorique du repas"
+                            style={{ background: `${color}22`, border: `1px solid ${color}`, color, borderRadius: '5px', cursor: 'pointer', fontSize: '0.68rem', padding: '0.25rem 0.5rem', marginLeft: '0.3rem', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                            🎯 Reco {Number(baseCoef).toFixed(1)}
+                        </button>
                     </div>
                 </div>
 
@@ -238,7 +273,10 @@ const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, 
                             return (
                                 <tr key={idx} style={{ borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                                     <td style={{ padding: '0.6rem 0', color: '#e2e8f0', lineHeight: 1.4 }}>
-                                        <div style={{ fontWeight: 600 }}>{ing.ingredient}</div>
+                                        <div style={{ fontWeight: 600 }}>
+                                            {ing.ingredient}
+                                            {ing.capped && <span title="Plafonné : les calories vont sur les autres ingrédients" style={{ fontSize: '0.6rem', fontWeight: 800, background: 'rgba(251,146,60,0.15)', color: '#fb923c', border: '1px solid #fb923c55', borderRadius: '4px', padding: '1px 4px', marginLeft: '0.4rem' }}>MAX</span>}
+                                        </div>
                                     </td>
                                     <td style={{ padding: '0.6rem 0', textAlign: 'right', verticalAlign: 'top' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.3rem' }}>
@@ -530,12 +568,13 @@ const RecipeDetailModal = ({ recipe, budgetAxel, budgetPrisca, onClose }) => {
                         <>
                             {/* Scaler Intelligent dynamique */}
                             {ingredientsMatrix && budgetAxel && budgetPrisca && (
-                                <InteractiveRecipeScaler 
-                                    ingredientsConfig={ingredientsMatrix} 
-                                    budgetAxel={budgetAxel} 
-                                    budgetPrisca={budgetPrisca} 
+                                <InteractiveRecipeScaler
+                                    ingredientsConfig={ingredientsMatrix}
+                                    budgetAxel={budgetAxel}
+                                    budgetPrisca={budgetPrisca}
                                     totalCostRaw={totalCost}
                                     onTotalCoefChange={setTotalCoef}
+                                    recipeId={recipe.id}
                                 />
                             )}
                             {/* Portions habituelles */}
@@ -793,7 +832,7 @@ const RecipeIdeas = ({ profiles }) => {
     const [search,       setSearch]       = useState('');
     const [activeTags,   setActiveTags]   = useState([]);
     const [loading,      setLoading]      = useState(true);
-    const [targetMeal,   setTargetMeal]   = useState('midi');
+    const [targetMeal,   setTargetMeal]   = useState('soir');
     const [detailRecipe, setDetailRecipe] = useState(null);
     const [showBatch,    setShowBatch]    = useState(false); // recettes batch masquées par défaut
 

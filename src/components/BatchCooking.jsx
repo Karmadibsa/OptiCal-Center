@@ -66,7 +66,7 @@ const CANON_RULES = [
     ['riz', 'Riz'],
     ['gnocchi', 'Gnocchis'],
     ['ebly', 'Ebly'],
-    ['pate complet', 'Pâtes complètes'], ['pates complet', 'Pâtes complètes'], ['pate', 'Pâtes'],
+    ['pates complet', 'Pâtes complètes'], ['pates', 'Pâtes'], ['nouille', 'Nouilles'],
     ['pst', 'PST'],
     ['carotte', 'Carottes'],
     ['courgette', 'Courgettes'],
