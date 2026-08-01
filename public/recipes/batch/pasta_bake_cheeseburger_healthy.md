@@ -26,7 +26,7 @@ emoji: 🍔
 | Cheddar râpé allégé | 35 | g | 260 | 25.0 | 16.0 | 2.0 | Lipide |
 | Huile d'olive | 8 | g | 900 | 0.0 | 100.0 | 0.0 | Cuisson et saveur |
 | Lait demi-écrémé | 100 | g | 47 | 3.3 | 1.6 | 4.8 | Base de la sauce fromagère légère |
-| Maïzena | 10 | g | 350 | 0.5 | 0.1 | 86.0 | Épaississant pour béchamel light |
+| Maïzena | 3 | g | 350 | 0.5 | 0.1 | 86.0 | Épaississant pour béchamel light |
 | Cornichons (en morceaux) | 30 | g | 15 | 1.0 | 0.1 | 2.5 | Touche "Cheeseburger" acidulée |
 
 ### Prix des ingrédients
