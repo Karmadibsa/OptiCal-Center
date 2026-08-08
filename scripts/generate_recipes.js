@@ -83,7 +83,13 @@ function parseFrontmatter(content) {
  * Normalise un texte pour la comparaison : minuscules, sans accents.
  */
 function norm(s) {
-    return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    // NFD ne décompose PAS les ligatures œ/æ : on les remplace explicitement,
+    // sinon "Œufs" ne matche jamais le mot-clé "oeuf".
+    return (s || '')
+        .toLowerCase()
+        .replace(/œ/g, 'oe').replace(/æ/g, 'ae')
+        .normalize('NFD').replace(/[̀-ͯ]/g, '')
+        .trim();
 }
 
 /**
@@ -94,15 +100,25 @@ function mapRole(roleText, ingName) {
     const rt = norm(roleText);
     const nm = norm(ingName);
 
-    // Féculent — toujours prioritaire
-    if (rt.includes('feculent') || rt.includes('glucidique') || rt.includes('glucides'))
+    // Féculent explicite ("Féculent") — prioritaire
+    if (rt.includes('feculent'))
         return 'feculent';
 
-    // Protéine végétale (avec glucides associés)
+    // Protéine (avec glucides associés) — AVANT le test "glucides", sinon
+    // "Protéine + Glucides" serait classé féculent (thon/poulet/lentilles dans
+    // les féculents de la liste de courses).
+    // NB : les haricots VERTS sont un légume, pas une légumineuse.
+    const isHaricotSec = nm.includes('haricot') && !nm.includes('vert');
     if (rt.includes('proteine') || rt.includes('protein') ||
         /\bpst\b/.test(nm) || nm.includes('edamame') ||
-        nm.includes('lentille') || nm.includes('pois chiche') || nm.includes('haricot'))
+        nm.includes('lentille') || nm.includes('pois chiche') || isHaricotSec ||
+        nm.includes('thon') || nm.includes('poulet') || nm.includes('dinde') ||
+        nm.includes('boeuf') || nm.includes('oeuf'))
         return 'protein_glu';
+
+    // Féculent implicite (rôle "Glucidique" / "Glucides")
+    if (rt.includes('glucidique') || rt.includes('glucides'))
+        return 'feculent';
 
     // Lipides (matières grasses, produits laitiers gras, fromages)
     if (rt.includes('lipide') || rt.includes('corps gras') || rt.includes('onctu') ||

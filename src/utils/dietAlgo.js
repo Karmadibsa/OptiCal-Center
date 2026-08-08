@@ -745,7 +745,10 @@ export const getSocleItems = (key, profiles) => {
 // ─── Tags de recette (pour filtrer la sélection batch) ───────────────────────
 // Dérivés automatiquement des ingrédients / cook_group, + température (chaud/froid)
 // heuristique depuis le nom (les salades = froid). Retourne un tableau de tags.
-const _norm = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+// NFD ne décompose pas les ligatures œ/æ : on les remplace explicitement.
+const _norm = (s) => String(s || '').toLowerCase()
+    .replace(/œ/g, 'oe').replace(/æ/g, 'ae')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '');
 export const getRecipeTags = (recipe) => {
     if (!recipe) return [];
     const tags = new Set();
@@ -754,19 +757,22 @@ export const getRecipeTags = (recipe) => {
     const groups = new Set(ings.map(i => i.cook_group).filter(Boolean));
     const ingHas = (kw) => ings.some(i => _norm(i.name).includes(kw));
 
-    // Température : salade / froid → froid, sinon chaud
-    tags.add(/salade|froid|taboule|wrap froid/.test(name) ? 'froid' : 'chaud');
+    // Température : salade / coleslaw / taboulé / poke → froid, sinon chaud
+    tags.add(/salade|coleslaw|froid|taboule|poke|ceviche/.test(name) ? 'froid' : 'chaud');
 
     // Base féculent
     if (groups.has('riz')      || ingHas('riz'))       tags.add('riz');
     if (groups.has('pates')    || ingHas('pates') || ingHas('nouille')) tags.add('pâtes');
     if (groups.has('ebly')     || ingHas('ebly'))      tags.add('ebly');
     if (groups.has('gnocchis') || ingHas('gnocchi'))   tags.add('gnocchis');
-    if (ingHas('patate douce') || ingHas('pomme de terre')) tags.add('patate douce');
+    if (ingHas('patate douce')) tags.add('patate douce');
+    if (ingHas('pomme de terre') || ingHas('pommes de terre')) tags.add('pomme de terre');
 
     // Source protéines
     if (recipe.has_pst === true || recipe.has_pst === 'true' || ingHas('pst')) tags.add('PST');
-    if (ingHas('lentille') || ingHas('haricot') || ingHas('pois chiche') || ingHas('edamame')) tags.add('légumineuses');
+    // Légumineuses : les haricots VERTS sont un légume, pas une légumineuse
+    const hasHaricotSec = ings.some(i => { const n = _norm(i.name); return n.includes('haricot') && !n.includes('vert'); });
+    if (ingHas('lentille') || hasHaricotSec || ingHas('pois chiche') || ingHas('edamame')) tags.add('légumineuses');
     if (ingHas('thon'))    tags.add('thon');
 
     return [...tags];

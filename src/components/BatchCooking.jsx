@@ -6,13 +6,13 @@ import { scaleRecipeForMeal, calculatePlan, computeGlycemic, getSocleItems, getR
 // Émoji par tag pour la barre de filtres
 const TAG_META = {
     chaud: '🔥', froid: '❄️', 'pâtes': '🍝', riz: '🍚', ebly: '🌾', gnocchis: '🥟',
-    'patate douce': '🍠', PST: '🫛', 'légumineuses': '🫘', thon: '🐟',
+    'patate douce': '🍠', 'pomme de terre': '🥔', PST: '🫛', 'légumineuses': '🫘', thon: '🐟',
 };
 
 // Groupes de filtres (affichés triés par catégorie)
 const TAG_GROUPS = [
     { label: 'Température', tags: ['chaud', 'froid'] },
-    { label: 'Féculent',    tags: ['pâtes', 'riz', 'ebly', 'gnocchis', 'patate douce'] },
+    { label: 'Féculent',    tags: ['pâtes', 'riz', 'ebly', 'gnocchis', 'patate douce', 'pomme de terre'] },
     { label: 'Protéine',    tags: ['PST', 'légumineuses', 'thon'] },
 ];
 
