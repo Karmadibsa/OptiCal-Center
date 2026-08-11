@@ -3384,23 +3384,23 @@
     "id": "600027",
     "scalable": true,
     "has_pst": false,
-    "name": "Salade Lentilles, Chèvre & Noix",
+    "name": "Salade Lentilles-Boulgour, Chèvre & Noix",
     "category": "plats|vege",
-    "cook_coef": "1.0",
-    "kcal": "711",
-    "prot": "35",
-    "lip": "31",
-    "glu": "70",
-    "price": "2.20",
+    "cook_coef": "1.3",
+    "kcal": "838",
+    "prot": "36",
+    "lip": "35",
+    "glu": "93",
+    "price": "2.40",
     "prep_active": "15 min",
     "prep_inactive": "20 min",
-    "description": "La salade qui se bonifie avec le temps — lentilles vertes fondantes marinées dans une vinaigrette moutarde-balsamique, carottes râpées, oignon rouge, chèvre frais et noix croquantes.",
-    "tips": "Se garde 3-4 jours et c'est la seule salade qui est MEILLEURE le lendemain : les lentilles s'imprègnent de la vinaigrette. Garde les noix à part pour le croquant.",
+    "description": "La salade qui se bonifie avec le temps — lentilles vertes et boulgour marinés dans une vinaigrette moutarde-balsamique, carottes râpées, concombre, tomates cerises, chèvre frais et noix croquantes.",
+    "tips": "Se garde 3-4 jours et c'est la seule salade MEILLEURE le lendemain : lentilles et boulgour s'imprègnent de la vinaigrette. Le boulgour apporte du volume sans que ça devienne une montagne de lentilles. Garde les noix à part pour le croquant.",
     "emoji": "🫘",
     "ingredients": [
       {
         "name": "Lentilles vertes (sèches)",
-        "qty_g": 90,
+        "qty_g": 60,
         "kcal_100": 340,
         "prot_100": 26,
         "lip_100": 1,
@@ -3409,6 +3409,17 @@
         "cook_group": "sauce_salade_lentilles",
         "is_pst": false,
         "precook": true
+      },
+      {
+        "name": "Boulgour (sec)",
+        "qty_g": 50,
+        "kcal_100": 350,
+        "prot_100": 12,
+        "lip_100": 1.5,
+        "glu_100": 70,
+        "role": "feculent",
+        "cook_group": "sauce_salade_lentilles",
+        "is_pst": false
       },
       {
         "name": "Carottes",
@@ -3433,6 +3444,17 @@
         "is_pst": false
       },
       {
+        "name": "Tomates cerises",
+        "qty_g": 100,
+        "kcal_100": 20,
+        "prot_100": 1,
+        "lip_100": 0.2,
+        "glu_100": 4,
+        "role": "legume",
+        "cook_group": "sauce_salade_lentilles",
+        "is_pst": false
+      },
+      {
         "name": "Oignon rouge",
         "qty_g": 50,
         "kcal_100": 40,
@@ -3445,7 +3467,7 @@
       },
       {
         "name": "Bûche de chèvre",
-        "qty_g": 40,
+        "qty_g": 45,
         "kcal_100": 290,
         "prot_100": 18,
         "lip_100": 23,
@@ -3467,7 +3489,7 @@
       },
       {
         "name": "Huile d'olive",
-        "qty_g": 10,
+        "qty_g": 12,
         "kcal_100": 884,
         "prot_100": 0,
         "lip_100": 100,
