@@ -15,7 +15,7 @@
       "haricots rouges"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 2.70,
+    "price_per_unit": 2.7,
     "achat": "Boîte 800g · ~1.35€ · ~500g égouttés",
     "magasin": "Carrefour"
   },
@@ -56,7 +56,7 @@
       "lentilles rouges"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.50,
+    "price_per_unit": 3.5,
     "achat": "Sachet 500g · ~1.75€",
     "magasin": "Carrefour"
   },
@@ -68,7 +68,7 @@
       "pst"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 8.00,
+    "price_per_unit": 8,
     "achat": "Sachet 1kg · ~8.00€",
     "magasin": "Official VeganShop"
   },
@@ -79,7 +79,7 @@
       "proteines de soja texturee grosses"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 8.00,
+    "price_per_unit": 8,
     "achat": "Sachet 1kg · ~8.00€",
     "magasin": "Official VeganShop"
   },
@@ -90,7 +90,7 @@
       "pates"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 2.10,
+    "price_per_unit": 2.1,
     "achat": "Paquet 500g · ~1.05€",
     "magasin": "Carrefour"
   },
@@ -182,7 +182,7 @@
     ],
     "buy_unit": "L",
     "price_per_unit": 3.45,
-    "density": 1.0,
+    "density": 1,
     "achat": "Boîte 200ml · 0.69€ → 3.45€/L",
     "magasin": "Carrefour"
   },
@@ -192,7 +192,7 @@
       "huile olive"
     ],
     "buy_unit": "L",
-    "price_per_unit": 10.00,
+    "price_per_unit": 10,
     "density": 0.916,
     "achat": "Bouteille 75cl · ~7.50€ → 10.00€/L",
     "magasin": "Carrefour"
@@ -205,7 +205,7 @@
       "cacahuete"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 9.00,
+    "price_per_unit": 9,
     "achat": "Pot 1kg · ~9.00€",
     "magasin": "Amazon"
   },
@@ -228,7 +228,7 @@
       "parmesan rape"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 21.50,
+    "price_per_unit": 21.5,
     "achat": "Sachet 100g · ~2.15€",
     "magasin": "Carrefour"
   },
@@ -239,7 +239,7 @@
       "creme 15"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.10,
+    "price_per_unit": 3.1,
     "achat": "Pot 50cl/500g · ~1.55€",
     "magasin": "Carrefour"
   },
@@ -353,7 +353,7 @@
       "melange legumes"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.50,
+    "price_per_unit": 3.5,
     "achat": "Sachet surgelé 1kg · ~3.50€",
     "magasin": "Carrefour"
   },
@@ -409,7 +409,7 @@
       "celeri"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 12.50,
+    "price_per_unit": 12.5,
     "achat": "Estimation uniforme toutes épices · ~0.10€ pour 8g",
     "magasin": ""
   },
@@ -497,7 +497,7 @@
       "cherry tomato"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 5.00,
+    "price_per_unit": 5,
     "achat": "Barquette 250g · ~1.25€",
     "magasin": "Carrefour"
   },
@@ -512,7 +512,7 @@
       "courge cuite"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 3.50,
+    "price_per_unit": 3.5,
     "achat": "Butternut surgelée 1kg · ~3.29€ · estimation purée cuite ~3.50€/kg",
     "magasin": "Carrefour"
   },
@@ -536,7 +536,7 @@
       "cheddar allege"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 11.50,
+    "price_per_unit": 11.5,
     "achat": "Sachet 200g · ~2.30€ (allégé)",
     "magasin": "Carrefour"
   },
@@ -668,7 +668,7 @@
       "allumettes de lardons"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 8.20,
+    "price_per_unit": 8.2,
     "achat": "Barquette 200g · ~1.64€",
     "magasin": "Carrefour"
   },
@@ -694,7 +694,7 @@
       "fromage blanc 0"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 2.50,
+    "price_per_unit": 2.5,
     "achat": "Pot 500g · ~1.25€",
     "magasin": "Carrefour"
   },
@@ -706,7 +706,7 @@
       "mayo"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 4.60,
+    "price_per_unit": 4.6,
     "achat": "Pot 475g · ~2.19€",
     "magasin": "Carrefour"
   },
@@ -719,7 +719,7 @@
       "moutarde forte"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 6.30,
+    "price_per_unit": 6.3,
     "achat": "Pot 370g · ~2.33€",
     "magasin": "Carrefour"
   },
@@ -734,7 +734,7 @@
       "thon"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 10.00,
+    "price_per_unit": 10,
     "achat": "Boîte 112g égoutté · ~1.12€",
     "magasin": "Carrefour"
   },
@@ -749,7 +749,7 @@
       "gruyere ou comte"
     ],
     "buy_unit": "kg",
-    "price_per_unit": 17.50,
+    "price_per_unit": 17.5,
     "achat": "Bloc 200g · ~3.50€",
     "magasin": "Carrefour"
   },
@@ -779,5 +779,201 @@
     "density": 1.01,
     "achat": "Bouteille 750ml · ~1.89€",
     "magasin": "Carrefour"
+  },
+  {
+    "name": "Poivron",
+    "aliases": [
+      "poivrons",
+      "poivron mix rouge/vert",
+      "poivron mix rouge/jaune"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 4.2,
+    "achat": "~4.20€/kg (frais) · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Graines de sésame",
+    "aliases": [
+      "sesame",
+      "graines sesame"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 9,
+    "achat": "Sachet 100g ~0.90€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Petits pois",
+    "aliases": [
+      "petit pois",
+      "petits pois surgeles"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.2,
+    "achat": "Surgelés 1kg ~2.20€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Blanc de poulet",
+    "aliases": [
+      "poulet",
+      "filet de poulet",
+      "blanc poulet",
+      "emince de poulet"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 11,
+    "achat": "~11€/kg (filets) · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Œufs",
+    "aliases": [
+      "oeuf",
+      "oeufs",
+      "blancs d'oeufs",
+      "jaune d'oeuf",
+      "oeuf mollet"
+    ],
+    "buy_unit": "pc",
+    "price_per_unit": 0.3,
+    "g_per_unit": 50,
+    "achat": "Boîte de 12 ~3.60€ · ~0.30€/œuf · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Olives noires",
+    "aliases": [
+      "olives",
+      "olive noire"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 7,
+    "achat": "Bocal 200g ~1.40€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Chapelure panko",
+    "aliases": [
+      "panko",
+      "chapelure"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 6,
+    "achat": "Sachet 200g ~1.20€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Fromage râpé allégé",
+    "aliases": [
+      "fromage rape",
+      "emmental rape",
+      "emmental rape allege"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 9,
+    "achat": "Sachet 200g ~1.80€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Pesto",
+    "aliases": [
+      "pesto vert",
+      "pesto basilic"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 12,
+    "achat": "Pot 190g ~2.30€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Sauce teriyaki",
+    "aliases": [
+      "teriyaki"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 7,
+    "density": 1.15,
+    "achat": "Bouteille 250ml ~1.75€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Boulgour (sec)",
+    "aliases": [
+      "boulgour",
+      "bulgur"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.5,
+    "achat": "Paquet 500g ~1.25€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Bûche de chèvre",
+    "aliases": [
+      "chevre",
+      "buche chevre",
+      "fromage de chevre"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 13,
+    "achat": "Bûche 180g ~2.35€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Noix (cerneaux)",
+    "aliases": [
+      "noix",
+      "cerneaux de noix"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 14,
+    "achat": "Sachet 125g ~1.75€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Haricots verts",
+    "aliases": [
+      "haricot vert",
+      "haricots verts surgeles"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 2.5,
+    "achat": "Surgelés 1kg ~2.50€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Feta",
+    "aliases": [
+      "feta douce",
+      "fromage feta"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 11,
+    "achat": "Bloc 200g ~2.20€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Nouilles complètes (sèches)",
+    "aliases": [
+      "nouilles completes",
+      "nouilles"
+    ],
+    "buy_unit": "kg",
+    "price_per_unit": 3,
+    "achat": "Paquet 500g ~1.50€ · ESTIMATION",
+    "magasin": ""
+  },
+  {
+    "name": "Sauce huître",
+    "aliases": [
+      "sauce huitre"
+    ],
+    "buy_unit": "L",
+    "price_per_unit": 6,
+    "density": 1.2,
+    "achat": "Bouteille 250ml ~1.50€ · ESTIMATION",
+    "magasin": ""
   }
 ]
