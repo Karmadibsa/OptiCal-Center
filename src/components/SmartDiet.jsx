@@ -152,30 +152,46 @@ const SmartDiet = ({ profiles, setProfiles }) => {
             ['Config', 'Profile', 'Prot_Ratio', profiles.axel.prot_ratio, profiles.prisca.prot_ratio, 'System Config'],
             ['Config', 'Profile', 'Opt_Fromage', profiles.axel.opt_fromage, profiles.prisca.opt_fromage, 'System Config'],
             ['Config', 'Profile', 'Opt_Fb_Soir', profiles.axel.opt_fb_soir || false, profiles.prisca.opt_fb_soir || false, 'System Config'],
-            ['Config', 'Sport', 'PAL',
+            ['Config', 'Profile', 'Pain_Matin_G',   resAxel.pain_g,     resPrisca.pain_g,     'Petit-déj (g pain)'],
+            ['Config', 'Profile', 'Cancoillotte_G', resAxel.canc_g,     resPrisca.canc_g,     'Petit-déj (g cancoillotte)'],
+            ['Config', 'Profile', 'Skyr_G',         resAxel.skyr_g,     resPrisca.skyr_g,     'Petit-déj (g skyr/fromage blanc)'],
+            ['Config', 'Profile', 'Oeuf_Matin',     resAxel.oeuf_matin, resPrisca.oeuf_matin, 'Œufs le matin'],
+            ['Config', 'Profile', 'Oeuf_Soir',      resAxel.oeuf_soir,  resPrisca.oeuf_soir,  'Œufs le soir'],
+            ['Config', 'Profile', 'Banane_Qty',     resAxel.banane_qty, resPrisca.banane_qty, 'Bananes / jour'],
+            ['Config', 'Profile', 'Pomme_Qty',      resAxel.pomme_qty,  resPrisca.pomme_qty,  'Pommes / jour'],            ['Config', 'Sport', 'PAL',
                 profiles.axel.pal || 1.375,
                 profiles.prisca.pal || 1.375,
                 'Niveau d\'activité (Physical Activity Level)'
             ]
         ];
 
+        // Lignes informatives : reflètent le plan réel (socle + repas batch).
+        // Aucune n'est relue par le code — seules les lignes "Config" le sont.
+        const fmtPetitDej = (res) => [
+            `${res.pain_g}g Pain`,
+            res.canc_g > 0 ? `${res.canc_g}g Canc.` : null,
+            res.skyr_g > 0 ? `${res.skyr_g}g Skyr` : null,
+            res.oeuf_matin > 0 ? `${res.oeuf_matin} Œufs` : null,
+        ].filter(Boolean).join(' + ');
+        const fmtFruits = (res) => [
+            res.banane_qty > 0 ? `${res.banane_qty} Banane` : null,
+            res.pomme_qty  > 0 ? `${res.pomme_qty} Pomme`  : null,
+        ].filter(Boolean).join(' + ') || '-';
+
         const dataRows = [
-            ['Diet', 'Matin', 'Pain + Cancoillotte + Œufs', `${resAxel.pain_g}g Pain + ${resAxel.canc_g}g Canc. + ${resAxel.oeuf_matin} Œufs`, `${resPrisca.pain_g}g Pain + ${resPrisca.canc_g}g Canc. + ${resPrisca.oeuf_matin} Œufs`, 'Base fixe'],
-            ['Diet', 'Matin', 'Whey', '1 Shaker de Whey (30g)', 'Rien', ''],
+            ['Diet', 'Matin', 'Petit-déjeuner', fmtPetitDej(resAxel), fmtPetitDej(resPrisca), 'Socle fixe'],
+            ['Diet', 'Matin', 'Whey', resAxel.use_whey_matin ? '1 Shaker' : '-', resPrisca.use_whey_matin ? '1 Shaker' : '-', ''],
 
-            ['Diet', 'Midi', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_midi)}g`, `${Math.round(resPrisca.pasta_midi)}g`, 'Calculé (55%)'],
-            ['Diet', 'Midi', 'PST (Cru)', `${resAxel.pst_qty}g`, `${resPrisca.pst_qty}g`, 'Source Protéines (Poids - 25)'],
-            ['Diet', 'Midi', 'Légumes', 'À volonté', 'À volonté', 'Volume'],
-            ['Diet', 'Midi', 'Crème Fraîche', '30g (1 c.à.s)', '30g (1 c.à.s)', 'Lipides'],
+            ['Diet', 'Midi', 'Repas Batch', `${resAxel.batch_midi_budget} kcal`, `${resPrisca.batch_midi_budget} kcal`, 'Recette de la semaine (55% du budget repas)'],
 
-            ['Diet', '16H00', 'Fruits', `${resAxel.banane_qty} Banane${resAxel.pomme_qty > 0 ? ` + ${resAxel.pomme_qty} Pomme` : ''}`, `${resPrisca.banane_qty} Banane${resPrisca.pomme_qty > 0 ? ` + ${resPrisca.pomme_qty} Pomme` : ''}`, 'Glucides'],
-            ['Diet', '16H00', 'Whey', '1 Shaker de Whey (30g)', '1 Shaker de Whey (25g)', 'Récupération'],
+            ['Diet', '16H00', 'Fruits', fmtFruits(resAxel), fmtFruits(resPrisca), 'Glucides'],
+            ['Diet', '16H00', 'Whey', resAxel.use_whey_collation ? '1 Shaker' : '-', resPrisca.use_whey_collation ? '1 Shaker' : '-', 'Récupération'],
 
-            ['Diet', 'Soir', 'Pâtes Protein+ (Cru)', `${Math.round(resAxel.pasta_soir)}g`, `${Math.round(resPrisca.pasta_soir)}g`, 'Ajustement (45%)'],
-            ['Diet', 'Soir', 'Œufs', `${resAxel.oeuf_qty_per_meal} (Plat/Mollet)`, `${resPrisca.oeuf_qty_per_meal} (Plat/Mollet)`, 'OBLIGATOIRE'],
-            ['Diet', 'Soir', 'Légumes + Crème', 'Légumes + 30g Crème', 'Légumes + 30g Crème', ''],
-            ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : "-", profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : "-", 'Extra variable'],
-            ['Diet', 'Soir', 'Fromage Blanc 0%', resAxel.fb_qty > 0 ? `${resAxel.fb_qty}g` : "-", resPrisca.fb_qty > 0 ? `${resPrisca.fb_qty}g` : "-", 'Compensation prot. soir'],
+            ['Diet', 'Soir', 'Repas Batch', `${resAxel.batch_soir_budget} kcal`, `${resPrisca.batch_soir_budget} kcal`, 'Recette de la semaine (45% du budget repas)'],
+            ['Diet', 'Soir', 'Œufs', resAxel.oeuf_soir > 0 ? `${resAxel.oeuf_soir}` : '-', resPrisca.oeuf_soir > 0 ? `${resPrisca.oeuf_soir}` : '-', ''],
+            ['Diet', 'Soir', 'Option Fromage', profiles.axel.opt_fromage > 0 ? `${profiles.axel.opt_fromage}g` : '-', profiles.prisca.opt_fromage > 0 ? `${profiles.prisca.opt_fromage}g` : '-', 'Extra variable'],
+
+            ['Diet', 'Total', 'Cible / jour', `${Math.round(resAxel.target_daily)} kcal`, `${Math.round(resPrisca.target_daily)} kcal`, 'Socle + repas batch'],
         ];
 
         const rows = [header, ...configRows, ...dataRows];
