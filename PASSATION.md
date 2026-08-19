@@ -139,6 +139,9 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ Noms d'ingrédients homogénéisés dans les courses (tous les riz → "Riz", etc.).
 - ✅ Suppression de 4 symboles morts dans `dietAlgo.js` (`MEAL_PCT`, `GLU_CRITICAL_MIN`, `LIP_MAX_RATIO`, alias `scaleRecipeForMidi`) — vérifié 0 usage, 10/10 tests de non-régression après coup.
 - ✅ `README.md` et `CALCUL_DETAILS.md` réécrits (ils décrivaient encore l'ancien système MET / pancakes / Pâtes Protein+ et des onglets supprimés).
+- ✅ **Plafonds d'ingrédients dans le frontmatter** (`max_g: konjac=350/200`) au lieu d'ids de recettes en dur — un changement d'id ne désactive plus silencieusement un plafond.
+- ✅ **Page Récap Diète branchée dans la nav** (la route existait sans entrée de menu).
+- ✅ **Base de prix complétée** : 100 % des ingrédients batch (293/293), contre 76 % avant.
 
 ### Recettes
 - **51 recettes** : 36 batch scalables + 15 plaisir (+ 10 plaisir archivées dans `_archive_plaisir/`).
@@ -172,21 +175,12 @@ Retirer ce modèle demande de redéfinir ce qu'affichent ces trois écrans. La d
 **volontairement reportée** pour ne pas casser les chiffres avant la mise en production.
 À traiter dans une passe dédiée, avec des tests avant/après.
 
-**🟡 2. La page `/diet-summary` n'est reliée à aucun menu.**
-La route existe et la page fonctionne (récapitulatif diététique imprimable), mais elle
-n'apparaît dans aucun onglet de `Navigation.jsx` : elle n'est accessible qu'en tapant l'URL.
-C'était déjà le cas avant la refonte. À brancher dans la nav, ou à supprimer.
+**🟡 2. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
+l'ancien modèle Pâtes/PST (voir point 1) et n'a pas été retesté fonctionnellement.
 
-**🟡 3. `MAX_G_MAP` référence des ids de recettes en dur** (`RecipeIdeas.jsx`).
-Si une recette change d'id, le plafond devient silencieusement inactif. Mieux : déplacer
-l'info dans le frontmatter du `.md` (ex. `max_g: konjac 350/200`) et la faire remonter
-par le générateur, comme pour `precook`.
-
-**🟡 4. Base de prix incomplète** — `ingredients_prix.json` couvre ~76 % des ingrédients
-(88/116). L'estimation budget est donc sous-évaluée. Compléter au fil de l'eau.
-
-**🟡 5. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
-l'ancien modèle et n'a pas été retesté.
+**🟢 3. Les prix sont des estimations.** `ingredients_prix.json` couvre 100 % des
+ingrédients batch, mais 17 entrées ont été ajoutées avec des prix **estimés** (marqués
+`ESTIMATION` dans le champ `achat`). À corriger avec les vrais tickets de caisse.
 
 ### 5.2 — Pièges à connaître
 
