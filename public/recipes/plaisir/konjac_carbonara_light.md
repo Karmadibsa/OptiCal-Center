@@ -11,6 +11,7 @@ prep_active: 10 min
 prep_inactive: 5 min
 description: La carbonara plaisir quasi sans glucides : nouilles de konjac, allumettes de dinde, jaune d'œuf et parmesan pour une sauce crémeuse ultra régressive et légère.
 tips: Rince et poêle les nouilles de konjac 3 min à sec avant la sauce (enlève l'eau et l'odeur). ⚖️ Le konjac ne fait quasi rien en calories : pour un repas plus copieux, augmente les toppings (dinde, parmesan) plutôt que le konjac — reste vers 300-350g konjac max (Axel) / 150-200g (Prisca).
+max_g: konjac=350/200
 emoji: 🍝
 ---
 

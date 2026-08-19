@@ -11,6 +11,7 @@ prep_active: 15 min
 prep_inactive: 40 min
 description: La recette virale de jimmyjumbeast — patate douce fondante, bœuf 5% et double fromage protéiné, gratinée au four et relevée d'une sauce chipotle. Ultra rassasiant et riche en protéines.
 tips: Toutes les quantités sont adaptables selon ta diète : augmente ou réduis facilement patate douce (glucides) et bœuf (protéines).
+max_g: patate douce=300/220
 emoji: 🌯
 ---
 

@@ -2,22 +2,27 @@ import React, { useState, useEffect } from 'react';
 import { BookMarked, ExternalLink, Search, Tag, Scale, X, ChevronDown, Euro } from 'lucide-react';
 import { getMealBudget } from '../utils/dietAlgo';
 
-// ─── Poids MAX par ingrédient (par recette id), en grammes et par personne ──────
-// Ingrédients "volume" quasi 0 kcal (konjac) ou incompressibles (patate douce du
-// wrap) : ils BLOQUENT à leur max, et les calories restantes sont redistribuées
-// automatiquement sur les autres ingrédients (toppings / protéines).
-const MAX_G_MAP = {
-    '730017': { konjac: { axel: 350, prisca: 200 } }, // Carbonara konjac
-    '730018': { konjac: { axel: 350, prisca: 200 } }, // Ramen konjac
-    '730019': { konjac: { axel: 350, prisca: 200 } }, // Pad thaï konjac
-    '730015': { 'patate douce': { axel: 300, prisca: 220 } }, // Wrap patate douce
-};
-const getMaxG = (recipeId, ingName, personKey) => {
-    const rec = MAX_G_MAP[String(recipeId)];
-    if (!rec) return null;
+// ─── Poids MAX par ingrédient ────────────────────────────────────────────────
+// Déclaré dans le frontmatter de la recette (champ max_g), pas en dur ici :
+//     max_g: konjac=350/200            → mot-clé = grammes Axel / grammes Prisca
+//     max_g: konjac=350/200; riz=150   → plusieurs plafonds séparés par ';'
+// Sert aux ingrédients volume quasi sans calories (konjac) ou incompressibles
+// (patate douce du wrap) : ils BLOQUENT à leur max et les calories restantes sont
+// redistribuées automatiquement sur les autres ingrédients (toppings / protéines).
+const parseMaxG = (spec) => String(spec || '').split(';').map(part => {
+    const [kw, vals] = part.split('=');
+    if (!kw || !vals) return null;
+    const [a, p] = vals.split('/').map(v => parseFloat(v));
+    if (!Number.isFinite(a)) return null;
+    return { kw: kw.trim().toLowerCase(), axel: a, prisca: Number.isFinite(p) ? p : a };
+}).filter(Boolean);
+
+const getMaxG = (maxGSpec, ingName, personKey) => {
+    const rules = parseMaxG(maxGSpec);
+    if (rules.length === 0) return null;
     const n = (ingName || '').toLowerCase();
-    const kw = Object.keys(rec).find(k => n.includes(k));
-    return kw ? rec[kw][personKey] : null;
+    const hit = rules.find(r => n.includes(r.kw));
+    return hit ? hit[personKey] : null;
 };
 
 // ─── Badge macros ─────────────────────────────────────────────────────────────
@@ -115,7 +120,7 @@ const PERSON_COLORS = { axel: '#38bdf8', prisca: '#a78bfa' };
 const getPersonColor = (name) => PERSON_COLORS[name.toLowerCase()] || '#94a3b8';
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
-const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange, recipeId }) => {
+const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, totalCostRaw, onTotalCoefChange, maxGSpec }) => {
     const totalKcalBase = ingredientsConfig.reduce((acc, i) => acc + i.kcal, 0) || 1;
     
     // Coef de reference (auto) = ce qu'il faut pour atteindre la cible calorique du
@@ -157,7 +162,7 @@ const InteractiveRecipeScaler = ({ ingredientsConfig, budgetAxel, budgetPrisca, 
             }
             const overridden = overrides[idx] !== undefined;
             let qty = overridden ? overrides[idx] : ing.qty * coef;
-            const maxG = getMaxG(recipeId, ing.ingredient, personKey);
+            const maxG = getMaxG(maxGSpec, ing.ingredient, personKey);
             const capped = !overridden && maxG != null && qty > maxG;
             if (capped) qty = maxG;
             else if (!overridden) qty = isDivisible ? Math.round(qty) : Math.round(qty / baseStep) * baseStep;
@@ -574,7 +579,7 @@ const RecipeDetailModal = ({ recipe, budgetAxel, budgetPrisca, onClose }) => {
                                     budgetPrisca={budgetPrisca}
                                     totalCostRaw={totalCost}
                                     onTotalCoefChange={setTotalCoef}
-                                    recipeId={recipe.id}
+                                    maxGSpec={recipe.max_g}
                                 />
                             )}
                             {/* Portions habituelles */}
@@ -890,6 +895,7 @@ const RecipeIdeas = ({ profiles }) => {
                         tips:         row.tips || '',
                         link:         row.link || '',
                         emoji:        row.emoji || '🍽️',
+                        max_g:        row.max_g || null,   // plafonds d'ingrédients (voir parseMaxG)
                         isBatch:      row.scalable === true || row.scalable === 'true',
                         accent:       ACCENTS[i % ACCENTS.length]
                     };

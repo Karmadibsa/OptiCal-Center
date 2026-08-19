@@ -11,6 +11,7 @@ prep_active: 15 min
 prep_inactive: 10 min
 description: Un ramen réconfortant et léger : nouilles de konjac dans un bouillon miso parfumé, poulet, œuf mollet et légumes croquants. Le gros bol plaisir sans culpabilité.
 tips: Ajoute l'œuf mollet et les oignons verts au dernier moment. ⚖️ Konjac quasi 0 kcal : pour plus copieux, augmente le poulet plutôt que le konjac — max ~300-350g konjac (Axel) / 150-200g (Prisca).
+max_g: konjac=350/200
 emoji: 🍜
 ---
 

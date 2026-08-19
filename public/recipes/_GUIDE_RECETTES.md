@@ -166,6 +166,25 @@ emoji: 🍗
 | Protocole | Toujours **"Étape 1", "Étape 2"...** (pas de noms d'étapes) |
 | Macros | Pour l'assiette entière (cible ~1135-1140 kcal) |
 
+#### Champ optionnel `max_g` — plafonner un ingrédient ⚖️
+
+Certains ingrédients ne doivent PAS être multipliés à l'infini quand le scaleur ajuste la
+recette à la cible calorique : le konjac (quasi 0 kcal, on n'en mangera jamais 900 g) ou une
+base déjà copieuse (la patate douce du wrap). On leur met un **plafond**, et le scaleur
+redistribue les calories restantes sur les autres ingrédients (toppings, protéines).
+
+Syntaxe dans le frontmatter — `mot-clé=grammes_Axel/grammes_Prisca` :
+
+```yaml
+max_g: konjac=350/200
+max_g: konjac=350/200; riz=150/100    # plusieurs plafonds séparés par ';'
+```
+
+- Le **mot-clé** est cherché dans le nom de l'ingrédient (`konjac` matche « Nouilles de konjac »).
+- Une seule valeur (`konjac=300`) s'applique aux deux personnes.
+- Champ **optionnel** : sans lui, aucun plafond (cas de la grande majorité des recettes).
+- ⚠️ N'agit que sur les recettes **plaisir** (scaleur de l'onglet Idées Recettes).
+
 ---
 
 ## 4. Le fichier `manifest.json`

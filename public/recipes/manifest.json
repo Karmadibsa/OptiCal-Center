@@ -13,7 +13,8 @@
     "prep_inactive": "5 min",
     "description": "La carbonara plaisir quasi sans glucides : nouilles de konjac, allumettes de dinde, jaune d'œuf et parmesan pour une sauce crémeuse ultra régressive et légère.",
     "tips": "Rince et poêle les nouilles de konjac 3 min à sec avant la sauce (enlève l'eau et l'odeur). ⚖️ Le konjac ne fait quasi rien en calories : pour un repas plus copieux, augmente les toppings (dinde, parmesan) plutôt que le konjac — reste vers 300-350g konjac max (Axel) / 150-200g (Prisca).",
-    "emoji": "🍝"
+    "emoji": "🍝",
+    "max_g": "konjac=350/200"
   },
   {
     "file": "plaisir/le_dark_bowl_boudin_noir_pommes_caramelisees.md",
@@ -61,7 +62,8 @@
     "prep_inactive": "5 min",
     "description": "Le pad thaï revisité léger : nouilles de konjac sautées, crevettes, œuf, germes de soja croquants et sauce tamarin, finies aux cacahuètes et citron vert.",
     "tips": "Garde germes de soja et cacahuètes pour la fin (croquant). ⚖️ Konjac quasi 0 kcal : pour plus copieux, augmente les crevettes plutôt que le konjac — max ~300-350g konjac (Axel) / 150-200g (Prisca).",
-    "emoji": "🦐"
+    "emoji": "🦐",
+    "max_g": "konjac=350/200"
   },
   {
     "file": "plaisir/pizza_proteinee_feuilles_riz.md",
@@ -141,7 +143,8 @@
     "prep_inactive": "10 min",
     "description": "Un ramen réconfortant et léger : nouilles de konjac dans un bouillon miso parfumé, poulet, œuf mollet et légumes croquants. Le gros bol plaisir sans culpabilité.",
     "tips": "Ajoute l'œuf mollet et les oignons verts au dernier moment. ⚖️ Konjac quasi 0 kcal : pour plus copieux, augmente le poulet plutôt que le konjac — max ~300-350g konjac (Axel) / 150-200g (Prisca).",
-    "emoji": "🍜"
+    "emoji": "🍜",
+    "max_g": "konjac=350/200"
   },
   {
     "file": "plaisir/riz_au_thon_de_maman.md",
@@ -221,7 +224,8 @@
     "prep_inactive": "40 min",
     "description": "La recette virale de jimmyjumbeast — patate douce fondante, bœuf 5% et double fromage protéiné, gratinée au four et relevée d'une sauce chipotle. Ultra rassasiant et riche en protéines.",
     "tips": "Toutes les quantités sont adaptables selon ta diète : augmente ou réduis facilement patate douce (glucides) et bœuf (protéines).",
-    "emoji": "🌯"
+    "emoji": "🌯",
+    "max_g": "patate douce=300/220"
   },
   {
     "file": "pain_de_campagne_rustique.md",

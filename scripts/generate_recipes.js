@@ -254,7 +254,7 @@ function buildEntry(filePath, frontmatter, existingEntry) {
         'kcal', 'prot', 'lip', 'glu', 'price',
         'prep_active', 'prep_inactive', 'prep',
         'description', 'tips', 'emoji',
-        'base_unit', 'recipe_yield',
+        'base_unit', 'recipe_yield', 'max_g',
     ];
 
     const entry = { file: filePath };
