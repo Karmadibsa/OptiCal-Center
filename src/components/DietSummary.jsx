@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculatePlan, PAL_OPTIONS, SOCLE_DATA, PASTA_REF, MACRO_EST as EST } from '../utils/dietAlgo';
+import { calculatePlan, PAL_OPTIONS, getSocleItems } from '../utils/dietAlgo';
 import {
     Printer, FlaskConical, Target, BookOpen,
     Pill, Dumbbell, Info
@@ -12,118 +12,36 @@ const r = (n, d = 0) => {
 };
 
 // ─── Sous-composant : tableau socle par personne ──────────────────────────────
+// Reflète le modèle ACTUEL : socle fixe (getSocleItems) + budget des repas batch
+// = cible calorique. Les anciennes lignes Pâtes Protein+ / PST / Fromage blanc
+// ont été retirées : elles décrivaient la diète d'avant le batch cooking.
 const SocleTable = ({ planKey, plan, profiles }) => {
-    const p        = profiles[planKey];
-    const isAxel   = planKey === 'axel';
-    const socle    = { ...SOCLE_DATA.common, ...SOCLE_DATA[planKey] };
-    const accent   = isAxel ? '#38bdf8' : '#818cf8';
-    const optFromage  = Math.max(0, Number(p.opt_fromage) || 0);
-    const optFbSoir   = Boolean(p.opt_fb_soir);
+    const isAxel = planKey === 'axel';
+    const accent = isAxel ? '#38bdf8' : '#818cf8';
 
-    // Whey selon les toggles réels (matin Axel + collation 16h)
-    const wheyNb   = (plan.use_whey_matin ? 1 : 0) + (plan.use_whey_collation ? 1 : 0);
-    const wheyKcal = (plan.use_whey_matin ? socle.matin_whey.kcal : 0) + (plan.use_whey_collation ? socle.collation_whey.kcal : 0);
-    const wheyProt = (plan.use_whey_matin ? socle.matin_whey.prot : 0) + (plan.use_whey_collation ? socle.collation_whey.prot : 0);
-    const totalOeufs = (plan.oeuf_matin || 0) + (plan.oeuf_soir || 0);
+    // Socle fixe = exactement ce qui est mangé hors recettes (source unique)
+    const { items, total } = getSocleItems(planKey, profiles);
 
-    // ─── Socle FIXE (depuis les réglages petit-déj ajustables) ───────────────
-    const fixedRows = [
-        {
-            name: 'Petit-déj (pain/canc./skyr)',
-            detail: `${plan.pain_g}g pain + ${plan.canc_g}g canc.${plan.skyr_g > 0 ? ` + ${plan.skyr_g}g skyr` : ''}`,
-            kcal: plan.pain_kcal,
-            prot: plan.pain_prot,
-            lip: plan.pain_lip,
-            glu: plan.pain_glu,
-        },
-        ...(wheyNb > 0 ? [{
-            name: 'Whey Protéinée',
-            detail: `×${wheyNb} shaker${wheyNb > 1 ? 's' : ''} / jour`,
-            kcal: wheyKcal,
-            prot: wheyProt,
-            lip: wheyNb * EST.whey_lip_per,
-            glu: wheyNb * EST.whey_glu_per,
-        }] : []),
-        {
-            name: 'Œufs entiers',
-            detail: `×${totalOeufs} / jour (${plan.oeuf_matin} matin + ${plan.oeuf_soir} soir)`,
-            kcal: totalOeufs * 80,
-            prot: totalOeufs * 6,
-            lip: totalOeufs * EST.oeuf_lip,
-            glu: 0,
-        },
-        {
-            name: 'Crème Fraîche 30%',
-            detail: '30g × 2 repas',
-            kcal: socle.midi_creme.kcal + socle.soir_creme.kcal,
-            prot: socle.midi_creme.prot + socle.soir_creme.prot,
-            lip: EST.creme_lip_per_30g * 2,
-            glu: 2,
-        },
-        {
-            name: 'Légumes (à volonté)',
-            detail: '~225g × 2 repas ≈ 450g/j',
-            kcal: EST.legumes_kcal_jours,
-            prot: EST.legumes_prot_jour,
-            lip: 1,
-            glu: EST.legumes_glu_jour,
-        },
-        ...((plan.banane_qty || 0) > 0 ? [{
-            name: 'Banane (collation 16h)',
-            detail: `${plan.banane_qty} banane${plan.banane_qty > 1 ? 's' : ''}`,
-            kcal: plan.banane_qty * EST.banane_kcal,
-            prot: plan.banane_qty * EST.banane_prot,
-            lip: 0,
-            glu: plan.banane_qty * EST.banane_glu,
-        }] : []),
-        ...((plan.pomme_qty || 0) > 0 ? [{
-            name: 'Pomme (collation 16h)',
-            detail: `${plan.pomme_qty} pomme${plan.pomme_qty > 1 ? 's' : ''}`,
-            kcal: plan.pomme_qty * 72,
-            prot: plan.pomme_qty * 0.4,
-            lip: plan.pomme_qty * 0.2,
-            glu: plan.pomme_qty * 19,
-        }] : []),
-    ];
+    const batchMidi = plan.batch_midi_budget || 0;
+    const batchSoir = plan.batch_soir_budget || 0;
+    const batchKcal = batchMidi + batchSoir;
 
-    // Options passées dans les variables, plus dans fixedRows
-
-    // Sous-total fixe (sans PST, pâtes, FB)
-    const sub = fixedRows.reduce(
-        (a, row) => ({ kcal: a.kcal + row.kcal, prot: a.prot + row.prot, lip: a.lip + row.lip, glu: a.glu + row.glu }),
-        { kcal: 0, prot: 0, lip: 0, glu: 0 }
-    );
-
-    // ─── Variables dynamiques ─────────────────────────────────────────────
-    const pstKcal = r(plan.pst_qty * 3.3);
-    const pstProt = r(plan.pst_qty * 0.5, 1);
-    const pstLip  = r(plan.pst_qty * 0.05, 1);
-    const pstGlu  = r(plan.pst_qty * 0.3, 1);
-
-    const pastaKcal = r(plan.pasta_grams_day * PASTA_REF.kcal / 100);
-    const pastaProt = r(plan.pasta_grams_day * PASTA_REF.prot / 100, 1);
-    const pastaLip  = r(plan.pasta_grams_day * EST.pasta_lip_per_100g / 100, 1);
-    const pastaGlu  = r(plan.pasta_grams_day * EST.pasta_glu_per_100g / 100, 1);
-
-    const fbKcal = r(plan.fb_qty * 0.48);
-    const fbProt = r(plan.fb_qty * 0.08, 1);
-    const fbGlu  = r(plan.fb_qty * EST.fb_glu_per_g, 1);
-
-    const fromageKcal = optFromage > 0 ? r(optFromage * 4) : 0;
-    const fromageProt = optFromage > 0 ? r(optFromage * 0.25, 1) : 0;
-    const fromageLip  = optFromage > 0 ? r(optFromage * EST.fromage_unit_lip, 1) : 0;
+    // Ce que les recettes doivent apporter pour atteindre les objectifs macros
+    const needProt = Math.max(0, r(plan.prot_goal - total.prot, 1));
+    const needLip  = Math.max(0, r(plan.lip_goal  - total.lip,  1));
+    const needGlu  = Math.max(0, r((plan.glu_goal || 0) - total.glu, 1));
 
     const grandTotal = {
-        kcal: r(sub.kcal + pstKcal + pastaKcal + fbKcal + fromageKcal),
-        prot: r(sub.prot + pstProt + pastaProt + fbProt + fromageProt, 1),
-        lip:  r(sub.lip  + pstLip  + pastaLip + fromageLip, 1),
-        glu:  r(sub.glu  + pstGlu  + pastaGlu + fbGlu, 1),
+        kcal: r(total.kcal + batchKcal),
+        prot: r(plan.prot_goal, 1),
+        lip:  r(plan.lip_goal, 1),
+        glu:  r(plan.glu_goal || 0, 1),
     };
 
     const pct = {
         prot: grandTotal.kcal > 0 ? r(((grandTotal.prot * 4) / grandTotal.kcal) * 100) : 0,
-        lip:  grandTotal.kcal > 0 ? r(((grandTotal.lip * 9)  / grandTotal.kcal) * 100) : 0,
-        glu:  grandTotal.kcal > 0 ? r(((grandTotal.glu * 4)  / grandTotal.kcal) * 100) : 0,
+        lip:  grandTotal.kcal > 0 ? r(((grandTotal.lip  * 9) / grandTotal.kcal) * 100) : 0,
+        glu:  grandTotal.kcal > 0 ? r(((grandTotal.glu  * 4) / grandTotal.kcal) * 100) : 0,
     };
 
     return (
@@ -145,9 +63,12 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {fixedRows.map((row, i) => (
+                        {items.map((row, i) => (
                             <tr key={i}>
-                                <td className="ds-td-name">{row.name}</td>
+                                <td className="ds-td-name">
+                                    <span style={{ color: '#64748b', fontSize: '0.78rem' }}>{row.moment} · </span>
+                                    {row.name}
+                                </td>
                                 <td className="ds-td-detail">{row.detail}</td>
                                 <td><span className="ds-val">{r(row.kcal)}</span></td>
                                 <td><span className="ds-val ds-prot">{r(row.prot, 1)}</span></td>
@@ -159,44 +80,23 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                     <tfoot>
                         <tr className="ds-tfoot-sub">
                             <td colSpan="2">Sous-total Socle Fixe</td>
-                            <td>{r(sub.kcal)}</td>
-                            <td className="ds-prot">{r(sub.prot, 1)}</td>
-                            <td className="ds-lip">{r(sub.lip, 1)}</td>
-                            <td className="ds-glu">{r(sub.glu, 1)}</td>
-                        </tr>
-                        {/* Variables dynamiques */}
-                        <tr className="ds-tfoot-var">
-                            <td colSpan="2">+ PST Soja ({plan.pst_qty}g cru)</td>
-                            <td>{pstKcal}</td>
-                            <td className="ds-prot">{pstProt}</td>
-                            <td className="ds-lip">{pstLip}</td>
-                            <td className="ds-glu">{pstGlu}</td>
+                            <td>{r(total.kcal)}</td>
+                            <td className="ds-prot">{r(total.prot, 1)}</td>
+                            <td className="ds-lip">{r(total.lip, 1)}</td>
+                            <td className="ds-glu">{r(total.glu, 1)}</td>
                         </tr>
                         <tr className="ds-tfoot-var">
-                            <td colSpan="2">+ Pâtes Protein+ ({r(plan.pasta_grams_day)}g cru / jour)</td>
-                            <td>{pastaKcal}</td>
-                            <td className="ds-prot">{pastaProt}</td>
-                            <td className="ds-lip">{pastaLip}</td>
-                            <td className="ds-glu">{pastaGlu}</td>
-                        </tr>
-                        <tr className={`ds-tfoot-var ${!optFbSoir || plan.fb_qty === 0 ? 'ds-row-inactive' : ''}`}>
                             <td colSpan="2">
-                                + Fromage Blanc 0% ({optFbSoir ? `${r(plan.fb_qty)}g` : '0g'})
+                                + Repas Batch (midi {batchMidi} + soir {batchSoir} kcal)
+                                <span style={{ color: '#64748b', fontSize: '0.75rem' }}> — à couvrir par les recettes</span>
                             </td>
-                            <td>{optFbSoir ? fbKcal : '—'}</td>
-                            <td className="ds-prot">{optFbSoir ? fbProt : '—'}</td>
-                            <td className="ds-lip">0</td>
-                            <td className="ds-glu">{optFbSoir ? fbGlu : '—'}</td>
-                        </tr>
-                        <tr className={`ds-tfoot-var ${optFromage === 0 ? 'ds-row-inactive' : ''}`}>
-                            <td colSpan="2">+ Option Fromage ({optFromage}g)</td>
-                            <td>{optFromage > 0 ? fromageKcal : '—'}</td>
-                            <td className="ds-prot">{optFromage > 0 ? fromageProt : '—'}</td>
-                            <td className="ds-lip">{optFromage > 0 ? fromageLip : '—'}</td>
-                            <td className="ds-glu">{optFromage > 0 ? '0' : '—'}</td>
+                            <td>{r(batchKcal)}</td>
+                            <td className="ds-prot">{needProt}</td>
+                            <td className="ds-lip">{needLip}</td>
+                            <td className="ds-glu">{needGlu}</td>
                         </tr>
                         <tr className="ds-tfoot-total">
-                            <td colSpan="2">TOTAL ESTIMÉ / JOUR</td>
+                            <td colSpan="2">TOTAL / JOUR = CIBLE</td>
                             <td>{grandTotal.kcal}</td>
                             <td className="ds-prot">{grandTotal.prot} <span style={{fontSize:'0.75rem', opacity:0.7}}>({pct.prot}%)</span></td>
                             <td className="ds-lip">{grandTotal.lip} <span style={{fontSize:'0.75rem', opacity:0.7}}>({pct.lip}%)</span></td>
@@ -242,9 +142,9 @@ const DietSummary = ({ profiles, data = [] }) => {
                     <p className="ds-formula-label">Formule BMR — Mifflin-St Jeor (1990)</p>
                     <code className="ds-formula">BMR = (10 × Poids<sub>kg</sub>) + (6.25 × Taille<sub>cm</sub>) − (5 × Âge) + S</code>
                     <p className="ds-formula-note">S = <strong>+5</strong> (homme) &nbsp;|&nbsp; <strong>−161</strong> (femme)</p>
-                    <code className="ds-formula">TDEE = BMR × 1.2 <span className="ds-formula-comment">(coefficient sédentaire)</span> + Calories Sport</code>
-                    <code className="ds-formula">Calories Sport = MET × Poids<sub>kg</sub> × Durée<sub>h</sub> &nbsp;<span className="ds-formula-comment">(sommé/7 pour ramener au jour)</span></code>
-                    <code className="ds-formula">Objectif Journalier = TDEE − Déficit</code>
+                    <code className="ds-formula">TDEE = BMR × PAL <span className="ds-formula-comment">(niveau d'activité, budget stable 7j/7)</span></code>
+                    <code className="ds-formula">Cible / jour = TDEE − Déficit</code>
+                    <code className="ds-formula">Budget Repas Batch = Cible − Socle Fixe &nbsp;<span className="ds-formula-comment">(midi 55% · soir 45%)</span></code>
                 </div>
 
                 {/* Valeurs calculées */}
@@ -305,26 +205,26 @@ const DietSummary = ({ profiles, data = [] }) => {
 
             {/* ─────────────── SECTION 2 : Macros Cibles ─────────────── */}
             <section className="ds-section">
-                <h3 className="ds-section-title"><Target size={19} /> Macros Cibles Estimees Par Jour</h3>
+                <h3 className="ds-section-title"><Target size={19} /> Macros Cibles Par Jour</h3>
                 <div className="card-grid">
                     {persons.map(({ key, label, plan, color, glow }) => {
-                        const ratioReel = r(plan.total_prot / (profiles[key].weight || 1), 2);
-                        const ratioOk = !plan.prot_warning;
+                        // Ce que le socle apporte déjà, et ce qu'il reste aux recettes à couvrir
+                        const socle = getSocleItems(key, profiles).total;
                         return (
                             <div key={key} className="card ds-macro-card" style={{ background: glow, borderColor: `${color}30` }}>
                                 <div className="ds-macro-name" style={{ color }}>{label}</div>
                                 <div className="ds-macro-grid">
                                     {[
-                                        { label: 'Poids actuel',         val: `${profiles[key].weight} kg`,          color },
-                                        { label: 'Objectif calorique',   val: `${r(plan.target_daily)} kcal/j`,      color },
-                                        { label: 'Protéines cible',      val: `${r(plan.prot_goal, 1)} g/j`,         color },
-                                        { label: 'Ratio cible',          val: `${profiles[key].prot_ratio} g/kg`,    color },
-                                        { label: 'Protéines estimées',   val: `${r(plan.total_prot, 1)} g/j`,        color: ratioOk ? '#4ade80' : '#f87171' },
-                                        { label: 'Ratio réel atteint',   val: `${ratioReel} g/kg`,                   color: ratioOk ? '#4ade80' : '#fb923c' },
-                                        { label: 'Lipides estimées',     val: `${r(plan.total_lip, 1)} g/j`,         color: '#fb923c' },
-                                        { label: 'Glucides estimées',    val: `${r(plan.total_glu, 1)} g/j`,         color: '#facc15' },
-                                        { label: 'Déficit appliqué',     val: `−${profiles[key].deficit} kcal`,      color: '#f59e0b' },
-                                        { label: 'TDEE (BMR × PAL)',     val: `${r(plan.tdee_final)} kcal`,          color },
+                                        { label: 'Poids actuel',          val: `${profiles[key].weight} kg`,                       color },
+                                        { label: 'Poids de forme',        val: `${plan.goal_weight || profiles[key].weight} kg`,   color },
+                                        { label: 'TDEE (BMR × PAL)',      val: `${r(plan.tdee_final)} kcal`,                       color },
+                                        { label: 'Déficit appliqué',      val: `−${profiles[key].deficit} kcal`,                   color: '#f59e0b' },
+                                        { label: 'Objectif calorique',    val: `${r(plan.target_daily)} kcal/j`,                   color },
+                                        { label: 'Protéines cible',       val: `${r(plan.prot_goal, 1)} g/j (${profiles[key].prot_ratio} g/kg)`, color: '#4ade80' },
+                                        { label: 'Lipides cible',         val: `${r(plan.lip_goal, 1)} g/j (${profiles[key].lip_ratio ?? 0.9} g/kg)`, color: '#fb923c' },
+                                        { label: 'Glucides cible',        val: `${r(plan.glu_goal || 0)} g/j`,                     color: '#facc15' },
+                                        { label: 'Apporté par le socle',  val: `${r(socle.kcal)} kcal · ${r(socle.prot, 1)}g P`,   color: '#94a3b8' },
+                                        { label: 'Reste aux recettes',    val: `${r(plan.batch_midi_budget + plan.batch_soir_budget)} kcal · ${r(Math.max(0, plan.prot_goal - socle.prot), 1)}g P`, color },
                                     ].map((item, i) => (
                                         <div key={i} className="ds-macro-item">
                                             <span className="ds-macro-label">{item.label}</span>
@@ -332,12 +232,6 @@ const DietSummary = ({ profiles, data = [] }) => {
                                         </div>
                                     ))}
                                 </div>
-                                {plan.prot_warning && (
-                                    <div className="ds-warn-badge">
-                                        ⚠️ Objectif non atteint — écart : {r(plan.prot_goal - plan.total_prot, 1)}g
-                                        &nbsp;({r(plan.prot_ratio - ratioReel, 2)} g/kg manquants)
-                                    </div>
-                                )}
                             </div>
                         );
                     })}

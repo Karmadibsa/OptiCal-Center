@@ -142,6 +142,7 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ **Plafonds d'ingrédients dans le frontmatter** (`max_g: konjac=350/200`) au lieu d'ids de recettes en dur — un changement d'id ne désactive plus silencieusement un plafond.
 - ✅ **Page Récap Diète branchée dans la nav** (la route existait sans entrée de menu).
 - ✅ **Base de prix complétée** : 100 % des ingrédients batch (293/293), contre 76 % avant.
+- ✅ **Récap Diète migré sur le modèle actuel** : il affichait encore « 413 g de pâtes + 16 g de PST par jour » (diète d'avant le batch), et la formule TDEE périmée (MET). Affiche maintenant socle + budget batch = cible.
 
 ### Recettes
 - **51 recettes** : 36 batch scalables + 15 plaisir (+ 10 plaisir archivées dans `_archive_plaisir/`).
@@ -167,13 +168,12 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 C'est le plus gros morceau. ~46 références (`pasta_grams_day`, `pasta_midi`, `pasta_soir`,
 `pst_qty`, `fb_qty`, `PASTA_REF`) calculent encore une diète "pâtes + protéines de soja"
 qui n'est **plus utilisée pour le batch cooking**, mais qui alimente toujours :
-- `DietSummary.jsx` (lignes du récapitulatif) ;
-- `ExternalMeal.jsx` ;
-- l'export CSV de `SmartDiet.jsx`.
+- ~~`DietSummary.jsx`~~ → **migré** : le Récap affiche désormais socle + budget batch = cible ;
+- `ExternalMeal.jsx` (reste à faire) ;
+- l'export CSV de `SmartDiet.jsx` (reste à faire).
 
-Retirer ce modèle demande de redéfinir ce qu'affichent ces trois écrans. La décision a été
-**volontairement reportée** pour ne pas casser les chiffres avant la mise en production.
-À traiter dans une passe dédiée, avec des tests avant/après.
+Il reste donc **deux** consommateurs. Une fois migrés, les champs `pasta_*`, `pst_qty`,
+`fb_qty` et `PASTA_REF` pourront disparaître de `calculatePlan()`.
 
 **🟡 2. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
 l'ancien modèle Pâtes/PST (voir point 1) et n'a pas été retesté fonctionnellement.
