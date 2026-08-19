@@ -85,7 +85,7 @@ public/recipes/*.md ──[generate_recipes.js]──► manifest.json ──►
 | `src/components/RecipeIdeas.jsx` | ~1086 | Idées recettes + scaleur interactif des plats plaisir |
 | `src/components/SmartDiet.jsx` | ~643 | "Macro Plan" : réglage des profils (poids, PAL, ratios, petit-déj) |
 | `src/components/DietSummary.jsx` | ~407 | Récapitulatif diététique imprimable |
-| `src/components/ExternalMeal.jsx` | ~562 | Guide repas extérieur — **jamais revu, utilise encore l'ancien modèle** |
+| `src/components/ExternalMeal.jsx` | ~530 | Guide repas extérieur (budget d'un repas pris dehors) |
 | `scripts/generate_recipes.js` | ~395 | Génère `manifest.json` depuis les `.md` (+ auto-parse ingrédients, détection pré-cuisson) |
 | `public/recipes/_GUIDE_RECETTES.md` | — | **Le prompt de référence** donné à l'IA pour créer des recettes au bon format |
 
@@ -142,6 +142,8 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ **Plafonds d'ingrédients dans le frontmatter** (`max_g: konjac=350/200`) au lieu d'ids de recettes en dur — un changement d'id ne désactive plus silencieusement un plafond.
 - ✅ **Page Récap Diète branchée dans la nav** (la route existait sans entrée de menu).
 - ✅ **Base de prix complétée** : 100 % des ingrédients batch (293/293), contre 76 % avant.
+- ✅ **Ancien modèle Pâtes/PST entièrement retiré** : Récap Diète, Repas Ext. et export CSV migrés sur socle + budget batch, puis suppression du calcul et des constantes dans `dietAlgo.js` (~900 → ~750 lignes).
+- ✅ **`getMealBudget` recalé** : il surestimait un repas jusqu'à +191 kcal (scaleur des recettes plaisir).
 - ✅ **Récap Diète migré sur le modèle actuel** : il affichait encore « 413 g de pâtes + 16 g de PST par jour » (diète d'avant le batch), et la formule TDEE périmée (MET). Affiche maintenant socle + budget batch = cible.
 
 ### Recettes
@@ -164,23 +166,26 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 
 ### 5.1 — Dette technique (par priorité)
 
-**🔴 1. L'ancien modèle Pâtes/PST vit encore dans `calculatePlan()`**
-C'est le plus gros morceau. ~46 références (`pasta_grams_day`, `pasta_midi`, `pasta_soir`,
-`pst_qty`, `fb_qty`, `PASTA_REF`) calculent encore une diète "pâtes + protéines de soja"
-qui n'est **plus utilisée pour le batch cooking**, mais qui alimente toujours :
-- ~~`DietSummary.jsx`~~ → **migré** : le Récap affiche désormais socle + budget batch = cible ;
-- `ExternalMeal.jsx` (reste à faire) ;
-- l'export CSV de `SmartDiet.jsx` (reste à faire).
+**🟢 Tout ce qui était listé ici a été traité.** L'ancien modèle Pâtes/PST a été
+entièrement retiré de `calculatePlan()` après migration des trois écrans qui en
+dépendaient (Récap Diète, Repas Ext., export CSV). `dietAlgo.js` est passé de
+~900 à ~750 lignes.
 
-Il reste donc **deux** consommateurs. Une fois migrés, les champs `pasta_*`, `pst_qty`,
-`fb_qty` et `PASTA_REF` pourront disparaître de `calculatePlan()`.
+Restent, par ordre d'intérêt :
 
-**🟡 2. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
-l'ancien modèle Pâtes/PST (voir point 1) et n'a pas été retesté fonctionnellement.
+**🟢 1. Les prix sont des estimations.** `ingredients_prix.json` couvre 100 % des
+ingrédients batch, mais 17 entrées ont été ajoutées avec des prix **estimés**
+(marqués `ESTIMATION` dans le champ `achat`). À corriger avec les vrais tickets.
 
-**🟢 3. Les prix sont des estimations.** `ingredients_prix.json` couvre 100 % des
-ingrédients batch, mais 17 entrées ont été ajoutées avec des prix **estimés** (marqués
-`ESTIMATION` dans le champ `achat`). À corriger avec les vrais tickets de caisse.
+**🟢 2. Les macros des recettes créées n'ont pas été vérifiées à la cuisson.**
+Deux corrections ont déjà été nécessaires à l'usage (maïzena 10 g → 3 g, lentilles
+90 g → 60 g). À ajuster au fil des repas réellement préparés.
+
+**🟢 3. `fixed_prot_socle` / `fixed_lip_socle` (utilisés par `scaleRecipeForMeal`
+pour le besoin protéines et le boost huile) incluent la crème et les légumes,
+contrairement au socle de `getSocleItems`.** Ce n'est pas faux — ces macros sont
+bien dans les recettes — mais les deux notions de « socle » cohabitent. À unifier
+si on retouche le scaling un jour (attention : ça change les quantités des recettes).
 
 ### 5.2 — Pièges à connaître
 
