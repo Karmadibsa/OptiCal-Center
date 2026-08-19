@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculatePlan, SOCLE_DATA, PASTA_REF } from '../utils/dietAlgo';
+import { calculatePlan, getSocleItems } from '../utils/dietAlgo';
 import {
     Utensils, ChefHat, CheckCircle, Info,
     TrendingDown, ShieldCheck, Salad, Sun, Moon,
@@ -12,123 +12,45 @@ const r = (n, d = 0) => {
     return Math.round((n || 0) * f) / f;
 };
 
-// ─── Budget SOIR ─────────────────────────────────────────────────────────────
-const calcEveningBudget = (key, profiles) => {
-    const plan        = calculatePlan(key, profiles);
-    const p           = profiles[key];
-    const optFromage  = Math.max(0, Number(p.opt_fromage)  || 0);
-    const optFbSoir   = Boolean(p.opt_fb_soir);
+// ─── Budget d'un repas (midi ou soir) ────────────────────────────────────────
+// Modèle actuel : le repas qu'on "saute" en mangeant dehors = la recette batch
+// (budget kcal du repas) + ce que le socle attache à ce repas (œufs du soir,
+// fromage). Les macros de la part recette = ce que les recettes doivent apporter
+// (objectif − socle), réparti 55% midi / 45% soir.
+const calcMealBudget = (key, profiles, meal) => {
+    const plan   = calculatePlan(key, profiles);
+    const socle  = getSocleItems(key, profiles).total;
+    const p      = profiles[key];
+    const optFromage = Math.max(0, Number(p.opt_fromage) || 0);
+
+    const ratio     = meal === 'midi' ? 0.55 : 0.45;
+    const batchKcal = meal === 'midi' ? plan.batch_midi_budget : plan.batch_soir_budget;
+    const share     = (goal, socleVal) => r(Math.max(0, goal - socleVal) * ratio, 1);
 
     const items = [
         {
-            name: 'Pâtes Protein+',
-            detail: `${r(plan.pasta_soir)}g cru`,
-            kcal: r(plan.pasta_soir * PASTA_REF.kcal / 100),
-            prot: r(plan.pasta_soir * PASTA_REF.prot / 100, 1),
-            lip:  r(plan.pasta_soir * 2   / 100, 1),
-            glu:  r(plan.pasta_soir * 62  / 100, 1),
-        },
-        {
-            name: `Œufs entiers (×${plan.oeuf_qty_per_meal})`,
-            detail: '—',
-            kcal: plan.oeuf_qty_per_meal * 80,
-            prot: plan.oeuf_qty_per_meal * 6,
-            lip:  plan.oeuf_qty_per_meal * 5,
-            glu:  0,
-        },
-        {
-            name: 'Crème Fraîche 30%',
-            detail: '30g',
-            kcal: SOCLE_DATA.common.soir_creme.kcal,
-            prot: SOCLE_DATA.common.soir_creme.prot,
-            lip:  9,
-            glu:  1,
+            name: 'Repas Batch',
+            detail: `recette ${meal === 'midi' ? 'du midi' : 'du soir'}`,
+            kcal: r(batchKcal),
+            prot: share(plan.prot_goal, socle.prot),
+            lip:  share(plan.lip_goal,  socle.lip),
+            glu:  share(plan.glu_goal || 0, socle.glu),
         },
     ];
 
-    if (optFromage > 0) {
+    // Œufs du soir (uniquement s'ils sont réglés et qu'on parle du dîner)
+    if (meal === 'soir' && (plan.oeuf_soir || 0) > 0) {
         items.push({
-            name: 'Option Fromage',
-            detail: `${optFromage}g`,
-            kcal: r(optFromage * 4),
-            prot: r(optFromage * 0.25, 1),
-            lip:  r(optFromage * 0.33, 1),
+            name: `Œufs entiers (×${plan.oeuf_soir})`,
+            detail: '—',
+            kcal: plan.oeuf_soir * 80,
+            prot: plan.oeuf_soir * 6,
+            lip:  plan.oeuf_soir * 5,
             glu:  0,
         });
     }
 
-    // Fromage Blanc — toujours affiché, grisé si désactivé
-    items.push({
-        name: 'Fromage Blanc 0%',
-        detail: optFbSoir
-            ? (plan.fb_qty > 0 ? `${r(plan.fb_qty)}g` : '0g (pas de déficit prot.)')
-            : 'Option désactivée',
-        kcal: optFbSoir ? r(plan.fb_qty * 0.48) : 0,
-        prot: optFbSoir ? r(plan.fb_qty * 0.08, 1) : 0,
-        lip:  0,
-        glu:  optFbSoir ? r(plan.fb_qty * 0.04, 1) : 0,
-        disabled: !optFbSoir,
-    });
-
-    const activeItems = items.filter(it => !it.disabled);
-    const total = activeItems.reduce(
-        (acc, it) => ({
-            kcal: acc.kcal + it.kcal,
-            prot: acc.prot + it.prot,
-            lip:  acc.lip  + it.lip,
-            glu:  acc.glu  + it.glu,
-        }),
-        { kcal: 0, prot: 0, lip: 0, glu: 0 }
-    );
-
-    return {
-        items,
-        total: { kcal: r(total.kcal), prot: r(total.prot, 1), lip: r(total.lip, 1), glu: r(total.glu, 1) },
-        plan,
-    };
-};
-
-// ─── Budget MIDI ──────────────────────────────────────────────────────────────
-const calcLunchBudget = (key, profiles) => {
-    const plan       = calculatePlan(key, profiles);
-    const optFromage = Math.max(0, Number(profiles[key].opt_fromage) || 0);
-
-    const items = [
-        {
-            name: 'PST (Soja Texturé)',
-            detail: `${plan.pst_qty}g cru`,
-            kcal: r(plan.pst_qty * 3.3),
-            prot: r(plan.pst_qty * 0.5, 1),
-            lip:  r(plan.pst_qty * 0.05, 1),
-            glu:  r(plan.pst_qty * 0.30, 1),
-        },
-        {
-            name: 'Pâtes Protein+',
-            detail: `${r(plan.pasta_midi)}g cru (55%)`,
-            kcal: r(plan.pasta_midi * PASTA_REF.kcal / 100),
-            prot: r(plan.pasta_midi * PASTA_REF.prot / 100, 1),
-            lip:  r(plan.pasta_midi * 2 / 100, 1),
-            glu:  r(plan.pasta_midi * 62 / 100, 1),
-        },
-        {
-            name: 'Crème Fraîche 30%',
-            detail: '30g',
-            kcal: SOCLE_DATA.common.midi_creme.kcal,
-            prot: SOCLE_DATA.common.midi_creme.prot,
-            lip:  9,
-            glu:  1,
-        },
-        {
-            name: 'Légumes (à volonté)',
-            detail: '~225g',
-            kcal: 90,   // 225g × 40kcal/100g
-            prot: 6,    // ~2.5g/100g × 225g
-            lip:  0,
-            glu:  15,
-        },
-    ];
-
-    if (optFromage > 0) {
+    if (meal === 'soir' && optFromage > 0) {
         items.push({
             name: 'Option Fromage',
             detail: `${optFromage}g`,
@@ -150,6 +72,9 @@ const calcLunchBudget = (key, profiles) => {
         plan,
     };
 };
+
+const calcEveningBudget = (key, profiles) => calcMealBudget(key, profiles, 'soir');
+const calcLunchBudget   = (key, profiles) => calcMealBudget(key, profiles, 'midi');
 
 // ─── Barre macro ──────────────────────────────────────────────────────────────
 const MacroBar = ({ label, val, unit, max, color }) => {

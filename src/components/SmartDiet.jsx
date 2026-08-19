@@ -2,12 +2,12 @@ import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import {
     Settings,
-    AlertTriangle,
     Download,
 } from 'lucide-react';
 import {
     PAL_OPTIONS,
     calculatePlan,
+    getSocleItems,
     LIP_MIN_RATIO,
     OMEGA3_ZENEMENT,
 } from '../utils/dietAlgo';
@@ -521,6 +521,12 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                 </div>
                             </div>
 
+                            {(() => {
+                                // Modèle actuel : on affiche l'objectif, ce que le socle apporte déjà,
+                                // et ce qu'il reste aux recettes batch à couvrir.
+                                const socle = getSocleItems(key, profiles).total;
+                                const reste = (goal, s) => Math.max(0, Math.round(goal - s));
+                                return (
                             <div className="stats-mini">
                                 <span>TDEE: {Math.round(res.tdee_final)} kcal</span>
                                 <span> | </span>
@@ -530,31 +536,36 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                     Batch Midi: {res.batch_midi_budget} kcal · Soir: {res.batch_soir_budget} kcal
                                 </span>
                                 <br />
+                                <span style={{ color: '#64748b', fontSize: '0.85em' }}>
+                                    Socle fixe : {socle.kcal} kcal · {socle.prot}g P · {socle.lip}g L · {socle.glu}g G
+                                </span>
+                                <br />
                                 {/* Protéines */}
-                                <span style={{ color: res.prot_warning ? '#f87171' : '#4ade80' }}>
-                                    Protéines: {Math.round(res.total_prot)}g / {Math.round(res.prot_goal)}g
+                                <span style={{ color: '#4ade80' }}>
+                                    Protéines: objectif {Math.round(res.prot_goal)}g
                                     {' → '}{profiles[key].prot_ratio}g/kg × {res.goal_weight ?? profiles[key].weight}kg
                                     <span style={{ color: '#475569', fontSize: '0.8em' }}> (forme)</span>
-                                    {res.prot_warning && ' ⚠️'}
+                                    <span style={{ color: '#94a3b8' }}> · socle {socle.prot}g · reste {reste(res.prot_goal, socle.prot)}g aux recettes</span>
                                 </span>
                                 <br />
                                 {/* Lipides */}
-                                <span style={{ color: res.lip_critical ? '#f87171' : res.lip_warning ? '#fbbf24' : '#fb923c' }}>
-                                    Lipides: {res.total_lip.toFixed(1)}g / {Math.round(res.lip_goal)}g
+                                <span style={{ color: res.lip_critical ? '#f87171' : '#fb923c' }}>
+                                    Lipides: objectif {Math.round(res.lip_goal)}g
                                     {' → '}{(profiles[key].lip_ratio ?? 0.9)}g/kg × {res.goal_weight ?? profiles[key].weight}kg
                                     {res.use_omega3 && <span style={{ color: '#64748b' }}> (dont {res.omega3_lip}g Ω3)</span>}
-                                    {res.lip_critical && <span style={{ color: '#f87171' }}> 🚨 &lt;{LIP_MIN_RATIO}g/kg (plancher !)</span>}
-                                    {res.lip_warning  && <span style={{ color: '#fbbf24' }}> ⚠️ sous cible</span>}
+                                    <span style={{ color: '#94a3b8' }}> · socle {socle.lip}g · reste {reste(res.lip_goal, socle.lip)}g</span>
+                                    {(profiles[key].lip_ratio ?? 0.9) < LIP_MIN_RATIO && <span style={{ color: '#f87171' }}> 🚨 cible &lt;{LIP_MIN_RATIO}g/kg (plancher !)</span>}
                                 </span>
                                 <br />
                                 {/* Glucides */}
-                                <span style={{ color: res.glu_critical ? '#f87171' : res.glu_warning ? '#fbbf24' : '#a78bfa' }}>
-                                    Glucides: {Math.round(res.total_glu)}g / {res.glu_goal}g
-                                    {' → '}ajustement calorique
-                                    {res.glu_critical && ' 🚨 −20%'}
-                                    {!res.glu_critical && res.glu_warning && ' ⚠️ Faible'}
+                                <span style={{ color: '#a78bfa' }}>
+                                    Glucides: objectif {res.glu_goal}g
+                                    {res.glu_pct > 0 ? ` (${res.glu_pct}% des kcal)` : ' (résiduel calorique)'}
+                                    <span style={{ color: '#94a3b8' }}> · socle {socle.glu}g · reste {reste(res.glu_goal, socle.glu)}g</span>
                                 </span>
                             </div>
+                                );
+                            })()}
 
                             {/* Rappel pesée > 30 jours (banner) */}
                             {(() => {
@@ -577,26 +588,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 style={{ marginTop: '1.5rem', width: '100%', background: 'rgba(255,255,255,0.1)', border: '1px dashed #94a3b8' }}>
                 <Download size={18} /> Copier Configuration CSV
             </button>
-
-            {(resAxel.prot_warning || resPrisca.prot_warning) && (
-                <div className="alert-box">
-                    <AlertTriangle size={24} />
-                    <div>
-                        {resAxel.prot_warning && (
-                            <div>
-                                <strong>Axel :</strong> {Math.round(resAxel.total_prot)}g / {Math.round(resAxel.prot_goal)}g
-                                {' — '}déficit de <strong style={{ color: '#fca5a5' }}>{Math.round(resAxel.prot_goal - resAxel.total_prot)}g</strong> de protéines.
-                            </div>
-                        )}
-                        {resPrisca.prot_warning && (
-                            <div>
-                                <strong>Prisca :</strong> {Math.round(resPrisca.total_prot)}g / {Math.round(resPrisca.prot_goal)}g
-                                {' — '}déficit de <strong style={{ color: '#fca5a5' }}>{Math.round(resPrisca.prot_goal - resPrisca.total_prot)}g</strong> de protéines.
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
 
             <style>{`
                 .section-title { font-size: 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; color: #fff; }
