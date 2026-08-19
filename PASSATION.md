@@ -1,7 +1,7 @@
 # 📋 Passation — OptiCal Center
 
 > Document de reprise : comment le projet fonctionne, ce qui a été fait, ce qui reste à faire.
-> Dernière mise à jour : après la refonte "suivi calorique FatSecret" (commit `63ef08b`).
+> Dernière mise à jour : après la refonte "suivi calorique FatSecret" + nettoyage code mort et docs.
 
 ---
 
@@ -137,6 +137,8 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ Suppression des onglets **Dashboard** et **Calculateur** (inutilisés) → bundle 842 kB → ~427 kB.
 - ✅ Suppression du tableau legacy "Pâtes/PST" et des logs dans Macro Plan.
 - ✅ Noms d'ingrédients homogénéisés dans les courses (tous les riz → "Riz", etc.).
+- ✅ Suppression de 4 symboles morts dans `dietAlgo.js` (`MEAL_PCT`, `GLU_CRITICAL_MIN`, `LIP_MAX_RATIO`, alias `scaleRecipeForMidi`) — vérifié 0 usage, 10/10 tests de non-régression après coup.
+- ✅ `README.md` et `CALCUL_DETAILS.md` réécrits (ils décrivaient encore l'ancien système MET / pancakes / Pâtes Protein+ et des onglets supprimés).
 
 ### Recettes
 - **51 recettes** : 36 batch scalables + 15 plaisir (+ 10 plaisir archivées dans `_archive_plaisir/`).
@@ -170,23 +172,20 @@ Retirer ce modèle demande de redéfinir ce qu'affichent ces trois écrans. La d
 **volontairement reportée** pour ne pas casser les chiffres avant la mise en production.
 À traiter dans une passe dédiée, avec des tests avant/après.
 
-**🟠 2. `MEAL_PCT = 0.65` est du code mort** — exporté depuis `dietAlgo.js` mais plus
-utilisé nulle part depuis le recalibrage. À supprimer (vérifier qu'aucun import ne traîne).
+**🟡 2. La page `/diet-summary` n'est reliée à aucun menu.**
+La route existe et la page fonctionne (récapitulatif diététique imprimable), mais elle
+n'apparaît dans aucun onglet de `Navigation.jsx` : elle n'est accessible qu'en tapant l'URL.
+C'était déjà le cas avant la refonte. À brancher dans la nav, ou à supprimer.
 
-**🟠 3. Les docs `README.md` et `CALCUL_DETAILS.md` sont périmées.**
-Elles décrivent l'ancien système (formule MET, "pancakes du matin 550 kcal", socle
-"Pâtes Protein+", onglets Dashboard/Calculateur qui n'existent plus). Elles induiront
-en erreur quiconque les lit. À réécrire ou supprimer.
-
-**🟡 4. `MAX_G_MAP` référence des ids de recettes en dur** (`RecipeIdeas.jsx`).
+**🟡 3. `MAX_G_MAP` référence des ids de recettes en dur** (`RecipeIdeas.jsx`).
 Si une recette change d'id, le plafond devient silencieusement inactif. Mieux : déplacer
 l'info dans le frontmatter du `.md` (ex. `max_g: konjac 350/200`) et la faire remonter
 par le générateur, comme pour `precook`.
 
-**🟡 5. Base de prix incomplète** — `ingredients_prix.json` couvre ~76 % des ingrédients
+**🟡 4. Base de prix incomplète** — `ingredients_prix.json` couvre ~76 % des ingrédients
 (88/116). L'estimation budget est donc sous-évaluée. Compléter au fil de l'eau.
 
-**🟡 6. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
+**🟡 5. `ExternalMeal.jsx` n'a jamais été revu** dans cette refonte : il utilise encore
 l'ancien modèle et n'a pas été retesté.
 
 ### 5.2 — Pièges à connaître

@@ -25,14 +25,6 @@ export const PASTA_REF = {
 
 export const LIP_MIN_RATIO    = 0.8;  // g lipides / kg — seuil sécurité hormonale
 export const LIP_TARGET_RATIO = 0.9;  // g lipides / kg — cible diéto
-export const LIP_MAX_RATIO    = 1.0;  // g lipides / kg — plafond indicatif
-
-// Fraction des kcal totales allouées aux repas du déjeuner et dîner (batch cooking).
-// Le socle (pain matin, whey, collations) occupe les 35% restants.
-export const MEAL_PCT = 0.65;
-
-// Minimum fonctionnel de glucides/j pour le cerveau (OMS / ANSES)
-export const GLU_CRITICAL_MIN = 130;
 
 // ─── Oméga-3 Zenement ─────────────────────────────────────────────────────────
 // Dose : 2 gélules/soir · 700 mg EPA + 500 mg DHA = 1 200 mg Oméga-3
@@ -557,9 +549,6 @@ export const scaleRecipeForMeal = (key, profiles, recipe, meal = 'midi') => {
         meal_kcal_budget: Math.round(meal_kcal_budget),
     };
 };
-
-// Alias backward-compat
-export const scaleRecipeForMidi = (key, profiles, recipe) => scaleRecipeForMeal(key, profiles, recipe, 'midi');
 
 // ─── Extracteur Budgets Repas (Midi / Soir) ──────────────────────────────────
 export const getMealBudget = (key, profiles, meal) => {
