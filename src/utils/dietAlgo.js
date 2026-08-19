@@ -17,12 +17,6 @@ export const PAL_OPTIONS = [
     { value: 1.725, label: 'Très actif',  desc: '6–7 séances intenses / semaine' },
 ];
 
-export const PASTA_REF = {
-    name: "Pâtes Barilla Protein+",
-    kcal: 360, // per 100g
-    prot: 20   // per 100g
-};
-
 export const LIP_MIN_RATIO    = 0.8;  // g lipides / kg — seuil sécurité hormonale
 export const LIP_TARGET_RATIO = 0.9;  // g lipides / kg — cible diéto
 
@@ -61,10 +55,6 @@ export const SOCLE_DATA = {
 
 // ─── Estimations lipides / glucides ───────────────
 export const MACRO_EST = {
-    pain_axel_lip: 5,    // 140g pain + 30g cancoillotte
-    pain_axel_glu: 68,
-    pain_prisca_lip: 3,  // 80g pain + 20g cancoillotte
-    pain_prisca_glu: 40,
     whey_lip_per: 2,     // par scoop
     whey_glu_per: 3,
     oeuf_lip: 5,         // par œuf entier
@@ -78,11 +68,6 @@ export const MACRO_EST = {
     banane_prot: 1,
     banane_glu: 25,
     fromage_unit_lip: 0.33,
-    pasta_lip_per_100g: 2,
-    pasta_glu_per_100g: 62,
-    fb_glu_per_g: 0.04,
-    pst_lip: 0.05,
-    pst_glu: 0.3,
 };
 
 
@@ -193,16 +178,14 @@ export const calculatePlan = (key, profiles) => {
     if (p.weight === 0 || p.height === 0) {
         return {
             bmr: 0, tdee_final: 0, target_daily: 0,
-            fixed_cal: 0, fixed_prot: 0, fixed_prot_socle: 0, remaining_cal: 0,
-            pasta_grams_day: 0, pasta_midi: 0, pasta_soir: 0,
-            total_prot: 0, prot_goal: 0, prot_warning: false,
-            lip_goal: 0, lip_warning: false, lip_critical: false,
-            glu_goal: 0, glu_warning: false, glu_critical: false,
-            total_lip: 0, total_glu: 0,
-            pst_qty: 0, oeuf_qty_per_meal: 0, total_estimated: 0,
+            fixed_prot_socle: 0,
+            prot_goal: 0,
+            lip_goal: 0, lip_critical: false,
+            glu_goal: 0,
+            oeuf_qty_per_meal: 0,
             pain_g: 0, canc_g: 0, skyr_g: 0, oeuf_matin: 0, oeuf_soir: 0, banane_qty: 0, pomme_qty: 0,
             pain_kcal: 0, pain_prot: 0, pain_lip: 0, pain_glu: 0,
-            fb_qty: 0, computed_age: computedAge,
+            computed_age: computedAge,
             batch_midi_budget: 0, batch_soir_budget: 0,
             omega3_lip: 0, use_omega3: false,
             goal_weight: 0, fixed_lip_socle: 0, glu_formula: 0, glu_pct: 0, glu_pct_g: 0,
@@ -327,67 +310,16 @@ export const calculatePlan = (key, profiles) => {
     // Objectif protéines : prot_ratio × poids de FORME (pas le poids actuel)
     const prot_goal = goal_weight * p.prot_ratio;
 
-    // Ce qu'il reste à couvrir après le socle fixe
-    const remaining_cal_target = target_daily - fixed_cal_sans_pst;
-    const remaining_prot_target = prot_goal - fixed_prot_sans_pst;
-
-    // Résolution du système d'équations :
-    // PST  : 3.3 kcal/g | 0.5g prot/g  → (3.3x + 3.6y = remaining_cal_target)
-    // Pâtes: 3.6 kcal/g | 0.2g prot/g  → (0.5x + 0.2y = remaining_prot_target)
-    // → x (PST) = (18 * remaining_prot_target - remaining_cal_target) / 5.7
-    const raw_pst_qty = (18 * remaining_prot_target - remaining_cal_target) / 5.7;
-    let pst_qty = Math.max(0, Math.round(raw_pst_qty));
-    pst_qty = Math.min(pst_qty, 85); // cap à 85g — le FB soir prend le relais
-
-    const pst_cal = pst_qty * 3.3;
-    const pst_prot = pst_qty * 0.5;
-
-    // Les pâtes comblent le reste des calories
-    const remaining_cal_for_pasta = remaining_cal_target - pst_cal;
-    let pasta_grams_day = Math.max(0, remaining_cal_for_pasta / 3.6);
-
-    // Étape 5 : Fromage Blanc 0% — filet de sécurité protéique post-cap PST
-    // Valeurs nutritionnelles : 0.48 kcal/g | 0.08 g prot/g
-    const current_prot_before_fb = fixed_prot_sans_pst + pst_prot + (pasta_grams_day * 0.2);
-    const prot_deficit = Math.round(prot_goal - current_prot_before_fb);
-
-    let fb_qty = 0;
-    if (p.opt_fb_soir && prot_deficit > 0) {
-        fb_qty = Math.round(prot_deficit / 0.08);
-        // On retire les calories du FB au budget pâtes pour rester dans la cible
-        const fb_cal = fb_qty * 0.48;
-        pasta_grams_day = Math.max(0, pasta_grams_day - (fb_cal / 3.6));
-    }
-
-    const pasta_midi = pasta_grams_day * 0.55;
-    const pasta_soir = pasta_grams_day * 0.45;
-
-    // Totaux réels (avec FB)
-    const pasta_prot = (pasta_grams_day / 100) * PASTA_REF.prot;
-    const fixed_cal = fixed_cal_sans_pst + pst_cal;
-    const fixed_prot = fixed_prot_sans_pst + pst_prot;
-    const final_total_prot = fixed_prot + pasta_prot + (fb_qty * 0.08);
-    const prot_warning = final_total_prot < prot_goal * 0.95; // tolérance ±5%
-
-    const remaining_cal = remaining_cal_target;
-    const total_estimated = fixed_cal_sans_pst + pst_cal + (remaining_cal_for_pasta > 0 ? remaining_cal_for_pasta : 0);
-
-    // Calcul final des lipides et glucides
-    const total_lip = fixed_lip_sans_pst +
-                      (pst_qty * MACRO_EST.pst_lip) +
-                      (pasta_grams_day * MACRO_EST.pasta_lip_per_100g / 100);
-
-    const total_glu = fixed_glu_sans_pst +
-                      (pst_qty * MACRO_EST.pst_glu) +
-                      (pasta_grams_day * MACRO_EST.pasta_glu_per_100g / 100) +
-                      (fb_qty * MACRO_EST.fb_glu_per_g);
+    // ── L'ancien modèle "Pâtes Protein+ + PST + Fromage blanc" a été retiré ──
+    // Les repas sont désormais couverts par les recettes batch : leurs macros
+    // réelles dépendent des recettes choisies (voir scaleRecipeForMeal), on ne
+    // peut donc plus produire un "total estimé" du jour ici. Les objectifs
+    // ci-dessous (prot/lip/glu) restent la référence.
 
     // Cible lipides : poids de FORME × ratio
-    // lip_critical = jamais en dessous du plancher absolu 0.8g/kg (risque hormonal)
-    // lip_warning  = sous la cible mais au-dessus du plancher (on note, pas d'alarme)
+    // lip_critical = la CIBLE elle-même passe sous le plancher hormonal 0.8 g/kg
     const lip_goal     = goal_weight * p.lip_ratio;
-    const lip_critical = total_lip < goal_weight * LIP_MIN_RATIO;          // < 0.8g/kg strict
-    const lip_warning  = !lip_critical && total_lip < lip_goal * 0.95;     // ≥5% sous cible, mild
+    const lip_critical = p.lip_ratio < LIP_MIN_RATIO;
 
     // Glucides = variable d'ajustement calorique
     // Cal résiduelles après protéines (4 kcal/g) + lipides (9 kcal/g)
@@ -397,41 +329,24 @@ export const calculatePlan = (key, profiles) => {
     const glu_pct     = Math.max(0, Math.min(100, Number(raw.glu_pct) || 0));         // % des kcal totales
     const glu_pct_g   = glu_pct > 0 ? Math.round(target_daily * (glu_pct / 100) / 4) : 0; // conversion % → g
     const glu_goal    = glu_pct > 0 ? glu_pct_g : (p.glu_target > 0 ? p.glu_target : glu_formula);
-    const glu_warning  = total_glu < glu_goal * 0.65;  // orange si −35% cible
-    const glu_critical = total_glu < glu_goal * 0.80;  // rouge si −20% cible individuelle
 
     return {
         bmr,
         tdee_final,
         target_daily,
-        fixed_cal,
-        fixed_prot,
         fixed_prot_socle: fixed_prot_sans_pst, // socle sans PST — utilisé pour scaleRecipeForMeal
         fixed_lip_socle:  fixed_lip_sans_pst,  // socle lipides — pour calculer le boost huile batch
         goal_weight,                           // poids de forme (pour affichage et lip boost)
-        remaining_cal,
-        // ── Budgets Batch Cooking (65% kcal totales) ─────────────────────────
+        // ── Budgets Batch Cooking (cible − socle fixe) ───────────────────────
         batch_midi_budget: Math.round(batch_midi_budget),
         batch_soir_budget: Math.round(batch_soir_budget),
-        pasta_grams_day,
-        pasta_midi,
-        pasta_soir,
-        total_prot: final_total_prot,
-        total_lip,
-        total_glu,
         prot_goal,
-        prot_warning,
         lip_goal,
         lip_critical,
-        lip_warning,
         glu_formula,  // valeur auto (résiduel kcal) — pour le bouton "Ajuster selon Kcal"
         glu_pct,      // % des kcal visé (0 = pas en mode %)
         glu_pct_g,    // g correspondant au % (pour affichage)
         glu_goal,
-        glu_warning,
-        glu_critical,
-        pst_qty,
-        fb_qty,
         oeuf_qty_per_meal,
         // ── Petit-déj / collation ajustables (pour getSocleItems, DietSummary) ──
         pain_g, canc_g, skyr_g, oeuf_matin, oeuf_soir, banane_qty, pomme_qty,
@@ -440,7 +355,6 @@ export const calculatePlan = (key, profiles) => {
         use_whey_collation, // bool — état actuel du shaker 16h
         use_omega3,         // bool — Oméga-3 Zenement actif
         omega3_lip,         // g de lipides déjà couverts par le complément
-        total_estimated,
         pal: p.pal,         // PAL actif — pour affichage dans SmartDiet
         computed_age: p.age, // âge calculé dynamiquement depuis birthdate
     };
@@ -550,102 +464,46 @@ export const scaleRecipeForMeal = (key, profiles, recipe, meal = 'midi') => {
     };
 };
 
-// ─── Extracteur Budgets Repas (Midi / Soir) ──────────────────────────────────
+// ─── Budget d'un repas (midi / soir) ─────────────────────────────────────────
+// Modèle actuel : ce qu'on mange à ce repas = la recette batch (budget kcal du
+// repas) + ce que le socle rattache à ce repas (œufs du soir, fromage).
+// Les macros de la part recette = ce que les recettes doivent apporter
+// (objectif − socle), réparti 55% midi / 45% soir.
 export const getMealBudget = (key, profiles, meal) => {
-    const plan = calculatePlan(key, profiles);
-    const p = profiles[key];
-    const optFromage  = Math.max(0, Number(p.opt_fromage)  || 0);
-    const optFbSoir   = Boolean(p.opt_fb_soir);
+    const plan  = calculatePlan(key, profiles);
+    const socle = getSocleItems(key, profiles).total;
+    const p     = profiles[key];
+    const optFromage = Math.max(0, Number(p.opt_fromage) || 0);
 
     const r = (n, d = 0) => {
         const f = Math.pow(10, d);
         return Math.round((n || 0) * f) / f;
     };
 
-    let total = { kcal: 0, prot: 0, lip: 0, glu: 0 };
+    const ratio     = meal === 'midi' ? 0.55 : 0.45;
+    const batchKcal = meal === 'midi' ? plan.batch_midi_budget : plan.batch_soir_budget;
+    const share     = (goal, socleVal) => Math.max(0, (goal - socleVal) * ratio);
 
+    let kcal = batchKcal;
+    let prot = share(plan.prot_goal, socle.prot);
+    let lip  = share(plan.lip_goal,  socle.lip);
+    let glu  = share(plan.glu_goal || 0, socle.glu);
+
+    // Éléments du socle rattachés au dîner
     if (meal === 'soir') {
-        const pasta = {
-            kcal: plan.pasta_soir * PASTA_REF.kcal / 100,
-            prot: plan.pasta_soir * PASTA_REF.prot / 100,
-            lip:  plan.pasta_soir * MACRO_EST.pasta_lip_per_100g / 100,
-            glu:  plan.pasta_soir * MACRO_EST.pasta_glu_per_100g / 100,
-        };
-        const oeufs = {
-            kcal: plan.oeuf_qty_per_meal * 80,
-            prot: plan.oeuf_qty_per_meal * 6,
-            lip:  plan.oeuf_qty_per_meal * MACRO_EST.oeuf_lip,
-            glu:  0,
-        };
-        const creme = {
-            kcal: SOCLE_DATA.common.soir_creme.kcal,
-            prot: SOCLE_DATA.common.soir_creme.prot,
-            lip:  MACRO_EST.creme_lip_per_30g,
-            glu:  MACRO_EST.creme_glu,
-        };
-
-        total.kcal += pasta.kcal + oeufs.kcal + creme.kcal;
-        total.prot += pasta.prot + oeufs.prot + creme.prot;
-        total.lip  += pasta.lip  + oeufs.lip  + creme.lip;
-        total.glu  += pasta.glu  + oeufs.glu  + creme.glu;
+        const oeufs = plan.oeuf_soir || 0;
+        kcal += oeufs * FOOD.oeuf.kcal;
+        prot += oeufs * FOOD.oeuf.prot;
+        lip  += oeufs * FOOD.oeuf.lip;
 
         if (optFromage > 0) {
-            total.kcal += optFromage * SOCLE_DATA.common.fromage_unit.kcal;
-            total.prot += optFromage * SOCLE_DATA.common.fromage_unit.prot;
-            total.lip  += optFromage * MACRO_EST.fromage_unit_lip;
-        }
-
-        if (optFbSoir) {
-            total.kcal += plan.fb_qty * 0.48;
-            total.prot += plan.fb_qty * 0.08;
-            total.glu  += plan.fb_qty * MACRO_EST.fb_glu_per_g;
-        }
-
-    } else if (meal === 'midi') {
-        const pasta = {
-            kcal: plan.pasta_midi * PASTA_REF.kcal / 100,
-            prot: plan.pasta_midi * PASTA_REF.prot / 100,
-            lip:  plan.pasta_midi * MACRO_EST.pasta_lip_per_100g / 100,
-            glu:  plan.pasta_midi * MACRO_EST.pasta_glu_per_100g / 100,
-        };
-        const pst = {
-            kcal: plan.pst_qty * 3.3,
-            prot: plan.pst_qty * 0.5,
-            lip:  plan.pst_qty * MACRO_EST.pst_lip,
-            glu:  plan.pst_qty * MACRO_EST.pst_glu,
-        };
-        const creme = {
-            kcal: SOCLE_DATA.common.midi_creme.kcal,
-            prot: SOCLE_DATA.common.midi_creme.prot,
-            lip:  MACRO_EST.creme_lip_per_30g,
-            glu:  MACRO_EST.creme_glu,
-        };
-        // Legumes midi (moitié jour)
-        const legumes = {
-            kcal: MACRO_EST.legumes_kcal_jours / 2,
-            prot: MACRO_EST.legumes_prot_jour / 2,
-            lip:  0.5,
-            glu:  MACRO_EST.legumes_glu_jour / 2,
-        };
-
-        total.kcal += pasta.kcal + pst.kcal + creme.kcal + legumes.kcal;
-        total.prot += pasta.prot + pst.prot + creme.prot + legumes.prot;
-        total.lip  += pasta.lip  + pst.lip  + creme.lip  + legumes.lip;
-        total.glu  += pasta.glu  + pst.glu  + creme.glu  + legumes.glu;
-
-        if (optFromage > 0) {
-            total.kcal += optFromage * SOCLE_DATA.common.fromage_unit.kcal;
-            total.prot += optFromage * SOCLE_DATA.common.fromage_unit.prot;
-            total.lip  += optFromage * MACRO_EST.fromage_unit_lip;
+            kcal += optFromage * SOCLE_DATA.common.fromage_unit.kcal;
+            prot += optFromage * SOCLE_DATA.common.fromage_unit.prot;
+            lip  += optFromage * MACRO_EST.fromage_unit_lip;
         }
     }
 
-    return {
-        kcal: r(total.kcal),
-        prot: r(total.prot, 1),
-        lip:  r(total.lip, 1),
-        glu:  r(total.glu, 1)
-    };
+    return { kcal: r(kcal), prot: r(prot, 1), lip: r(lip, 1), glu: r(glu, 1) };
 };
 
 // ─── Socle fixe "à saisir dans FatSecret" (hors plats batch) ─────────────────

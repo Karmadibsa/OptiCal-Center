@@ -356,8 +356,6 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                                 ? <span style={{ color: '#a78bfa' }}>Manuel : {profiles[key].glu_target}g · Auto serait {res.glu_formula}g</span>
                                                 : <span style={{ color: '#475569' }}>Auto : {res.glu_formula}g (résiduel kcal)</span>
                                         }
-                                        {res.glu_critical && <span style={{ color: '#f87171', fontWeight: 700 }}>🚨 −20%</span>}
-                                        {!res.glu_critical && res.glu_warning && <span style={{ color: '#fbbf24' }}>⚠️ Faible</span>}
                                     </div>
                                 </div>
                                 {/* Dernière pesée */}
