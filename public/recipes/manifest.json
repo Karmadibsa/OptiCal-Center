@@ -33,6 +33,22 @@
     "emoji": "🍎"
   },
   {
+    "file": "plaisir/maki_bowl_truite.md",
+    "id": "839215",
+    "name": "Maki Bowl Truite & Crevettes",
+    "category": "plats|poisson",
+    "kcal": "923",
+    "prot": "64",
+    "lip": "20",
+    "glu": "110",
+    "price": "9.05",
+    "prep_active": "15 min",
+    "prep_inactive": "10 min",
+    "description": "Un bowl inspiré des makis, très gourmand mais équilibré : riz vinaigré, truite fumée grillée, crevettes, légumes frais, mangue, avocat et sauce spicy crémeuse.",
+    "tips": "Garde quelques morceaux de nori en petits carrés. Dépose une cuillère de bowl dessus et mange le tout comme un mini maki/taco.",
+    "emoji": "🍣"
+  },
+  {
     "file": "plaisir/omelette_garnie_jambon_champignons.md",
     "id": "730026",
     "name": "Omelette Garnie Jambon, Champignons & Fromage",
