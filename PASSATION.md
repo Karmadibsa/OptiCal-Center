@@ -151,6 +151,8 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ **Barre d'onglets sticky** (Courses / Cuisson / Répartition / FatSecret) : une ligne défilante de 64 px, accessible sans remonter la page. Les onglets sont passés de y=8238 px à y=1013 px.
 - ✅ **Cibles tactiles** : 49 boutons sous 40 px sur la page principale → 0. Les pires étaient à 18×16 px (✓/OFF de la semaine) et 24×24 px (« marquer comme fait » en cuisine). Champs de saisie en 16 px pour éviter le zoom automatique iOS.
 - ✅ **Installable (PWA)** : `manifest.webmanifest`, icônes PNG 192/512/maskable + apple-touch (générées avec `zlib`, voir historique git), `theme-color`, métas iOS, `lang="fr"` et un vrai titre — l'app s'ajoute à l'écran d'accueil.
+- ✅ **Fiche recette = quantités du batch** : en ouvrant une recette depuis le batch cooking, le tableau affichait les grammages d'UNE portion. Il montre maintenant par défaut les totaux réels (tous les créneaux × 2 personnes) avec les jours concernés, et une bascule « 1 portion ».
+- ✅ **Récap Diète sur mobile** : colonne « Quantité » fusionnée sous le nom, zone de tableau en pleine largeur — débordement horizontal ramené de ~133 px à 71 px (et à 14 px pour les tableaux secondaires). Le scroll subsiste sur les deux tableaux socle : le supprimer demanderait des cartes empilées.
 - ✅ **Récap Diète migré sur le modèle actuel** : il affichait encore « 413 g de pâtes + 16 g de PST par jour » (diète d'avant le batch), et la formule TDEE périmée (MET). Affiche maintenant socle + budget batch = cible.
 
 ### Recettes
