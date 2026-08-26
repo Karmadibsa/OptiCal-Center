@@ -144,6 +144,13 @@ ou **pourcentage des kcal** (le % est prioritaire s'il est renseigné).
 - ✅ **Base de prix complétée** : 100 % des ingrédients batch (293/293), contre 76 % avant.
 - ✅ **Ancien modèle Pâtes/PST entièrement retiré** : Récap Diète, Repas Ext. et export CSV migrés sur socle + budget batch, puis suppression du calcul et des constantes dans `dietAlgo.js` (~900 → ~750 lignes).
 - ✅ **`getMealBudget` recalé** : il surestimait un repas jusqu'à +191 kcal (scaleur des recettes plaisir).
+
+### Mobile / UX (audit mesuré au viewport 375×812)
+- ✅ **Cases cochées persistées** — les courses cochées et les étapes de cuisson étaient perdues au moindre rechargement d'onglet (typique sur téléphone). Corrigé.
+- ✅ **Page 3,4× plus courte** : 10 410 px → 3 096 px. Les étapes 1 et 2 se replient automatiquement une fois terminées (dépliables d'un clic).
+- ✅ **Barre d'onglets sticky** (Courses / Cuisson / Répartition / FatSecret) : une ligne défilante de 64 px, accessible sans remonter la page. Les onglets sont passés de y=8238 px à y=1013 px.
+- ✅ **Cibles tactiles** : 49 boutons sous 40 px sur la page principale → 0. Les pires étaient à 18×16 px (✓/OFF de la semaine) et 24×24 px (« marquer comme fait » en cuisine). Champs de saisie en 16 px pour éviter le zoom automatique iOS.
+- ✅ **Installable (PWA)** : `manifest.webmanifest`, icônes PNG 192/512/maskable + apple-touch (générées avec `zlib`, voir historique git), `theme-color`, métas iOS, `lang="fr"` et un vrai titre — l'app s'ajoute à l'écran d'accueil.
 - ✅ **Récap Diète migré sur le modèle actuel** : il affichait encore « 413 g de pâtes + 16 g de PST par jour » (diète d'avant le batch), et la formule TDEE périmée (MET). Affiche maintenant socle + budget batch = cible.
 
 ### Recettes
