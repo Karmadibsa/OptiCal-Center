@@ -1370,9 +1370,14 @@ body {
   .em-panel-kcal { font-size: 1.5rem; }
   .em-tips-grid { grid-template-columns: 1fr; }
   .em-examples-grid { grid-template-columns: 1fr; }
-  .diet-table { font-size: 0.8rem; }
+  .diet-table { font-size: 0.78rem; }
   .diet-table th,
-  .diet-table td { padding: 0.5rem 0.6rem; }
+  .diet-table td { padding: 0.45rem 0.4rem; }
+  /* Nom sur plusieurs lignes + zone de tableau en pleine largeur : réduit le
+     scroll horizontal sans le supprimer (les 2 gros tableaux débordent ~70px). */
+  .diet-table .ds-td-name { white-space: normal; min-width: 108px; }
+  .diet-table tfoot td:first-child { white-space: normal; }
+  .ds-table-scroll { margin-left: -1rem; margin-right: -1rem; padding-left: 1rem; padding-right: 1rem; }
 }
 
 /* ================================================================

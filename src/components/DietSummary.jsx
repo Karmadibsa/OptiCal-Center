@@ -55,7 +55,6 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                     <thead>
                         <tr>
                             <th>Aliment</th>
-                            <th>Quantité</th>
                             <th>Kcal</th>
                             <th>Prot (g)</th>
                             <th>Lip (g)</th>
@@ -68,8 +67,8 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                                 <td className="ds-td-name">
                                     <span style={{ color: '#64748b', fontSize: '0.78rem' }}>{row.moment} · </span>
                                     {row.name}
+                                    <span className="ds-td-detail" style={{ display: 'block', fontSize: '0.74rem' }}>{row.detail}</span>
                                 </td>
-                                <td className="ds-td-detail">{row.detail}</td>
                                 <td><span className="ds-val">{r(row.kcal)}</span></td>
                                 <td><span className="ds-val ds-prot">{r(row.prot, 1)}</span></td>
                                 <td><span className="ds-val ds-lip">{r(row.lip, 1)}</span></td>
@@ -79,16 +78,16 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                     </tbody>
                     <tfoot>
                         <tr className="ds-tfoot-sub">
-                            <td colSpan="2">Sous-total Socle Fixe</td>
+                            <td colSpan="1">Sous-total Socle Fixe</td>
                             <td>{r(total.kcal)}</td>
                             <td className="ds-prot">{r(total.prot, 1)}</td>
                             <td className="ds-lip">{r(total.lip, 1)}</td>
                             <td className="ds-glu">{r(total.glu, 1)}</td>
                         </tr>
                         <tr className="ds-tfoot-var">
-                            <td colSpan="2">
-                                + Repas Batch (midi {batchMidi} + soir {batchSoir} kcal)
-                                <span style={{ color: '#64748b', fontSize: '0.75rem' }}> — à couvrir par les recettes</span>
+                            <td colSpan="1">
+                                + Repas Batch
+                                <span style={{ color: '#64748b', fontSize: '0.72rem', display: 'block' }}>midi {batchMidi} · soir {batchSoir} kcal — à couvrir par les recettes</span>
                             </td>
                             <td>{r(batchKcal)}</td>
                             <td className="ds-prot">{needProt}</td>
@@ -96,7 +95,7 @@ const SocleTable = ({ planKey, plan, profiles }) => {
                             <td className="ds-glu">{needGlu}</td>
                         </tr>
                         <tr className="ds-tfoot-total">
-                            <td colSpan="2">TOTAL / JOUR = CIBLE</td>
+                            <td colSpan="1">TOTAL / JOUR = CIBLE</td>
                             <td>{grandTotal.kcal}</td>
                             <td className="ds-prot">{grandTotal.prot} <span style={{fontSize:'0.75rem', opacity:0.7}}>({pct.prot}%)</span></td>
                             <td className="ds-lip">{grandTotal.lip} <span style={{fontSize:'0.75rem', opacity:0.7}}>({pct.lip}%)</span></td>
