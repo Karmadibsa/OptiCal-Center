@@ -1003,7 +1003,7 @@ const RecipeIdeas = ({ profiles }) => {
                         { key: 'soir', label: '🌙 Repas Soir', activeColor: '#a78bfa', activeBorder: 'rgba(139,92,246,0.3)'  },
                     ].map(({ key, label, activeColor, activeBorder }) => (
                         <button key={key} onClick={() => setTargetMeal(key)} style={{
-                            padding: '0.55rem 1.2rem', borderRadius: '8px', cursor: 'pointer',
+                            padding: '0.7rem 1.2rem', minHeight: '44px', borderRadius: '8px', cursor: 'pointer',
                             background: targetMeal === key ? 'var(--bg-deep, #0a0f1a)' : 'transparent',
                             border: targetMeal === key ? `1px solid ${activeBorder}` : '1px solid transparent',
                             color: targetMeal === key ? activeColor : '#64748b',

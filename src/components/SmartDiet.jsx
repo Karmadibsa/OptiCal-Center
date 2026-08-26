@@ -69,7 +69,7 @@ const InfoTooltip = ({ text }) => {
                 onFocus={open}
                 onBlur={close}
                 onClick={e => { e.preventDefault(); computeRect(); setShow(s => !s); }}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0.1rem', color: '#4f6374', fontSize: '0.8rem', lineHeight: 1 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.6rem 0.5rem', margin: '-0.6rem -0.3rem', color: '#4f6374', fontSize: '0.95rem', lineHeight: 1 }}
                 aria-label="Recommandations"
                 tabIndex={-1}
             >ⓘ</button>
@@ -206,8 +206,8 @@ const SmartDiet = ({ profiles, setProfiles }) => {
 
     // Styles pour la liste verticale de checkboxes
     const S_cb = {
-        row:   { display: 'flex', alignItems: 'center', gap: '0.6rem', cursor: 'pointer', padding: '0.3rem 0', userSelect: 'none' },
-        input: { flexShrink: 0, transform: 'scale(1.15)', accentColor: activeTab === 'axel' ? '#38bdf8' : '#a78bfa' },
+        row:   { display: 'flex', alignItems: 'center', gap: '0.7rem', cursor: 'pointer', padding: '0.5rem 0', minHeight: '44px', userSelect: 'none' },
+        input: { flexShrink: 0, width: '22px', height: '22px', accentColor: activeTab === 'axel' ? '#38bdf8' : '#a78bfa' },
         label: { fontSize: '0.88rem', color: '#cbd5e1' },
     };
 
@@ -343,7 +343,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         <button
                                             onClick={() => { handleInput(key, 'glu_target', res.glu_formula); handleInput(key, 'glu_pct', 0); }}
                                             title="Calcule les glucides résiduels (kcal − Prot×4 − Lip×9) ÷ 4"
-                                            style={{ flexShrink: 0, padding: '0 0.6rem', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '6px', color: '#a78bfa', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.2 }}
+                                            style={{ flexShrink: 0, padding: '0 0.9rem', minHeight: '44px', background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.35)', borderRadius: '6px', color: '#a78bfa', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.2 }}
                                         >
                                             Auto
                                         </button>
@@ -448,7 +448,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                         value={profiles[key].opt_fromage === 0 ? '' : profiles[key].opt_fromage}
                                         placeholder="0"
                                         onChange={(e) => handleInput(key, 'opt_fromage', e.target.value)}
-                                        style={{ width: '70px', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.3rem 0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '0.9rem' }}
+                                        style={{ width: '80px', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '16px', minHeight: '44px' }}
                                     />
                                     <span style={{ fontSize: '0.75rem', color: '#64748b' }}>g</span>
                                 </div>
@@ -477,7 +477,7 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                                                 value={profiles[key][field] === '' || profiles[key][field] === undefined ? '' : profiles[key][field]}
                                                 placeholder="0"
                                                 onChange={(e) => handleInput(key, field, e.target.value)}
-                                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.4rem 0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '0.9rem', fontFamily: 'monospace' }}
+                                                style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid #334155', padding: '0.6rem 0.5rem', borderRadius: '6px', color: '#fff', textAlign: 'right', fontSize: '16px', fontFamily: 'monospace', minHeight: '44px' }}
                                             />
                                         </div>
                                     ))}
@@ -596,7 +596,9 @@ const SmartDiet = ({ profiles, setProfiles }) => {
                 .tab-btn.active.prisca { background: rgba(139,92,246,0.2); border-color: #8b5cf6; color: #a78bfa; }
                 .inputs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1.5rem; }
                 .input-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.5rem; }
-                .input-group input[type="number"] { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #334155; padding: 0.5rem; border-radius: 6px; color: #fff; }
+                .input-group input[type="number"],
+                .input-group input[type="date"] { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid #334155; padding: 0.6rem 0.5rem; border-radius: 6px; color: #fff;
+                    min-height: 44px; font-size: 16px; }  /* 16px : évite le zoom auto iOS au focus */
                 .input-group.checkbox { display: flex; align-items: center; }
                 .input-group.checkbox input { margin-right: 0.5rem; transform: scale(1.2); }
                 .unit-badge { font-size: 0.7rem; color: #64748b; background: rgba(255,255,255,0.07); padding: 0.1rem 0.35rem; border-radius: 4px; font-family: monospace; margin-left: 0.25rem; }

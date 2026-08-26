@@ -30,11 +30,13 @@ const loadState = () => {
         const s = localStorage.getItem(LS_KEY);
         if (s) return JSON.parse(s);
     } catch (_) {}
-    return { selectedIds: [], weekPlan: {}, measuredCooked: {}, disabledSlots: {} };
+    return { selectedIds: [], weekPlan: {}, measuredCooked: {}, disabledSlots: {}, checkedShopItems: {}, doneCookGroups: {} };
 };
-const saveState = (selectedIds, weekPlan, measuredCooked, disabledSlots) => {
+// NB : les cases cochées (courses, cuisson) sont persistées elles aussi — sinon on
+// perd sa place au supermarché dès que le téléphone recharge l'onglet.
+const saveState = (selectedIds, weekPlan, measuredCooked, disabledSlots, checkedShopItems, doneCookGroups) => {
     try {
-        localStorage.setItem(LS_KEY, JSON.stringify({ selectedIds, weekPlan, measuredCooked, disabledSlots }));
+        localStorage.setItem(LS_KEY, JSON.stringify({ selectedIds, weekPlan, measuredCooked, disabledSlots, checkedShopItems, doneCookGroups }));
     } catch (_) {}
 };
 
@@ -110,13 +112,18 @@ const BatchCooking = ({ profiles }) => {
     const [previewMd,      setPreviewMd]      = useState('');     // contenu markdown brut
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [priceDb,        setPriceDb]        = useState([]);     // base de données des prix
-    const [doneCookGroups,  setDoneCookGroups]  = useState({});    // cuisson : étapes cochées
-    const [checkedShopItems, setCheckedShopItems] = useState({});  // courses : items cochés
+    const [doneCookGroups,  setDoneCookGroups]  = useState(init.doneCookGroups  || {}); // cuisson : étapes cochées (persisté)
+    const [checkedShopItems, setCheckedShopItems] = useState(init.checkedShopItems || {}); // courses : items cochés (persisté)
     const [doneSteps, setDoneSteps] = useState(() => {             // protocole : étapes cochées (persisté)
         try { return JSON.parse(localStorage.getItem('bc_done_steps') || '{}'); } catch { return {}; }
     });
     useEffect(() => { localStorage.setItem('bc_done_steps', JSON.stringify(doneSteps)); }, [doneSteps]);
     const [recipeSteps, setRecipeSteps] = useState({});           // id → étapes du protocole (pour "prochaine étape")
+
+    // Repli des étapes : null = automatique (une étape terminée se replie toute
+    // seule pour raccourcir la page sur mobile), true/false = choix explicite.
+    const [openStep1, setOpenStep1] = useState(null);
+    const [openStep2, setOpenStep2] = useState(null);
 
     // Helper : slot désactivé ?
     const isSlotDisabled = (day, meal) => !!disabledSlots[`${day}_${meal}`];
@@ -164,8 +171,8 @@ const BatchCooking = ({ profiles }) => {
 
     // ── Sync localStorage ─────────────────────────────────────────────────────
     useEffect(() => {
-        saveState(selectedIds, weekPlan, measuredCooked, disabledSlots);
-    }, [selectedIds, weekPlan, measuredCooked, disabledSlots]);
+        saveState(selectedIds, weekPlan, measuredCooked, disabledSlots, checkedShopItems, doneCookGroups);
+    }, [selectedIds, weekPlan, measuredCooked, disabledSlots, checkedShopItems, doneCookGroups]);
 
     // ── Fetch markdown quand on ouvre la prévisualisation ─────────────────────
     useEffect(() => {
@@ -709,6 +716,9 @@ const BatchCooking = ({ profiles }) => {
     );
 
     const assignedSlots  = countAssignedSlots();
+    // Une étape terminée se replie automatiquement (page 2× plus courte sur mobile)
+    const step1Open = openStep1 === null ? selectedIds.length === 0 : openStep1;
+    const step2Open = openStep2 === null ? assignedSlots === 0    : openStep2;
     const { sections: shoppingItems } = buildShoppingList();
     const cuissonData    = buildCuissonData();
     const cookGroupData  = buildCookGroupData();
@@ -724,8 +734,8 @@ const BatchCooking = ({ profiles }) => {
             {/* ── Sync cross-device ── */}
             <div style={{ marginBottom: '2rem' }}>
                 <button onClick={() => setShowSync(s => !s)} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                    padding: '0.38rem 0.85rem',
+                    display: 'inline-flex', alignItems: 'center', gap: '0.4rem', minHeight: '44px',
+                    padding: '0.5rem 0.85rem',
                     background: showSync ? 'rgba(56,189,248,0.08)' : 'rgba(255,255,255,0.04)',
                     border: `1px solid ${showSync ? '#38bdf8' : '#334155'}`,
                     borderRadius: '7px', color: showSync ? '#38bdf8' : '#64748b',
@@ -789,10 +799,14 @@ const BatchCooking = ({ profiles }) => {
             {/* ── ÉTAPE 1 : Recettes ── */}
             <div style={{ marginBottom: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <div style={S.stepLabel}>ÉTAPE 1 — RECETTES BATCH COOKING ({selectedIds.length}/{MAX_RECIPES})</div>
+                    <button onClick={() => setOpenStep1(!step1Open)} style={S.stepToggle}>
+                        <span style={{ transform: step1Open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', display: 'inline-block' }}>▶</span>
+                        ÉTAPE 1 — RECETTES ({selectedIds.length}/{MAX_RECIPES})
+                        {!step1Open && selectedIds.length > 0 && <span style={S.stepDone}>✓ choisies</span>}
+                    </button>
                     <button onClick={randomSelect} style={{
                         display: 'flex', alignItems: 'center', gap: '0.4rem',
-                        padding: '0.38rem 0.85rem',
+                        padding: '0.5rem 0.85rem', minHeight: '44px',
                         background: 'rgba(167,139,250,0.1)', border: '1px solid #a78bfa',
                         borderRadius: '7px', color: '#a78bfa',
                         cursor: 'pointer', fontWeight: 600, fontSize: '0.8rem',
@@ -802,6 +816,7 @@ const BatchCooking = ({ profiles }) => {
                     </button>
                 </div>
 
+                {step1Open && (<>
                 {/* ── Filtres par tag (multi-sélection, triés par catégorie) ── */}
                 {(() => {
                     const present = new Set();
@@ -900,17 +915,23 @@ const BatchCooking = ({ profiles }) => {
                     })}
                 </div>
 
+                </>)}
             </div>
 
             {/* ── ÉTAPE 2 : Planificateur ── */}
             {selectedIds.length > 0 && (
                 <div style={{ marginBottom: '2.5rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                        <div style={S.stepLabel}>ÉTAPE 2 — SEMAINE ({assignedSlots}/{DAYS.length * MEALS.length} slots)</div>
+                        <button onClick={() => setOpenStep2(!step2Open)} style={S.stepToggle}>
+                            <span style={{ transform: step2Open ? 'rotate(90deg)' : 'none', transition: 'transform 0.15s', display: 'inline-block' }}>▶</span>
+                            ÉTAPE 2 — SEMAINE ({assignedSlots}/{DAYS.length * MEALS.length})
+                            {!step2Open && assignedSlots > 0 && <span style={S.stepDone}>✓ planifiée</span>}
+                        </button>
                         <button onClick={autoDispatch} style={S.autoBtn}>
                             <Shuffle size={14} /> Auto-dispatch
                         </button>
                     </div>
+                    {step2Open && (
                     <div style={S.weekGrid}>
                         {DAYS.map(day => {
                             const plan = weekPlan[day] || {};
@@ -932,7 +953,7 @@ const BatchCooking = ({ profiles }) => {
                                                         {meal === 'midi' ? 'MIDI' : 'SOIR'}
                                                     </span>
                                                     <button onClick={() => toggleSlot(day, meal)} title={disabled ? 'Réactiver ce repas' : 'Désactiver ce repas'} style={{
-                                                        fontSize: '0.58rem', padding: '0.08rem 0.3rem',
+                                                        fontSize: '0.62rem', minWidth: '40px', minHeight: '40px', padding: '0.2rem 0.4rem',
                                                         background: disabled ? 'rgba(248,113,113,0.1)' : 'transparent',
                                                         border: `1px solid ${disabled ? '#ef4444' : '#1e293b'}`,
                                                         borderRadius: '3px', color: disabled ? '#ef4444' : '#334155',
@@ -968,6 +989,7 @@ const BatchCooking = ({ profiles }) => {
                             );
                         })}
                     </div>
+                    )}
                 </div>
             )}
 
@@ -1049,8 +1071,14 @@ const BatchCooking = ({ profiles }) => {
                         );
                     })()}
 
-                    {/* Sélecteur de vue */}
-                    <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                    {/* Sélecteur de vue — sticky : accessible sans remonter toute la page
+                        (en cuisine/au magasin, la page fait plusieurs écrans de haut) */}
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem',
+                                 position: 'sticky', top: 0, zIndex: 30, background: '#030712',
+                                 paddingTop: '0.6rem', paddingBottom: '0.6rem',
+                                 borderBottom: '1px solid rgba(255,255,255,0.06)',
+                                 // une seule ligne qui défile : la barre reste basse même sur petit écran
+                                 overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
                         {[
                             { key: 'shopping',   label: '🛒 Courses',      num: '1' },
                             { key: 'cuisson_cru',label: '🍳 Cuisson Cru',  num: '2' },
@@ -1335,7 +1363,8 @@ const BatchCooking = ({ profiles }) => {
                                                     <button
                                                         onClick={() => setPreviewRecipe(prmList[0]?.recipe)}
                                                         title="Voir la recette"
-                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: '0.15rem', flexShrink: 0, transition: 'color 0.15s' }}
+                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', flexShrink: 0, transition: 'color 0.15s',
+                                                                 width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                         onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'}
                                                         onMouseLeave={e => e.currentTarget.style.color = '#475569'}
                                                     >
@@ -1350,7 +1379,7 @@ const BatchCooking = ({ profiles }) => {
                                                     onClick={() => setDoneCookGroups(prev => ({ ...prev, [gk]: !prev[gk] }))}
                                                     title={isDone2 ? 'Marquer comme à faire' : 'Marquer comme fait'}
                                                     style={{
-                                                        width: '24px', height: '24px', flexShrink: 0,
+                                                        width: '40px', height: '40px', flexShrink: 0,
                                                         background: isDone2 ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
                                                         border: `1.5px solid ${isDone2 ? '#4ade80' : '#334155'}`,
                                                         borderRadius: '6px', cursor: 'pointer',
@@ -1473,7 +1502,8 @@ const BatchCooking = ({ profiles }) => {
                                                     <button
                                                         onClick={() => setPreviewRecipe(firstRecipe)}
                                                         title="Voir la recette"
-                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', padding: '0.15rem', flexShrink: 0, transition: 'color 0.15s' }}
+                                                        style={{ background: 'none', border: 'none', color: '#475569', cursor: 'pointer', flexShrink: 0, transition: 'color 0.15s',
+                                                                 width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                                                         onMouseEnter={e => e.currentTarget.style.color = '#38bdf8'}
                                                         onMouseLeave={e => e.currentTarget.style.color = '#475569'}
                                                     >
@@ -1486,7 +1516,7 @@ const BatchCooking = ({ profiles }) => {
                                                     onClick={() => setDoneCookGroups(prev => ({ ...prev, [gk]: !prev[gk] }))}
                                                     title={isDone3 ? 'Marquer comme à faire' : 'Marquer comme fait'}
                                                     style={{
-                                                        width: '24px', height: '24px', flexShrink: 0,
+                                                        width: '40px', height: '40px', flexShrink: 0,
                                                         background: isDone3 ? 'rgba(74,222,128,0.15)' : 'rgba(255,255,255,0.04)',
                                                         border: `1.5px solid ${isDone3 ? '#4ade80' : '#334155'}`,
                                                         borderRadius: '6px', cursor: 'pointer',
@@ -1810,19 +1840,22 @@ const BatchCooking = ({ profiles }) => {
 const S = {
     pageTitle:   { fontSize: '1.5rem', marginBottom: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.6rem', color: '#fff' },
     stepLabel:   { fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1.5px', marginBottom: '0.75rem' },
+    stepToggle:  { display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'none', border: 'none', padding: '0.5rem 0', minHeight: '44px',
+                   fontSize: '0.72rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1.2px', cursor: 'pointer', fontFamily: 'inherit', textAlign: 'left' },
+    stepDone:    { fontSize: '0.66rem', color: '#4ade80', background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', borderRadius: '999px', padding: '0.1rem 0.5rem', letterSpacing: 0 },
     recipeGrid:  { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 230px), 1fr))', gap: '0.75rem', marginTop: '0.75rem' },
     recipeCard:  { borderRadius: '12px', padding: '0.9rem 1rem', textAlign: 'left', transition: 'all 0.15s', touchAction: 'manipulation' },
     recipeMacros:{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginTop: '0.15rem' },
-    autoBtn:     { display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.45rem 0.9rem', background: 'rgba(56,189,248,0.1)', border: '1px solid #38bdf8', borderRadius: '7px', color: '#38bdf8', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', touchAction: 'manipulation' },
+    autoBtn:     { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', minHeight: '44px', padding: '0.45rem 0.9rem', background: 'rgba(56,189,248,0.1)', border: '1px solid #38bdf8', borderRadius: '7px', color: '#38bdf8', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem', touchAction: 'manipulation' },
     weekGrid:    { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 280px), 1fr))', gap: '0.75rem' },
     dayCard:     { background: 'rgba(15,23,42,0.6)', border: '1px solid #1e293b', borderRadius: '10px', padding: '0.9rem 1rem' },
     dayLabel:    { fontWeight: 700, color: '#475569', fontSize: '0.7rem', letterSpacing: '1.5px', marginBottom: '0.6rem' },
     daySelect:   { width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #334155', borderRadius: '6px', color: '#e2e8f0', padding: '0.35rem 0.5rem', fontSize: '0.82rem', marginBottom: '0.25rem' },
     dayMacros:   { fontSize: '0.73rem', display: 'flex', flexDirection: 'column', gap: '0.15rem', paddingLeft: '0.25rem' },
-    tabBtn:      { display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1.1rem', border: '1px solid', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', touchAction: 'manipulation', transition: 'all 0.15s' },
+    tabBtn:      { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', minHeight: '44px', flexShrink: 0, whiteSpace: 'nowrap', padding: '0.55rem 1.1rem', border: '1px solid', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, fontSize: '0.88rem', touchAction: 'manipulation', transition: 'all 0.15s' },
     panel:       { background: 'rgba(15,23,42,0.6)', border: '1px solid #1e293b', borderRadius: '12px', padding: '1.5rem' },
     panelTitle:  { fontSize: '0.7rem', color: '#94a3b8', fontWeight: 700, letterSpacing: '1.5px' },
-    copyBtn:     { display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.38rem 0.9rem', border: '1px solid', borderRadius: '6px', cursor: 'pointer', fontSize: '0.83rem', fontWeight: 600, touchAction: 'manipulation', transition: 'all 0.2s' },
+    copyBtn:     { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', minHeight: '44px', padding: '0.38rem 0.9rem', border: '1px solid', borderRadius: '6px', cursor: 'pointer', fontSize: '0.83rem', fontWeight: 600, touchAction: 'manipulation', transition: 'all 0.2s' },
     boxCard:     { background: 'rgba(0,0,0,0.2)', border: '1px solid #1e293b', borderRadius: '10px', padding: '1rem 1.1rem' },
     emptyState:  { textAlign: 'center', color: '#475569', padding: '3rem 2rem', background: 'rgba(15,23,42,0.4)', borderRadius: '12px', border: '1px dashed #1e293b' },
 };
