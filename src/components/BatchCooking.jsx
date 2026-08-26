@@ -110,6 +110,7 @@ const BatchCooking = ({ profiles }) => {
     const [showSync,       setShowSync]       = useState(false);
     const [previewRecipe,  setPreviewRecipe]  = useState(null);   // recette prévisualisée
     const [previewMd,      setPreviewMd]      = useState('');     // contenu markdown brut
+    const [previewMode,    setPreviewMode]    = useState('batch'); // fiche : quantités batch ou 1 portion
     const [loadingPreview, setLoadingPreview] = useState(false);
     const [priceDb,        setPriceDb]        = useState([]);     // base de données des prix
     const [doneCookGroups,  setDoneCookGroups]  = useState(init.doneCookGroups  || {}); // cuisson : étapes cochées (persisté)
@@ -176,6 +177,7 @@ const BatchCooking = ({ profiles }) => {
 
     // ── Fetch markdown quand on ouvre la prévisualisation ─────────────────────
     useEffect(() => {
+        setPreviewMode('batch');   // chaque ouverture repart sur les quantités du batch
         if (!previewRecipe?.file) { setPreviewMd(''); return; }
         setLoadingPreview(true);
         const base = import.meta.env.BASE_URL || '/';
@@ -249,6 +251,36 @@ const BatchCooking = ({ profiles }) => {
         if (!recipe) return null;
         return scaleRecipeForMeal(personKey, profiles, recipe, meal);
     }, [recipes, profiles]);
+    // ── Totaux réels d'une recette sur le plan de la semaine ──────────────────
+    // Quand on ouvre une fiche depuis le batch cooking, ce qui compte n'est pas
+    // la portion de base mais ce qu'on va VRAIMENT cuisiner : tous les créneaux
+    // où la recette apparaît × les 2 personnes.
+    const getRecipeBatchTotals = useCallback((recipeId) => {
+        const agg = {};
+        let portions = 0, slots = 0;
+        const jours = [];
+        DAYS.forEach(day => MEALS.forEach(meal => {
+            if (isSlotDisabled(day, meal)) return;
+            if (weekPlan[day]?.[meal] !== recipeId) return;
+            slots++;
+            jours.push(`${day.slice(0, 3)} ${meal === 'midi' ? 'midi' : 'soir'}`);
+            ['axel', 'prisca'].forEach(person => {
+                const s = getScaled(recipeId, person, meal);
+                if (!s) return;
+                portions++;
+                s.ingredients.forEach(i => {
+                    if (!agg[i.name]) agg[i.name] = { name: i.name, raw_g: 0, prot: 0, lip: 0, glu: 0, unit: i.unit, g_per_pc: i.g_per_pc, fixed_qty: i.fixed_qty, is_pst: i.is_pst, precook: i.precook };
+                    agg[i.name].raw_g += i.raw_g;
+                    agg[i.name].prot  += i.prot;
+                    agg[i.name].lip   += i.lip;
+                    agg[i.name].glu   += i.glu;
+                });
+            });
+        }));
+        if (portions === 0) return null;
+        return { portions, slots, jours, ingredients: Object.values(agg) };
+    }, [weekPlan, disabledSlots, getScaled]);
+
 
     // ── Utilitaires comptage ──────────────────────────────────────────────────
     const countAssignedSlots = () => {
@@ -826,7 +858,7 @@ const BatchCooking = ({ profiles }) => {
                     const nbFiltered = recipes.filter(r => { const rt = getRecipeTags(r); return filterTags.every(t => rt.includes(t)); }).length;
                     const chip = (label, active, onClick, key) => (
                         <button key={key} onClick={onClick} style={{
-                            padding: '0.26rem 0.65rem', borderRadius: '999px', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 700,
+                            padding: '0.5rem 0.75rem', minHeight: '40px', borderRadius: '999px', cursor: 'pointer', fontSize: '0.74rem', fontWeight: 700,
                             background: active ? 'rgba(56,189,248,0.18)' : 'rgba(15,23,42,0.6)',
                             border: `1px solid ${active ? '#38bdf8' : '#334155'}`,
                             color: active ? '#38bdf8' : '#94a3b8', textTransform: 'capitalize',
@@ -898,7 +930,7 @@ const BatchCooking = ({ profiles }) => {
                                     style={{
                                         marginTop: 'auto',
                                         display: 'flex', alignItems: 'center', gap: '0.3rem',
-                                        background: 'none', border: 'none', padding: '0.45rem 0',
+                                        background: 'none', border: 'none', padding: '0.7rem 0', minHeight: '44px',
                                         color: sel ? '#93c5fd' : '#475569',
                                         cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600,
                                         borderTop: '1px solid rgba(255,255,255,0.05)',
@@ -1733,10 +1765,58 @@ const BatchCooking = ({ profiles }) => {
                                 )}
                             </div>
 
-                            {/* Tableau ingrédients */}
-                            {Array.isArray(previewRecipe.ingredients) && previewRecipe.ingredients.length > 0 && (
+                            {/* Tableau ingrédients — bascule « 1 portion » / « tout le batch » */}
+                            {Array.isArray(previewRecipe.ingredients) && previewRecipe.ingredients.length > 0 && (() => {
+                                const batch = getRecipeBatchTotals(previewRecipe.id);
+                                // En contexte batch cooking, ce qu'on veut voir par défaut c'est ce
+                                // qu'on va réellement peser, pas la portion de référence.
+                                const enBatch = batch && previewMode !== 'portion';
+                                const rows = enBatch
+                                    ? batch.ingredients.map(i => ({
+                                        name: i.name, is_pst: i.is_pst, precook: i.precook,
+                                        qty: fmtIng(i.name, i.raw_g, i.unit, i.g_per_pc, false),
+                                        prot: Math.round(i.prot * 10) / 10,
+                                        lip:  Math.round(i.lip  * 10) / 10,
+                                        glu:  Math.round(i.glu  * 10) / 10,
+                                    }))
+                                    : previewRecipe.ingredients.map(i => ({
+                                        name: i.name, is_pst: i.is_pst, precook: i.precook,
+                                        qty: fmtIng(i.name, i.qty_g, i.unit, i.g_per_pc, i.fixed_qty),
+                                        prot: Math.round(i.qty_g * i.prot_100 / 100 * 10) / 10,
+                                        lip:  Math.round(i.qty_g * i.lip_100  / 100 * 10) / 10,
+                                        glu:  Math.round(i.qty_g * i.glu_100  / 100 * 10) / 10,
+                                    }));
+                                const btn = (actif) => ({
+                                    fontSize: '0.68rem', fontWeight: 700, padding: '0.35rem 0.6rem', borderRadius: '6px',
+                                    cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap', minHeight: '36px',
+                                    background: actif ? 'rgba(56,189,248,0.18)' : 'rgba(255,255,255,0.04)',
+                                    border: '1px solid ' + (actif ? '#38bdf8' : '#334155'),
+                                    color: actif ? '#38bdf8' : '#64748b',
+                                });
+                                return (
                                 <div>
-                                    <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px', marginBottom: '0.6rem' }}>📊 INGRÉDIENTS (1 PORTION)</div>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+                                        <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', letterSpacing: '1.5px' }}>
+                                            📊 INGRÉDIENTS
+                                        </div>
+                                        {batch ? (
+                                            <div style={{ display: 'flex', gap: '0.35rem' }}>
+                                                <button onClick={() => setPreviewMode('batch')} style={btn(enBatch)}>
+                                                    🍲 Tout le batch ({batch.portions} portions)
+                                                </button>
+                                                <button onClick={() => setPreviewMode('portion')} style={btn(!enBatch)}>
+                                                    1 portion
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span style={{ fontSize: '0.68rem', color: '#475569' }}>1 portion — recette non planifiée</span>
+                                        )}
+                                    </div>
+                                    {enBatch && (
+                                        <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: '0.5rem', lineHeight: 1.5 }}>
+                                            Quantités à peser pour <strong style={{ color: '#38bdf8' }}>{batch.slots} repas</strong> × 2 personnes — {batch.jours.join(' · ')}
+                                        </div>
+                                    )}
                                     <div style={{ borderRadius: '8px', overflow: 'hidden', border: '1px solid #1e293b' }}>
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto auto', background: 'rgba(0,0,0,0.4)', padding: '0.45rem 0.75rem', fontSize: '0.62rem', fontWeight: 700, color: '#475569', letterSpacing: '0.5px', gap: '0.5rem' }}>
                                             <span>INGRÉDIENT</span>
@@ -1745,27 +1825,22 @@ const BatchCooking = ({ profiles }) => {
                                             <span style={{ textAlign: 'right', color: '#fb923c' }}>LIP</span>
                                             <span style={{ textAlign: 'right', color: '#a78bfa' }}>GLU</span>
                                         </div>
-                                        {previewRecipe.ingredients.map((ing, i) => {
-                                            const prot = Math.round(ing.qty_g * ing.prot_100 / 100 * 10) / 10;
-                                            const lip  = Math.round(ing.qty_g * ing.lip_100  / 100 * 10) / 10;
-                                            const glu  = Math.round(ing.qty_g * ing.glu_100  / 100 * 10) / 10;
-                                            const qty  = fmtIng(ing.name, ing.qty_g, ing.unit, ing.g_per_pc, ing.fixed_qty);
-                                            const isPst = ing.is_pst;
-                                            return (
-                                                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto auto', alignItems: 'center', padding: '0.4rem 0.75rem', gap: '0.5rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                                                    <span style={{ color: isPst ? '#fbbf24' : '#e2e8f0', fontSize: '0.83rem', fontWeight: isPst ? 700 : 400 }}>
-                                                        {ing.name}{isPst ? ' ★' : ''}
-                                                    </span>
-                                                    <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontSize: '0.82rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{qty}</span>
-                                                    <span style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{prot}g</span>
-                                                    <span style={{ color: '#fb923c', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{lip}g</span>
-                                                    <span style={{ color: '#a78bfa', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{glu}g</span>
-                                                </div>
-                                            );
-                                        })}
+                                        {rows.map((r, i) => (
+                                            <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr auto auto auto auto', alignItems: 'center', padding: '0.4rem 0.75rem', gap: '0.5rem', background: i % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'transparent', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                                                <span style={{ color: r.is_pst ? '#fbbf24' : '#e2e8f0', fontSize: '0.83rem', fontWeight: r.is_pst ? 700 : 400 }}>
+                                                    {r.name}{r.is_pst ? ' ★' : ''}
+                                                    {r.precook && <span title="À cuire ou réhydrater avant l'assemblage" style={{ marginLeft: '0.35rem', fontSize: '0.6rem', color: '#fb923c', border: '1px solid rgba(251,146,60,0.35)', background: 'rgba(251,146,60,0.12)', borderRadius: '4px', padding: '0 0.3rem', whiteSpace: 'nowrap' }}>à pré-cuire</span>}
+                                                </span>
+                                                <span style={{ color: '#38bdf8', fontFamily: 'monospace', fontSize: '0.82rem', textAlign: 'right', whiteSpace: 'nowrap' }}>{r.qty}</span>
+                                                <span style={{ color: '#4ade80', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{r.prot}g</span>
+                                                <span style={{ color: '#fb923c', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{r.lip}g</span>
+                                                <span style={{ color: '#a78bfa', fontFamily: 'monospace', fontSize: '0.78rem', textAlign: 'right' }}>{r.glu}g</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
-                            )}
+                                );
+                            })()}
 
                             {/* Protocole — étapes cochables + prochaine étape mise en avant */}
                             {(() => {
